@@ -1,8 +1,3 @@
-#ifndef EVENTTIMER_H_
-#define EVENTTIMER_H_
-
-#include "../ptpd.h"
-
 /*-
  * Copyright (c) 2015 Wojciech Owczarek,
  *
@@ -29,6 +24,11 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef EVENTTIMER_H_
+#define EVENTTIMER_H_
+
+#include "ptp_primitives.h"
 
 #define EVENTTIMER_MAX_DESC		20
 #define EVENTTIMER_MIN_INTERVAL_US	250 /* 4000/sec */

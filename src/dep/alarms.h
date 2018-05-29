@@ -36,7 +36,10 @@
  * handling raising and clearing alarms.
  */
 
-#include "../datatypes.h"
+#include <stdint.h>
+
+#include "ptp_primitives.h"
+#include "ptp_datatypes.h"
 
 #define DOMAIN_MISMATCH_MIN 10	/* trigger domain mismatch alarm after at least 10 mismatches */
 #define ALARM_UPDATE_INTERVAL 1 /* how often we process alarms */

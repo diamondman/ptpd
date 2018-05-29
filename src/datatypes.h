@@ -1,15 +1,25 @@
 #ifndef DATATYPES_H_
 #define DATATYPES_H_
 
+#include <limits.h>
+#include <sys/param.h>
+#include <stdio.h>
+#include <stdint.h>
+
+#include "constants.h"
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
+#include "ptp_timers.h"
 
-#include <stdio.h>
-#include <dep/iniparser/dictionary.h>
+#include "dep/iniparser/dictionary.h"
+#include "dep/ntpengine/ntpdcontrol.h"
 #ifdef PTPD_STATISTICS
-#  include <dep/statistics.h>
+#  include "dep/statistics.h"
+#  include "dep/outlierfilter.h"
 #endif /* PTPD_STATISTICS */
 #include "dep/alarms.h"
+#include "dep/datatypes_dep.h"
+#include "dep/constants_dep.h"
 
 
 /**

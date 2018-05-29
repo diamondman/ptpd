@@ -1,8 +1,6 @@
 #ifndef PTP_TIMERS_H_
 #define PTP_TIMERS_H_
 
-#include "ptpd.h"
-
 /*-
  * Copyright (c) 2015 Wojciech Owczarek,
  *
@@ -30,6 +28,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "ptp_primitives.h"
 
 #ifdef PTPD_PTIMERS
 #  define LOG_MIN_INTERVAL -7

@@ -133,8 +133,12 @@
 #  include <sys/cpuset.h>
 #endif /* HAVE_SYS_CPUSET_H */
 
-#include "constants.h"
-#include "limits.h"
+#include "ptp_primitives.h"
+#include "ptp_datatypes.h"
+#include "ptp_timers.h"
+#include "dep/datatypes_dep.h"
+#include "dep/alarms.h"
+#include "datatypes.h"
 
 /* Disable SO_TIMESTAMPING if configured to do so */
 #ifdef PTPD_DISABLE_SOTIMESTAMPING
@@ -142,37 +146,6 @@
 #    undef SO_TIMESTAMPING
 #  endif /* SO_TIMESTAMPING */
 #endif /* PTPD_DISABLE_SOTIMESTAMPING */
-
-#include "dep/ipv4_acl.h"
-
-#include "dep/constants_dep.h"
-#include "dep/datatypes_dep.h"
-
-#include "ptp_timers.h"
-#include "dep/eventtimer.h"
-
-#include "dep/ntpengine/ntpdcontrol.h"
-#include "dep/ntpengine/ntp_isc_md5.h"
-
-#include "timingdomain.h"
-
-#ifdef PTPD_STATISTICS
-#  include "dep/outlierfilter.h"
-#endif
-
-#include "datatypes.h"
-
-#ifdef PTPD_STATISTICS
-#  include "dep/statistics.h"
-#endif
-
-#include "dep/ptpd_dep.h"
-#include "dep/iniparser/dictionary.h"
-#include "dep/iniparser/iniparser.h"
-#include "dep/daemonconfig.h"
-
-#include "dep/alarms.h"
-
 
 
 /* NOTE: this macro can be refactored into a function */

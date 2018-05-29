@@ -8,6 +8,8 @@
 #ifndef PTPD_IPV4_ACL_H_
 #define PTPD_IPV4_ACL_H_
 
+#include <stdint.h>
+
 #define IN_RANGE(num, min,max) \
 	(num >= min && num <= max)
 

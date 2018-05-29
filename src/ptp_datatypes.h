@@ -2,6 +2,7 @@
 #define PTP_DATATYPES_H_
 
 #include "ptp_primitives.h"
+#include "dep/constants_dep.h"
 
 /*Struct defined in spec*/
 

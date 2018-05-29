@@ -9,8 +9,10 @@
 #ifndef PTPD_CONFIGDEFAULTS_H_
 #define PTPD_CONFIGDEFAULTS_H_
 
-#include <stddef.h>
-#include "iniparser/iniparser.h"
+#include "ptp_primitives.h"
+#include "iniparser/dictionary.h"
+#include "dep/datatypes_dep.h"
+#include "datatypes.h"
 
 #define DEFAULT_TEMPLATE_FILE DATADIR"/"PACKAGE_NAME"/templates.conf"
 

@@ -11,6 +11,10 @@
 #ifndef STATISTICS_H_
 #define STATISTICS_H_
 
+#include <stdint.h>
+
+#include "ptp_primitives.h"
+
 #define STATCONTAINER_MAX_SAMPLES 60
 
 /* "Permanent" i.e. non-moving statistics containers - useful for long term measurement */

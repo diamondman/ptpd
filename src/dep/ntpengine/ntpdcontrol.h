@@ -5,12 +5,23 @@
 #ifndef NTPDCONTROL_H
 #define NTPDCONTROL_H
 
-#include "../../ptpd.h"
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif /* HAVE_CONFIG_H */
 
-#include "../../timingdomain.h"
+#include <limits.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+#endif /* HAVE_SYS_PARAM_H */
+
+#include "ptp_primitives.h"
+#include "timingdomain.h"
+#include "dep/ntpengine/ntp_isc_md5.h"
 
 typedef struct {
-
 	Boolean enableEngine;
 	Boolean enableControl;
 	Boolean enableFailover;
@@ -92,7 +103,6 @@ typedef struct {
 		    (n)->l_uf = htonl((h)->l_uf); } while (0)
 
 typedef unsigned short associd_t; /* association ID */
-typedef int32_t keyid_t;        /* cryptographic key ID */
 typedef uint32_t tstamp_t;       /* NTP seconds timestamp */
 
 

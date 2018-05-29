@@ -51,12 +51,15 @@
 #ifndef ISC_MD5_H
 #define ISC_MD5_H 1
 
+#include <stdint.h>
+
 #ifdef HAVE_STRINGS_H
 #  include <strings.h>
 #endif /* HAVE_STRINGS_H */
 
 #define ISC_MD5_DIGESTLENGTH 16U
 
+typedef int32_t keyid_t;        /* cryptographic key ID */
 
 typedef struct {
 	uint32_t buf[4];

@@ -9,6 +9,13 @@
 #ifndef PTPD_DEP_H_
 #define PTPD_DEP_H_
 
+#include "ptp_primitives.h"
+#include "ptp_datatypes.h"
+#include "dep/alarms.h"
+#include "dep/datatypes_dep.h"
+#include "dep/iniparser/dictionary.h"
+#include "datatypes.h"
+
 #ifdef RUNTIME_DEBUG
 #  undef PTPD_DBGV
 #  define PTPD_DBGV

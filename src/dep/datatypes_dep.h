@@ -1,7 +1,16 @@
 #ifndef DATATYPES_DEP_H_
 #define DATATYPES_DEP_H_
 
-#include "../ptp_primitives.h"
+#include <sys/param.h>
+#include <sys/socket.h> //Auto included by netinet/in.h
+#include <netinet/in.h>
+#ifdef PTPD_PCAP
+#  include <pcap.h>
+#endif //PTPD_PCAP
+#include <net/ethernet.h>
+
+#include "ptp_primitives.h"
+#include "dep/ipv4_acl.h"
 
 /**
 *\file
