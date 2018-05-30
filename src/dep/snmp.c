@@ -35,7 +35,14 @@
  * @brief  SNMP related functions
  */
 
-#include "../ptpd.h"
+#include <stdint.h>
+
+#include "constants.h"
+#include "ptp_primitives.h"
+#include "ptp_datatypes.h"
+#include "dep/alarms.h"
+
+#include "ptpd.h"
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>

@@ -52,7 +52,15 @@
  * best master clock from any number of possibilities.
  */
 
-#include "ptpd.h"
+#include <string.h>
+
+#include "ptp_primitives.h"
+#include "constants.h"
+#include "dep/constants_dep.h"
+#include "ptp_datatypes.h"
+#include "ptp_timers.h"
+#include "dep/alarms.h"
+#include "datatypes.h"
 
 
 /* Init ptpClock with run time values (initialization constants are in constants.h)*/

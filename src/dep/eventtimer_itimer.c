@@ -51,7 +51,13 @@
  * The original interval timer timer implementation.
  */
 
-#include "../ptpd.h"
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+
+#include "ptp_primitives.h"
+#include "dep/eventtimer.h"
 
 #define US_TIMER_INTERVAL (31250)
 

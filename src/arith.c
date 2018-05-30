@@ -51,7 +51,12 @@
  *
  */
 
-#include "ptpd.h"
+#include <limits.h>
+#include <stdlib.h>
+#include <math.h>
+
+#include "ptp_primitives.h"
+#include "ptp_datatypes.h"
 
 void
 internalTime_to_integer64(TimeInternal internal, Integer64 *bigint)

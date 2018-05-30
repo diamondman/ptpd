@@ -35,8 +35,14 @@
  *
  */
 
-#include "../ptpd.h"
-#include "string.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+
+#include "ptp_primitives.h"
+#include "ipv4_acl.h"
 
 /**
  * strdup + free are used across code using strtok_r, so as to

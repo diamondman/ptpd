@@ -1,12 +1,23 @@
 #ifndef DATATYPES_DEP_H_
 #define DATATYPES_DEP_H_
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
 #include <sys/param.h>
 #include <sys/socket.h> //Auto included by netinet/in.h
 #include <netinet/in.h>
 #ifdef PTPD_PCAP
-#  include <pcap.h>
-#endif //PTPD_PCAP
+#  ifdef HAVE_PCAP_PCAP_H
+#    include <pcap/pcap.h>
+#  else
+/* Cases like RHEL5 and others where only pcap.h exists */
+#    ifdef HAVE_PCAP_H
+#      include <pcap.h>
+#    endif /* HAVE_PCAP_H */
+#  endif
+#endif
 #include <net/ethernet.h>
 
 #include "ptp_primitives.h"

@@ -33,7 +33,15 @@
  * computing statistical information.
  */
 
-#include "../ptpd.h"
+#include <stdint.h>
+#include <stddef.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "dep/constants_dep.h"
+#include "ptp_primitives.h"
+#include "statistics.h"
 
 static int cmpInt32 (const void *vA, const void *vB)
 {

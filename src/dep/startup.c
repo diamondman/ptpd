@@ -54,7 +54,27 @@
  * and include the getopt() command line argument parsing.
  */
 
-#include "../ptpd.h"
+#include <stdio.h>
+#include <stddef.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <sys/stat.h>
+
+#include "dep/constants_dep.h"
+#include "ptp_primitives.h"
+#include "timingdomain.h"
+#include "dep/ntpengine/ntpdcontrol.h"
+#include "ptp_datatypes.h"
+#include "dep/alarms.h"
+#include "ptp_timers.h"
+#include "datatypes.h"
+#include "dep/daemonconfig.h"
+#include "dep/ptpd_dep.h"
+#include "dep/configdefaults.h"
+
+#include "ptpd.h"
 
 /*
  * valgrind 3.5.0 currently reports no errors (last check: 20110512)

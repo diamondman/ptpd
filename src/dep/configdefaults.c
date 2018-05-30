@@ -32,7 +32,17 @@
  *
  */
 
-#include "../ptpd.h"
+#include <stdio.h>
+#include <stddef.h>
+
+#include "constants.h"
+#include "ptp_primitives.h"
+#include "dep/datatypes_dep.h"
+#include "dep/iniparser/dictionary.h"
+#include "dep/iniparser/iniparser.h"
+#include "datatypes.h"
+#include "dep/configdefaults.h"
+#include "dep/ptpd_dep.h"
 
 #define CONFIG_ISTRUE(key) \
 	(iniparser_getboolean(dict,key,FALSE)==TRUE)

@@ -35,6 +35,18 @@
  *
  */
 
+#include <stdint.h>
+#include <stddef.h>
+#include <limits.h>
+#include <math.h>
+
+#include "constants.h"
+#include "dep/constants_dep.h"
+#include "ptp_primitives.h"
+#include "ptp_datatypes.h"
+#include "datatypes.h"
+#include "dep/ptpd_dep.h"
+
 #include "ptpd.h"
 
 /* how many times we send a cancel before we stop waiting for ack. 8 bit unsigned. */

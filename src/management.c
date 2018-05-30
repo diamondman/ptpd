@@ -51,6 +51,16 @@
  *
  */
 
+#include <stdlib.h>
+
+#include "constants.h"
+#include "ptp_primitives.h"
+#include "ptp_datatypes.h"
+#include "dep/iniparser/dictionary.h"
+#include "datatypes.h"
+#include "dep/ptpd_dep.h"
+#include "dep/daemonconfig.h"
+
 #include "ptpd.h"
 
 static void handleMMNullManagement(MsgManagement*, MsgManagement*, PtpClock*);

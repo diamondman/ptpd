@@ -10,7 +10,7 @@
 #define PTPD_DAEMONCONFIG_H_
 
 #include "ptp_primitives.h"
-#include "iniparser/dictionary.h"
+#include "dep/iniparser/dictionary.h"
 #include "datatypes.h"
 
 /* Config reload - component restart status flags */

@@ -15,6 +15,14 @@
 
 /* platform dependent */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
+#include <netinet/ip.h>
+#include <netinet/udp.h>
+#include <fcntl.h>
+
 #if !defined(linux) && !defined(__NetBSD__) && !defined(__FreeBSD__) && \
   !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__sun) && !defined(__QNXNTO__)
 #  error PTPD hasn't been ported to this OS - should be possible \

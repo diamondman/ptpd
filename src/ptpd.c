@@ -56,6 +56,15 @@
  * below.
  */
 
+#include <stddef.h>
+#include <string.h>
+
+#include "constants.h"
+#include "ptp_primitives.h"
+#include "timingdomain.h"
+#include "datatypes.h"
+#include "dep/ptpd_dep.h"
+
 #include "ptpd.h"
 
 RunTimeOpts rtOpts;			/* statically allocated run-time

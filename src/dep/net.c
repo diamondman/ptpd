@@ -54,7 +54,24 @@
  *
  */
 
-#include "../ptpd.h"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
+#include <stdint.h>
+#include <stddef.h>
+#include <errno.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+
+#include "constants.h"
+#include "ptp_primitives.h"
+#include "dep/constants_dep.h"
+#include "ptp_datatypes.h"
+#include "dep/datatypes_dep.h"
+#include "datatypes.h"
+
+#include "ptpd.h"
 
 #ifdef PTPD_PCAP
 #  ifdef HAVE_PCAP_PCAP_H

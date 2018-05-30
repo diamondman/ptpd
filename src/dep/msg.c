@@ -52,7 +52,15 @@
  * See spec annex d
  */
 
-#include "../ptpd.h"
+#include "constants.h"
+#include "dep/constants_dep.h"
+#include "ptp_primitives.h"
+#include "ptp_datatypes.h"
+#include "dep/datatypes_dep.h"
+#include "datatypes.h"
+#include "dep/ptpd_dep.h"
+
+#include "ptpd.h"
 
 extern RunTimeOpts rtOpts;
 

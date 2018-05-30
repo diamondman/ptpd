@@ -51,7 +51,26 @@
  *
  */
 
-#include "../ptpd.h"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
+#include <stdint.h>
+#include <stdio.h>
+#include <errno.h>
+#include <math.h>
+#include <glob.h>
+#include <arpa/inet.h>
+#include <stdarg.h>
+#include <sys/stat.h>
+
+#ifdef HAVE_UTMPX_H
+#  include <utmpx.h>
+#else
+#  ifdef HAVE_UTMP_H
+#    include <utmp.h>
+#  endif /* HAVE_UTMP_H */
+#endif /* HAVE_UTMPX_H */
 
 #ifdef HAVE_NETINET_ETHER_H
 #  include <netinet/ether.h>
@@ -68,6 +87,25 @@
 #ifdef HAVE_NET_IF_ETHER_H
 #  include <net/if_ether.h>
 #endif
+
+#ifdef HAVE_SYS_TIMEX_H
+#  include <sys/timex.h>
+#endif
+
+#ifdef HAVE_SYS_CPUSET_H
+#  include <sys/cpuset.h>
+#endif /* HAVE_SYS_CPUSET_H */
+
+#include "constants.h"
+#include "dep/constants_dep.h"
+#include "ptp_primitives.h"
+#include "ptp_datatypes.h"
+#include "dep/alarms.h"
+#include "dep/datatypes_dep.h"
+#include "datatypes.h"
+#include "dep/ptpd_dep.h"
+
+#include "ptpd.h"
 
 /* only C99 has the round function built-in */
 double round (double __x);

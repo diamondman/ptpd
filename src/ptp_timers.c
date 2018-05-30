@@ -41,7 +41,11 @@
  * - write something different
  */
 
-#include "ptpd.h"
+#include <stddef.h>
+
+#include "ptp_primitives.h"
+#include "ptp_timers.h"
+#include "dep/eventtimer.h"
 
 void
 timerStop(IntervalTimer * itimer)

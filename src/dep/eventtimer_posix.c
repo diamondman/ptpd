@@ -35,7 +35,13 @@
  * allowing for high(er) message intervals.
  */
 
-#include "../ptpd.h"
+#include <stddef.h>
+#include <signal.h>
+#include <sys/time.h>
+#include <string.h>
+
+#include "ptp_primitives.h"
+#include "dep/eventtimer.h"
 
 #define TIMER_SIGNAL SIGALRM
 

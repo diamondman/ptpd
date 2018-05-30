@@ -1,5 +1,24 @@
-#include "ptpd.h"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
+#include <stdint.h>
+#include <stddef.h>
+#ifdef HAVE_SYS_TIMEX_H
+#  include <sys/timex.h>
+#endif
+
+#include "constants.h"
+#include "ptp_primitives.h"
+#include "dep/constants_dep.h"
+#include "ptp_datatypes.h"
+#include "timingdomain.h"
+#include "dep/datatypes_dep.h"
 #include "dep/ntpengine/ntpdcontrol.h"
+#include "datatypes.h"
+#include "dep/ptpd_dep.h"
+
+#include "ptpd.h"
 
 #ifdef LOCAL_PREFIX
 #undef LOCAL_PREFIX

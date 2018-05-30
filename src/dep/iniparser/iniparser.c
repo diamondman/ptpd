@@ -7,8 +7,15 @@
 */
 /*--------------------------------------------------------------------------*/
 /*---------------------------- Includes ------------------------------------*/
+
+#include <stddef.h>
+#include <stdio.h>
 #include <ctype.h>
-#include "iniparser.h"
+#include <string.h>
+#include <stdlib.h>
+
+#include "dep/iniparser/dictionary.h"
+#include "dep/iniparser/iniparser.h"
 
 /*---------------------------- Defines -------------------------------------*/
 #define ASCIILINESZ         (1024)

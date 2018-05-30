@@ -61,7 +61,21 @@
  *                                                                     *
  ***********************************************************************/
 
-#include "../../ptpd.h"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <unistd.h>
+#include <errno.h>
+#include <time.h>
+#include <sys/select.h>
+
+#include "ptp_primitives.h"
+#include "dep/ntpengine/ntpdcontrol.h"
+#include "dep/ptpd_dep.h"
 
 #define NTP_PORT 123
 
@@ -701,9 +715,12 @@ again:
 			return INFO_ERR_IMPL;
 		}
 
+#if defined(RUNTIME_DEBUG) || defined (PTPD_DBGV)
 		DBGV(
 		    "NTPDC ***Warning changing the request packet size from %d to %d\n",
 		    oldsize, req_pkt_size);
+#endif /* RUNTIME_DEBUG */
+
 		goto again;
 	}
 

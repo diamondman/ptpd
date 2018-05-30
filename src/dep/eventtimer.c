@@ -35,7 +35,11 @@
  * all created instances.
  */
 
-#include "../ptpd.h"
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <dep/eventtimer.h>
 
 /* linked list - so that we can control all registered objects centrally */
 static EventTimer *_first = NULL;

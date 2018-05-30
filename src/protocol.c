@@ -51,6 +51,19 @@
  *
  */
 
+#include <stdint.h>
+#include <sys/types.h>
+#include <string.h>
+#include <math.h>
+
+#include "constants.h"
+#include "dep/constants_dep.h"
+#include "ptp_primitives.h"
+#include "ptp_timers.h"
+#include "dep/alarms.h"
+#include "datatypes.h"
+#include "dep/ptpd_dep.h"
+
 #include "ptpd.h"
 
 Boolean doInit(RunTimeOpts*,PtpClock*);

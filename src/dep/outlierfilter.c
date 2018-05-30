@@ -35,7 +35,13 @@
  * in preparation for 2.4's OOP-like model
  */
 
-#include "../ptpd.h"
+#include <stddef.h>
+#include <string.h>
+#include <math.h>
+
+#include "ptp_primitives.h"
+#include "dep/statistics.h"
+#include "dep/outlierfilter.h"
 
 #ifdef LOCAL_PREFIX
 #  undef LOCAL_PREFIX

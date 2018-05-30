@@ -24,7 +24,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "../../ptpd.h"
+#include <stdint.h>
+#include <string.h>
+#include <sys/types.h>
 
 #include "ntp_isc_md5.h"
 

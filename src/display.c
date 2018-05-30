@@ -52,7 +52,15 @@
  *
  */
 
-#include "ptpd.h"
+#include <stdint.h>
+
+#include "constants.h"
+#include "ptp_primitives.h"
+#include "dep/constants_dep.h"
+#include "ptp_datatypes.h"
+#include "ptp_timers.h"
+#include "dep/datatypes_dep.h"
+#include "datatypes.h"
 
 /**\brief Display an Integer64 type*/
 void
@@ -695,8 +703,6 @@ displayForeignMaster(const PtpClock * ptpClock)
 void
 displayOthers(const PtpClock * ptpClock)
 {
-	int i;
-
 	/* Usefull to display name of timers */
 #ifdef PTPD_DBGV
 	    char timer[][26] = {
@@ -750,11 +756,14 @@ displayOthers(const PtpClock * ptpClock)
 	DBGV("message activity %d \n", ptpClock->message_activity);
 	DBGV("\n");
 
+#ifdef PTPD_DBGV
+        int i;
 	for (i = 0; i < PTP_MAX_TIMER; i++) {
 		DBGV("%s : \n", timer[i]);
 		intervalTimer_display(&ptpClock->timers[i]);
 		DBGV("\n");
 	}
+#endif
 
 	netPath_display(&ptpClock->netPath);
 	DBGV("mCommunication technology %d \n", ptpClock->port_communication_technology);

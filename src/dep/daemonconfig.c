@@ -37,7 +37,30 @@
  *
  */
 
-#include "../ptpd.h"
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
+#include <stdint.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <ctype.h>
+#ifdef HAVE_GETOPT_H
+#  include <getopt.h>
+#endif /* HAVE_GETOPT_H */
+
+#include "constants.h"
+#include "dep/constants_dep.h"
+#include "ptp_primitives.h"
+#include "dep/iniparser/dictionary.h"
+#include "dep/iniparser/iniparser.h"
+#include "dep/datatypes_dep.h"
+#include "datatypes.h"
+#include "dep/configdefaults.h"
+#include "dep/daemonconfig.h"
+#include "dep/ptpd_dep.h"
+
+#include "ptpd.h"
 
 /*-
  * Helper macros - this is effectively the API for using the new config file interface.
