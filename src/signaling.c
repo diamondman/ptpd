@@ -46,6 +46,8 @@
 #include "ptp_datatypes.h"
 #include "datatypes.h"
 #include "dep/ptpd_dep.h"
+#include "ptpd_logging.h"
+#include "ptpd_utils.h"
 
 #include "ptpd.h"
 

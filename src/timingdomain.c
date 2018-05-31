@@ -17,6 +17,7 @@
 #include "dep/ntpengine/ntpdcontrol.h"
 #include "datatypes.h"
 #include "dep/ptpd_dep.h"
+#include "ptpd_logging.h"
 
 #include "ptpd.h"
 

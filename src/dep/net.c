@@ -70,6 +70,7 @@
 #include "ptp_datatypes.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
+#include "ptpd_logging.h"
 
 #include "ptpd.h"
 

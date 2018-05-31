@@ -41,6 +41,7 @@
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "dep/alarms.h"
+#include "ptpd_utils.h"
 
 #include "ptpd.h"
 

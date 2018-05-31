@@ -42,6 +42,7 @@
 #include "ptp_primitives.h"
 #include "dep/statistics.h"
 #include "dep/outlierfilter.h"
+#include "ptpd_logging.h"
 
 #ifdef LOCAL_PREFIX
 #  undef LOCAL_PREFIX

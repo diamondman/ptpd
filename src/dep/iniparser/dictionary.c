@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "dictionary.h"
+#include "ptpd_logging.h"
 
 /** Maximum value size for integers and doubles. */
 #define MAXVALSZ    1024

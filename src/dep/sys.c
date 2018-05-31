@@ -104,6 +104,7 @@
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
 #include "dep/ptpd_dep.h"
+#include "ptpd_logging.h"
 
 #include "ptpd.h"
 
@@ -111,6 +112,9 @@
 double round (double __x);
 
 static int closeLog(LogFileHandler* handler);
+
+static Boolean maintainLogSize(LogFileHandler* handler);
+static void updateLogSize(LogFileHandler* handler);
 
 #ifdef __QNXNTO__
 typedef struct {
@@ -448,7 +452,7 @@ int writeMessage(FILE* destination, uint32_t *lastHash, int priority, const char
 	return written;
 }
 
-void
+static void
 updateLogSize(LogFileHandler* handler)
 {
 	struct stat st;
@@ -604,7 +608,7 @@ closeLog(LogFileHandler* handler)
 
 /* Return TRUE only if the log file had to be rotated / truncated - FALSE does not mean error */
 /* Mini-logrotate: truncate file if exceeds preset size, also rotate up to n number of files if configured */
-Boolean
+static Boolean
 maintainLogSize(LogFileHandler* handler)
 {
 	if(handler->maxSize) {
@@ -673,7 +677,6 @@ maintainLogSize(LogFileHandler* handler)
 void
 restartLogging(RunTimeOpts* rtOpts)
 {
-
 	if(!restartLog(&rtOpts->statisticsLog, TRUE))
 		NOTIFY("Failed logging to %s file\n", rtOpts->statisticsLog.logID);
 

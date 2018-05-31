@@ -64,34 +64,6 @@
 #include "datatypes.h"
 
 
-/* NOTE: this macro can be refactored into a function */
-#define XMALLOC(ptr,size) \
-	if(!((ptr)=malloc(size))) { \
-		PERROR("failed to allocate memory"); \
-		ptpdShutdown(ptpClock); \
-		exit(1); \
-	}
-
-#define SAFE_FREE(pointer) \
-	if(pointer != NULL) { \
-		free(pointer); \
-		pointer = NULL; \
-	}
-
-#define IS_SET(data, bitpos) \
-	((data & ( 0x1 << bitpos )) == (0x1 << bitpos))
-
-#define SET_FIELD(data, bitpos) \
-	data << bitpos
-
-#ifndef min
-#  define min(a,b)     (((a)<(b))?(a):(b))
-#endif /* min */
-
-#ifndef max
-#  define max(a,b)     (((a)>(b))?(a):(b))
-#endif /* max */
-
 #define SET_ALARM(alarm, val) \
 	setAlarmCondition(&ptpClock->alarms[alarm], val, ptpClock)
 
@@ -230,13 +202,6 @@ void 	handleSignaling(MsgHeader*, Boolean, Integer32, const RunTimeOpts*,PtpCloc
 
 void 	refreshUnicastGrants(UnicastGrantTable *grantTable, int nodeCount, const RunTimeOpts *rtOpts, PtpClock *ptpClock);
 void 	updateUnicastGrantTable(UnicastGrantTable *grantTable, int nodeCount, const RunTimeOpts *rtOpts);
-
-
-/* quick shortcut to defining a temporary char array for the purpose of snprintf to it */
-#define tmpsnprintf(var,len, ...) \
-	char var[len+1]; \
-	memset(var, 0, len+1); \
-	snprintf(var, len, __VA_ARGS__);
 
 /*
  * \brief Packing and Unpacking macros

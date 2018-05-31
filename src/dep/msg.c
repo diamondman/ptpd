@@ -59,8 +59,8 @@
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
 #include "dep/ptpd_dep.h"
-
-#include "ptpd.h"
+#include "ptpd_logging.h"
+#include "ptpd_utils.h"
 
 extern RunTimeOpts rtOpts;
 

@@ -43,6 +43,7 @@
 
 #include "ptp_primitives.h"
 #include "ipv4_acl.h"
+#include "ptpd_logging.h"
 
 /**
  * strdup + free are used across code using strtok_r, so as to
@@ -283,11 +284,7 @@ dumpMaskTable(MaskTable* table)
 	if(table->entries != NULL) {
 		for(i = 0; i < table->numEntries; i++) {
 		    AclEntry this = table->entries[i];
-#ifdef PTPD_MSBF
-		    network = this.network;
-#else
 		    network = htonl(this.network);
-#endif
 		    INFO("%d.%d.%d.%d/%d\t(0x%.8x/0x%.8x), matches: %d\n",
 		    *((uint8_t*)&network), *((uint8_t*)&network+1),
 		    *((uint8_t*)&network+2), *((uint8_t*)&network+3), this.netmask,

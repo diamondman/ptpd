@@ -61,6 +61,7 @@
 #include "ptp_timers.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
+#include "ptpd_logging.h"
 
 /**\brief Display an Integer64 type*/
 void

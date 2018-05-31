@@ -58,6 +58,7 @@
 
 #include "ptp_primitives.h"
 #include "dep/eventtimer.h"
+#include "ptpd_logging.h"
 
 #define US_TIMER_INTERVAL (31250)
 

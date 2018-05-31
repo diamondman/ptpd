@@ -41,6 +41,7 @@
 
 #include "dep/constants_dep.h"
 #include "ptp_primitives.h"
+#include "ptpd_logging.h"
 #include "statistics.h"
 
 static int cmpInt32 (const void *vA, const void *vB)

@@ -30,16 +30,6 @@
 
 #include "ntp_isc_md5.h"
 
-void    ntp_memset      (char *, int, int);
-
-#define memcmp(a, b, c)         bcmp(a, b, (int)(c))
-#define memmove(t, f, c)        bcopy(f, t, (int)(c))
-#define memcpy(t, f, c)         bcopy(f, t, (int)(c))
-#define memset(a, x, c)         if (0 == (x)) \
-                                        bzero(a, (int)(c)); \
-                                else \
-                                        ntp_memset((char *)(a), x, c)
-
 static void
 byteSwap(uint32_t *buf, unsigned words)
 {

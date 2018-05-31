@@ -39,7 +39,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <dep/eventtimer.h>
+#include "dep/eventtimer.h"
+#include "ptpd_logging.h"
 
 /* linked list - so that we can control all registered objects centrally */
 static EventTimer *_first = NULL;

@@ -43,6 +43,7 @@
 #include "datatypes.h"
 #include "dep/configdefaults.h"
 #include "dep/ptpd_dep.h"
+#include "ptpd_logging.h"
 
 #define CONFIG_ISTRUE(key) \
 	(iniparser_getboolean(dict,key,FALSE)==TRUE)

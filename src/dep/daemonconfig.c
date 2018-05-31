@@ -59,6 +59,8 @@
 #include "dep/configdefaults.h"
 #include "dep/daemonconfig.h"
 #include "dep/ptpd_dep.h"
+#include "ptpd_logging.h"
+#include "ptpd_utils.h"
 
 #include "ptpd.h"
 

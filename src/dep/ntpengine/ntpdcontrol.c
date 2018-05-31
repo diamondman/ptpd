@@ -74,6 +74,7 @@
 #include <sys/select.h>
 
 #include "ptp_primitives.h"
+#include "ptpd_logging.h"
 #include "dep/ntpengine/ntpdcontrol.h"
 #include "dep/ptpd_dep.h"
 

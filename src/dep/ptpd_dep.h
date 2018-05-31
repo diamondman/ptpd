@@ -16,63 +16,6 @@
 #include "dep/iniparser/dictionary.h"
 #include "datatypes.h"
 
-#ifdef RUNTIME_DEBUG
-#  undef PTPD_DBGV
-#  define PTPD_DBGV
-#endif
-
- /** \name System messages*/
- /**\{*/
-
-
-// Syslog ordering. We define extra debug levels above LOG_DEBUG for internal use - but message() doesn't pass these to SysLog
-
-// extended from <sys/syslog.h>
-#define LOG_DEBUG1   7
-#define LOG_DEBUG2   8
-#define LOG_DEBUG3   9
-#define LOG_DEBUGV   9
-
-
-#define EMERGENCY(x, ...) logMessage(LOG_EMERG, x, ##__VA_ARGS__)
-#define ALERT(x, ...)     logMessage(LOG_ALERT, x, ##__VA_ARGS__)
-#define CRITICAL(x, ...)  logMessage(LOG_CRIT, x, ##__VA_ARGS__)
-#define ERROR(x, ...)  logMessage(LOG_ERR, x, ##__VA_ARGS__)
-#define PERROR(x, ...)    logMessage(LOG_ERR, x "      (strerror: %m)\n", ##__VA_ARGS__)
-#define WARNING(x, ...)   logMessage(LOG_WARNING, x, ##__VA_ARGS__)
-#define NOTIFY(x, ...) logMessage(LOG_NOTICE, x, ##__VA_ARGS__)
-#define NOTICE(x, ...)    logMessage(LOG_NOTICE, x, ##__VA_ARGS__)
-#define INFO(x, ...)   logMessage(LOG_INFO, x, ##__VA_ARGS__)
-
-#define EMERGENCY_LOCAL(x, ...)	EMERGENCY(LOCAL_PREFIX": " x,##__VA_ARGS__)
-#define ALERT_LOCAL(x, ...)	ALERT(LOCAL_PREFIX": " x, ##__VA_ARGS__)
-#define CRITICAL_LOCAL(x, ...)	CRITICAL(LOCAL_PREFIX": " x, ##__VA_ARGS__)
-#define ERROR_LOCAL(x, ...)	ERROR(LOCAL_PREFIX": " x, ##__VA_ARGS__)
-#define PERROR_LOCAL(x, ...)	PERROR(LOCAL_PREFIX": " x, ##__VA_ARGS__)
-#define WARNING_LOCAL(x, ...)	WARNING(LOCAL_PREFIX": " x, ##__VA_ARGS__)
-#define NOTIFY_LOCAL(x, ...)	NOTIFY(LOCAL_PREFIX": " x, ##__VA_ARGS__)
-#define NOTIC_LOCALE(x, ...)	NOTICE(LOCAL_PREFIX": " x, ##__VA_ARGS__)
-#define INFO_LOCAL(x, ...)	INFO(LOCAL_PREFIX": " x, ##__VA_ARGS__)
-
-#define EMERGENCY_LOCAL_ID(o,x, ...)	EMERGENCY(LOCAL_PREFIX".%s: "x,o->id,##__VA_ARGS__)
-#define ALERT_LOCAL_ID(o,x, ...)	ALERT(LOCAL_PREFIX".%s: "x,o->id, ##__VA_ARGS__)
-#define CRITICAL_LOCAL_ID(o,x, ...)	CRITICAL(LOCAL_PREFIX".%s: "x,o->id, ##__VA_ARGS__)
-#define ERROR_LOCAL_ID(o,x, ...)	ERROR(LOCAL_PREFIX".%s: "x,o->id, ##__VA_ARGS__)
-#define PERROR_LOCAL_ID(o,x, ...)	PERROR(LOCAL_PREFIX".%s: "x,o->id, ##__VA_ARGS__)
-#define WARNING_LOCAL_ID(o,x, ...)	WARNING(LOCAL_PREFIX".%s: "x,o->id, ##__VA_ARGS__)
-#define NOTIFY_LOCAL_ID(o,x, ...)	NOTIFY(LOCAL_PREFIX".%s: "x,o->id, ##__VA_ARGS__)
-#define NOTICE_LOCAL_ID(o,x, ...)	NOTICE(LOCAL_PREFIX".%s: "x,o->id, ##__VA_ARGS__)
-#define INFO_LOCAL_ID(o,x, ...)		INFO(LOCAL_PREFIX".%s: "x,o->id, ##__VA_ARGS__)
-
-#if defined(__FILE__) && defined(__LINE__)
-#  define MARKER INFO("Marker: %s:%d\n", __FILE__, __LINE__)
-#else
-#  define MARKER INFO("Marker\n")
-#endif
-
-#include <assert.h>
-
-
 /*
   list of per-module defines:
 
@@ -81,7 +24,10 @@
 */
 #define USE_BINDTODEVICE
 
-
+#ifdef RUNTIME_DEBUG
+#  undef PTPD_DBGV
+#  define PTPD_DBGV
+#endif
 
 // enable this line to show debug numbers in nanoseconds instead of microseconds
 // #define DEBUG_IN_NS
@@ -95,126 +41,6 @@
 #  define DBG_UNIT DBG_UNIT_US
 #endif
 
-
-
-
-/** \}*/
-
-/** \name Debug messages*/
- /**\{*/
-
-#ifdef PTPD_DBGV
-#  undef PTPD_DBG
-#  undef PTPD_DBG2
-#  define PTPD_DBG
-#  define PTPD_DBG2
-
-#  define DBGV(x, ...) logMessage(LOG_DEBUGV, x, ##__VA_ARGS__)
-#  define DBGV_LOCAL(x, ...) DBGV(LOCAL_PREFIX": " x,##__VA_ARGS__)
-#  define DBGV_LOCAL_ID(o,x, ...)	DBGV(LOCAL_PREFIX".%s:"x,o->id,##__VA_ARGS__)
-#else
-#  define DBGV(x, ...)
-#  define DBGV_LOCAL(x, ...)
-#  define DBGV_LOCAL_ID(x, ...)
-#endif
-
-/*
- * new debug level DBG2:
- * this is above DBG(), but below DBGV() (to avoid changing hundreds of lines)
- */
-
-
-#ifdef PTPD_DBG2
-#  undef PTPD_DBG
-#  define PTPD_DBG
-#  define DBG2(x, ...) logMessage(LOG_DEBUG2, x, ##__VA_ARGS__)
-#  define DBG2_LOCAL(x, ...) DBG2(LOCAL_PREFIX": " x,##__VA_ARGS__)
-#  define DBG2_LOCAL_ID(o,x, ...)	DBG2(LOCAL_PREFIX".%s:"x,o->id,##__VA_ARGS__)
-#else
-#  define DBG2(x, ...)
-#  define DBG2_LOCAL(x, ...)
-#  define DBG2_LOCAL_ID(x, ...)
-#endif
-
-#ifdef PTPD_DBG
-#  define DBG(x, ...) logMessage(LOG_DEBUG, x, ##__VA_ARGS__)
-#  define DBG_LOCAL(x, ...) DBG(LOCAL_PREFIX": " x,##__VA_ARGS__)
-#  define DBG_LOCAL_ID(o,x, ...)	DBG(LOCAL_PREFIX".%s:"x,o->id,##__VA_ARGS__)
-#else
-#  define DBG(x, ...)
-#  define DBG_LOCAL(x, ...)
-#  define DBG_LOCAL_ID(x, ...)
-#endif
-
-/** \}*/
-
-/** \name Endian corrections*/
- /**\{*/
-
-#if defined(PTPD_MSBF)
-#  define shift8(x,y)   ( (x) << ((3-y)<<3) )
-#  define shift16(x,y)  ( (x) << ((1-y)<<4) )
-#elif defined(PTPD_LSBF)
-#  define shift8(x,y)   ( (x) << ((y)<<3) )
-#  define shift16(x,y)  ( (x) << ((y)<<4) )
-#endif
-
-#define flip16(x) htons(x)
-#define flip32(x) htonl(x)
-
-/* i don't know any target platforms that do not have htons and htonl,
-   but here are generic funtions just in case */
-/*
-#if defined(PTPD_MSBF)
-#  define flip16(x) (x)
-#  define flip32(x) (x)
-#elif defined(PTPD_LSBF)
-static inline Integer16 flip16(Integer16 x)
-{
-   return (((x) >> 8) & 0x00ff) | (((x) << 8) & 0xff00);
-}
-
-static inline Integer32 flip32(x)
-{
-  return (((x) >> 24) & 0x000000ff) | (((x) >> 8 ) & 0x0000ff00) |
-         (((x) << 8 ) & 0x00ff0000) | (((x) << 24) & 0xff000000);
-}
-#endif
-*/
-
-/** \}*/
-
-
-/** \name Bit array manipulations*/
- /**\{*/
-
-#define getFlag(x,y)  !!( *(UInteger8*)((x)+((y)<8?1:0)) &   (1<<((y)<8?(y):(y)-8)) )
-#define setFlag(x,y)    ( *(UInteger8*)((x)+((y)<8?1:0)) |=   1<<((y)<8?(y):(y)-8)  )
-#define clearFlag(x,y)  ( *(UInteger8*)((x)+((y)<8?1:0)) &= ~(1<<((y)<8?(y):(y)-8)) )
-/** \}*/
-
-#define DEFAULT_TOKEN_DELIM ", ;\t"
-
-/*
- * foreach loop across substrings from var, delimited by delim, placing
- * each token in targetvar on iteration, using id variable name prefix
- * to allow nesting (each loop uses an individual set of variables)
- */
-#define foreach_token_begin(id, var, targetvar, delim) {\
-    char* id_stash; \
-    char* id_text_; \
-    char* id_text__; \
-    char* targetvar; \
-    id_text_=strdup(var); \
-    for(id_text__ = id_text_;; id_text__=NULL) { \
-	targetvar = strtok_r(id_text__, delim, &id_stash); \
-	if(targetvar==NULL) break;
-
-#define foreach_token_end(id) } \
-    if(id_text_ != NULL) { \
-	free(id_text_); \
-    }\
-}
 
 /** \name msg.c
  *-Pack and unpack PTP messages */
@@ -436,7 +262,7 @@ void disable_runtime_debug(void );
 void ntpSetup(RunTimeOpts *rtOpts, PtpClock *ptpClock);
 
 #define D_ON      do { enable_runtime_debug();  } while (0);
-#define D_OFF     do { disable_runtime_debug( ); } while (0);
+#define D_OFF     do { disable_runtime_debug(); } while (0);
 
 
 /** \}*/
@@ -449,14 +275,10 @@ void ntpSetup(RunTimeOpts *rtOpts, PtpClock *ptpClock);
 char *time2st(const TimeInternal * p);
 void DBG_time(const char *name, const TimeInternal  p);
 
-
-void logMessage(int priority, const char *format, ...);
-void updateLogSize(LogFileHandler* handler);
-Boolean maintainLogSize(LogFileHandler* handler);
+void logStatistics(PtpClock *ptpClock);
 int restartLog(LogFileHandler* handler, Boolean quiet);
 void restartLogging(RunTimeOpts* rtOpts);
 void stopLogging(RunTimeOpts* rtOpts);
-void logStatistics(PtpClock *ptpClock);
 void periodicUpdate(const RunTimeOpts *rtOpts, PtpClock *ptpClock);
 void displayStatus(PtpClock *ptpClock, const char *prefixMessage);
 void displayPortIdentity(PortIdentity *port, const char *prefixMessage);

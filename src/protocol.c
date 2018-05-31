@@ -63,6 +63,7 @@
 #include "dep/alarms.h"
 #include "datatypes.h"
 #include "dep/ptpd_dep.h"
+#include "ptpd_utils.h"
 
 #include "ptpd.h"
 

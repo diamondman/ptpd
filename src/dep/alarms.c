@@ -43,6 +43,7 @@
 #include "datatypes.h"
 #include "ptpd_dep.h"
 #include "ptpd.h"
+#include "ptpd_logging.h"
 
 static const char* alarmStateToString(AlarmState state);
 

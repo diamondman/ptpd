@@ -73,6 +73,7 @@
 #include "dep/daemonconfig.h"
 #include "dep/ptpd_dep.h"
 #include "dep/configdefaults.h"
+#include "ptpd_logging.h"
 
 #include "ptpd.h"
 
