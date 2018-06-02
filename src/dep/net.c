@@ -58,12 +58,14 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <sys/types.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <errno.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
+#include <sys/socket.h> // Required explicitly on FreeBSD (AF_LINK)
 #if defined(AF_LINK) && !defined(__sun) // BSD thing
 #  include <net/if_dl.h>    // struct sockaddr_dl
 #  include <net/if_types.h> // IFT_* constants
