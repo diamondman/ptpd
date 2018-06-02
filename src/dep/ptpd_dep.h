@@ -24,24 +24,6 @@
 */
 #define USE_BINDTODEVICE
 
-#ifdef RUNTIME_DEBUG
-#  undef PTPD_DBGV
-#  define PTPD_DBGV
-#endif
-
-// enable this line to show debug numbers in nanoseconds instead of microseconds
-// #define DEBUG_IN_NS
-
-#define DBG_UNIT_US (1000)
-#define DBG_UNIT_NS (1)
-
-#ifdef DEBUG_IN_NS
-#  define DBG_UNIT DBG_UNIT_NS
-#else
-#  define DBG_UNIT DBG_UNIT_US
-#endif
-
-
 /** \name msg.c
  *-Pack and unpack PTP messages */
  /**\{*/

@@ -55,6 +55,10 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#if defined(linux) && !defined(_GNU_SOURCE)
+#  define _GNU_SOURCE
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 #include <errno.h>
@@ -63,6 +67,7 @@
 #include <arpa/inet.h>
 #include <stdarg.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #ifdef HAVE_UTMPX_H
 #  include <utmpx.h>
@@ -71,6 +76,16 @@
 #    include <utmp.h>
 #  endif /* HAVE_UTMP_H */
 #endif /* HAVE_UTMPX_H */
+
+#if defined(linux)
+//Alternate option instead of HAVE_STRUCT_ETHER_ADDR_OCTET
+//#  define octet ether_addr_octet
+#  if defined(HAVE_SCHED_H)
+#    include <sched.h>
+#  endif
+#else
+#  define adjtimex ntp_adjtime
+#endif
 
 #ifdef HAVE_NETINET_ETHER_H
 #  include <netinet/ether.h>
@@ -94,7 +109,20 @@
 
 #ifdef HAVE_SYS_CPUSET_H
 #  include <sys/cpuset.h>
-#endif /* HAVE_SYS_CPUSET_H */
+#endif
+
+#ifdef HAVE_LINUX_RTC_H
+#  include <sys/ioctl.h>
+#  include <linux/rtc.h>
+#endif
+
+#ifdef HAVE_SYS_CPUSET_H
+#  include <sys/cpuset.h>
+#endif
+
+#ifdef HAVE_UNIX_H /* setlinebuf() on QNX */
+#  include <unix.h>
+#endif /* HAVE_UNIX_H */
 
 #include "constants.h"
 #include "dep/constants_dep.h"

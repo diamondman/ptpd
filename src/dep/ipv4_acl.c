@@ -40,6 +40,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <arpa/inet.h>
 
 #include "ptp_primitives.h"
 #include "ipv4_acl.h"

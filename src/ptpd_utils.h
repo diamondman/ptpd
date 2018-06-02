@@ -47,6 +47,16 @@
 #define getFlag(x,y)  !!( *(uint8_t*)((x)+((y)<8?1:0)) &   (1<<((y)<8?(y):(y)-8)) )
 #define setFlag(x,y)    ( *(uint8_t*)((x)+((y)<8?1:0)) |=   1<<((y)<8?(y):(y)-8)  )
 #define clearFlag(x,y)  ( *(uint8_t*)((x)+((y)<8?1:0)) &= ~(1<<((y)<8?(y):(y)-8)) )
+
+/* respect are kulture ye fenion basterb */
+#define		FLAGS_ARESET(var, flegs) \
+((var & (flegs)) == (flegs))
+
+#define		FLAGS_SET(var, flegs) \
+(var |= flegs)
+
+#define		FLAGS_UNSET(var, flegs) \
+(var &= ~flegs)
 /** \}*/
 
 
@@ -58,6 +68,15 @@
 #  define max(a,b)     (((a)>(b))?(a):(b))
 #endif /* max */
 
+/* simple compare 2, lower wins */
+#define CMP2L(a,b) \
+    if (a < b ) return 1;\
+    if (a > b ) return -1;
+
+/* simple compare 2, higher wins */
+#define CMP2H(a,b) \
+    if (a > b ) return 1;\
+    if (a < b ) return -1;
 
 /* quick shortcut to defining a temporary char array for the purpose of snprintf to it */
 #define tmpsnprintf(var,len, ...) \
@@ -69,13 +88,19 @@
 /** \name Endian corrections*/
  /**\{*/
 
-#if defined(HAVE_ARPA_INET_H) && Y == 1
+#if defined(HAVE_ARPA_INET_H) && HAVE_ARPA_INET_H == 1
 #  include <arpa/inet.h>
 #  define flip16(x) htons(x)
 #  define flip32(x) htonl(x)
 #else
 /* i don't know any target platforms that do not have htons and htonl,
    but here are generic funtions just in case */
+#  ifdef HAVE_MACHINE_ENDIAN_H
+#    include <machine/endian.h>
+#  endif /* HAVE_MACHINE_ENDIAN_H */
+#  ifdef HAVE_ENDIAN_H
+#    include <endian.h>
+#  endif /* HAVE_ENDIAN_H */
 #  if BYTE_ORDER == LITTLE_ENDIAN || defined(_LITTLE_ENDIAN) ||\
       (defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN)
 static inline int16_t flip16(Integer16 x)

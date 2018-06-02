@@ -28,6 +28,10 @@
 #ifndef EVENTTIMER_H_
 #define EVENTTIMER_H_
 
+#ifdef PTPD_PTIMERS
+#  include <time.h>
+#endif
+
 #include "ptp_primitives.h"
 
 #define EVENTTIMER_MAX_DESC		20

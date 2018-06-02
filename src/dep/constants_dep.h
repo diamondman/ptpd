@@ -31,79 +31,21 @@ if it's POSIX compatible, if you succeed, report it to ptpd-devel@sourceforge.ne
 #include <netinet/udp.h>
 #include <fcntl.h>
 
-#ifdef linux
-#  include <netinet/in.h>
-#  include <net/if_arp.h>
-#  include <ifaddrs.h>
-#  define IFACE_NAME_LENGTH         IF_NAMESIZE
-#  define NET_ADDRESS_LENGTH        INET_ADDRSTRLEN
-#  define IFCONF_LENGTH 10
-#  define octet ether_addr_octet
-#endif /* linux */
-
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__APPLE__) \
-  || defined(__OpenBSD__) || defined(__sun) || defined(__QNXNTO__)
-#  include <sys/types.h>
-#  include <sys/socket.h>
-#  ifdef HAVE_SYS_SOCKIO_H
-#    include <sys/sockio.h>
-#  endif /* HAVE_SYS_SOCKIO_H */
-#  include <net/if_dl.h>
-#  include <net/if_types.h>
-#  ifdef HAVE_NET_IF_ETHER_H
-#    include <net/if_ether.h>
-#  endif
-#  ifdef HAVE_SYS_UIO_H
-#    include <sys/uio.h>
-#  endif
-#  ifdef HAVE_NET_ETHERNET_H
-#    include <net/ethernet.h>
-#  endif
-#  include <ifaddrs.h>
-#  define IFACE_NAME_LENGTH         IF_NAMESIZE
-#  define NET_ADDRESS_LENGTH        INET_ADDRSTRLEN
-
-#  ifdef HAVE_SYS_PARAM_H
-#    include <sys/param.h>
-#  endif /* HAVE_SYS_PARAM_H */
-
-#  ifdef __QNXNTO__
-#    include <sys/neutrino.h>
-#    include <sys/syspage.h>
-#    define BSD_INTERFACE_FUNCTIONS
-#  endif /* __QNXNTO __ */
-
-#  if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
-#    define ETHER_ADDR_LEN ETHERADDRL
-#  endif /* ETHER_ADDR_LEN && ETHERADDRL */
-
-#  ifndef ETHER_HDR_LEN
-#    define ETHER_HDR_LEN sizeof (struct ether_header)
-#  endif /* ETHER_ADDR_LEN && ETHERADDRL */
-
-#  define IFCONF_LENGTH 10
-#  define adjtimex ntp_adjtime
-#endif
-
-#ifdef HAVE_MACHINE_ENDIAN_H
-#  include <machine/endian.h>
-#endif /* HAVE_MACHINE_ENDIAN_H */
-
-#ifdef HAVE_ENDIAN_H
-#  include <endian.h>
-#endif /* HAVE_ENDIAN_H */
-
 #ifdef HAVE_SYS_ISA_DEFS_H
-#  include <sys/isa_defs.h>
+#  include <sys/isa_defs.h> // sun related
 #endif /* HAVE_SYS_ISA_DEFS_H */
+
+#ifdef __QNXNTO__
+#  include <sys/neutrino.h>
+#  include <sys/syspage.h>
+#  define BSD_INTERFACE_FUNCTIONS
+#endif /* __QNXNTO __ */
+
+#define IFACE_NAME_LENGTH         IF_NAMESIZE
+#define NET_ADDRESS_LENGTH        INET_ADDRSTRLEN
 
 #define CLOCK_IDENTITY_LENGTH 8
 #define ADJ_FREQ_MAX 500000
-
-/* UDP/IPv4 dependent */
-#ifndef INADDR_LOOPBACK
-#  define INADDR_LOOPBACK 0x7f000001UL
-#endif
 
 #define SUBDOMAIN_ADDRESS_LENGTH  4
 #define PORT_ADDRESS_LENGTH       2
@@ -213,16 +155,6 @@ enum {
 	LEAP_STEP,
 	LEAP_SMEAR
 };
-
-/* Alarm codes */
-enum {
-	ALARM_PORTSTATE,
-	ALARM_OFFSET_THRESHOLD,
-	ALARM_CLOCK_STEP,
-	ALARM_OFFSET_1SEC
-};
-
-#define MM_STARTING_BOUNDARY_HOPS  0x7fff
 
 /* others */
 

@@ -5,26 +5,6 @@
 
 #include "ptp_primitives.h"
 
-/* simple compare 2, lower wins */
-#define CMP2L(a,b) \
-    if (a < b ) return 1;\
-    if (a > b ) return -1;
-
-/* simple compare 2, higher wins */
-#define CMP2H(a,b) \
-    if (a > b ) return 1;\
-    if (a < b ) return -1;
-
-/* respect are kulture ye fenion basterb */
-#define		FLAGS_ARESET(var, flegs) \
-((var & (flegs)) == (flegs))
-
-#define		FLAGS_SET(var, flegs) \
-(var |= flegs)
-
-#define		FLAGS_UNSET(var, flegs) \
-(var &= ~flegs)
-
 #define TIMINGSERVICE_OPERATIONAL 	0x01 /* functioning */
 #define TIMINGSERVICE_AVAILABLE 	0x02 /* ready to control the clock */
 #define TIMINGSERVICE_IN_CONTROL 	0x04 /* allowed to control the clock - has control */

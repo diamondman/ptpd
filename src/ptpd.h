@@ -44,18 +44,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#ifdef HAVE_UNIX_H /* setlinebuf() on QNX */
-#  include <unix.h>
-#endif /* HAVE_UNIX_H */
-
-#if defined(linux) && defined(HAVE_SCHED_H)
-#  include <sched.h>
-#endif /* linux && HAVE_SCHED_H */
-
-#ifdef HAVE_LINUX_RTC_H
-#  include <linux/rtc.h>
-#endif /* HAVE_LINUX_RTC_H */
-
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"

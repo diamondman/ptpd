@@ -63,16 +63,22 @@
 #include <errno.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <ifaddrs.h>
+#if defined(AF_LINK) && !defined(__sun) // BSD thing
+#  include <net/if_dl.h>    // struct sockaddr_dl
+#  include <net/if_types.h> // IFT_* constants
+#else
+#  include <sys/ioctl.h>
+#  include <net/if_arp.h> // Used by Linux
+#endif
 
-#include "constants.h"
-#include "ptp_primitives.h"
-#include "dep/constants_dep.h"
-#include "ptp_datatypes.h"
-#include "dep/datatypes_dep.h"
-#include "datatypes.h"
-#include "ptpd_logging.h"
+#if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
+#  define ETHER_ADDR_LEN ETHERADDRL
+#endif /* ETHER_ADDR_LEN && ETHERADDRL */
 
-#include "ptpd.h"
+#ifndef ETHER_HDR_LEN
+#  define ETHER_HDR_LEN sizeof (struct ether_header)
+#endif /* ETHER_ADDR_LEN && ETHERADDRL */
 
 #ifdef PTPD_PCAP
 #  ifdef HAVE_PCAP_PCAP_H
@@ -86,13 +92,19 @@
 #  define PCAP_TIMEOUT 1 /* expressed in milliseconds */
 #endif
 
-#if defined PTPD_SNMP
-#  include <net-snmp/net-snmp-config.h>
-#  include <net-snmp/net-snmp-includes.h>
-#  include <net-snmp/agent/net-snmp-agent-includes.h>
-#endif
+#include "constants.h"
+#include "ptp_primitives.h"
+#include "dep/constants_dep.h"
+#include "ptp_datatypes.h"
+#include "dep/datatypes_dep.h"
+#include "datatypes.h"
+#include "ptpd_logging.h"
+#include "dep/ptpd_dep.h"
+
+#include "ptpd.h"
 
 /* choose kernel-level nanoseconds or microseconds resolution on the client-side */
+//SO_TIMESTAMPING may be cleared by ptpd.h, so be sure to include that first.
 #if !defined(SO_TIMESTAMPING) && !defined(SO_TIMESTAMPNS) && !defined(SO_TIMESTAMP) && !defined(SO_BINTIME)
 #  error No kernel-level support for packet timestamping detected!
 #endif
@@ -102,6 +114,12 @@
 #  include <linux/sockios.h>
 #  include <linux/ethtool.h>
 #endif /* SO_TIMESTAMPING */
+
+#if defined PTPD_SNMP
+#  include <net-snmp/net-snmp-config.h>
+#  include <net-snmp/net-snmp-includes.h>
+#  include <net-snmp/agent/net-snmp-agent-includes.h>
+#endif
 
 /**
  * shutdown the IPv4 multicast for specific address
@@ -392,23 +410,23 @@ end:
 	    goto end;
     }
 
-#ifdef HAVE_STRUCT_IFREQ_IFR_HWADDR
+#  ifdef HAVE_STRUCT_IFREQ_IFR_HWADDR
     int af = ifr.ifr_hwaddr.sa_family;
-#else
+#  else
     int af = ifr.ifr_addr.sa_family;
-#endif /* HAVE_STRUCT_IFREQ_IFR_HWADDR */
+#  endif /* HAVE_STRUCT_IFREQ_IFR_HWADDR */
 
     if (    af == ARPHRD_ETHER
 	 || af == ARPHRD_IEEE802
-#ifdef ARPHRD_INFINIBAND
+#  ifdef ARPHRD_INFINIBAND
 	 || af == ARPHRD_INFINIBAND
-#endif
+#  endif
 	) {
-#ifdef HAVE_STRUCT_IFREQ_IFR_HWADDR
+#  ifdef HAVE_STRUCT_IFREQ_IFR_HWADDR
 	    memcpy(hwAddr, ifr.ifr_hwaddr.sa_data, hwAddrSize);
-#else
+#  else
     	    memcpy(hwAddr, ifr.ifr_addr.sa_data, hwAddrSize);
-#endif /* HAVE_STRUCT_IFREQ_IFR_HWADDR */
+#  endif /* HAVE_STRUCT_IFREQ_IFR_HWADDR */
 
 	    ret = 1;
 	} else {

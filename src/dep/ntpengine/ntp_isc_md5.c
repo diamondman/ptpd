@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
 
 #include "ntp_isc_md5.h"
 

@@ -41,6 +41,7 @@
 #include <string.h>
 
 #include "ptp_primitives.h"
+#include "ptpd_logging.h"
 #include "dep/eventtimer.h"
 
 #define TIMER_SIGNAL SIGALRM

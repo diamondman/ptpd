@@ -5,6 +5,7 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <stdio.h>
 #include <sys/param.h>
 #include <sys/socket.h> //Auto included by netinet/in.h
 #include <netinet/in.h>

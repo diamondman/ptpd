@@ -66,6 +66,14 @@
 
 #include "ptpd.h"
 
+// enable this line to show debug numbers in nanoseconds instead of microseconds
+// #define DEBUG_IN_NS
+#ifdef DEBUG_IN_NS
+#  define DBG_UNIT (1)    //Nanoseconds
+#else
+#  define DBG_UNIT (1000) //Microseconds
+#endif
+
 #define CLAMP(var,bound) {\
     if(var < -bound) {\
 	var = -bound;\
