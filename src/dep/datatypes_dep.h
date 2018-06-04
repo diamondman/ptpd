@@ -9,6 +9,16 @@
 #include <sys/param.h>
 #include <sys/socket.h> //Auto included by netinet/in.h
 #include <netinet/in.h>
+
+#if defined(HAVE_NET_IF_ARP_H)
+// Required by OpenBSD for netinet/if_ethers.h
+#  include <net/if_arp.h>
+#endif
+#if defined(HAVE_NETINET_IF_ETHER_H)
+// Many BSD systems have this file, but OpenBSD defines ether_Addr here.
+#  include <netinet/if_ether.h>
+#endif
+
 #ifdef PTPD_PCAP
 #  ifdef HAVE_PCAP_PCAP_H
 #    include <pcap/pcap.h>
@@ -19,7 +29,10 @@
 #    endif /* HAVE_PCAP_H */
 #  endif
 #endif
-#include <net/ethernet.h>
+
+#if defined(HAVE_NET_ETHERNET_H)
+#  include <net/ethernet.h>
+#endif
 
 #include "ptp_primitives.h"
 #include "dep/ipv4_acl.h"

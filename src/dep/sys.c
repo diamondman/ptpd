@@ -95,6 +95,11 @@
 #  include <net/ethernet.h>
 #endif
 
+#if defined(HAVE_SYS_SOCKET_H)
+// Required by openBSD before net/if.h
+#  include <sys/socket.h>
+#endif
+
 #ifdef HAVE_NET_IF_H
 #  include <net/if.h>
 #endif

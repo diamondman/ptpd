@@ -25,6 +25,10 @@
 if it's POSIX compatible, if you succeed, report it to ptpd-devel@sourceforge.net
 #endif
 
+#if defined(HAVE_SYS_SOCKET_H)
+// Required by openBSD before net/if.h
+#  include <sys/socket.h>
+#endif
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
