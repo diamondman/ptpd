@@ -4,6 +4,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#ifdef HAVE_SYS_TIME_H
+// Required by sys/timex.h in NetBSD.
+#  include <sys/time.h>
+#endif
 #ifdef HAVE_SYS_TIMEX_H
 #  include <sys/timex.h>
 #endif
