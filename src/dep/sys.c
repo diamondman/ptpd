@@ -68,6 +68,7 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <syslog.h>
 
 #ifdef HAVE_UTMPX_H
 #  include <utmpx.h>

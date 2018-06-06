@@ -22,18 +22,6 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#ifdef __sun
-#  ifndef _XPG6
-#    define _XPG6
-#  endif /* _XPG6 */
-#  ifndef _XOPEN_SOURCE
-#    define _XOPEN_SOURCE 500
-#  endif /* _XOPEN_SOURCE */
-#  ifndef __EXTENSIONS__
-#    define __EXTENSIONS__
-#  endif /* __EXTENSIONS */
-#endif /* __sun */
-
 /* Disable SO_TIMESTAMPING if configured to do so */
 #ifdef PTPD_DISABLE_SOTIMESTAMPING
 #  ifdef SO_TIMESTAMPING

@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>

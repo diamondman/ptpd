@@ -66,6 +66,10 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <sys/socket.h> // Required explicitly on FreeBSD (AF_LINK)
+#if defined(HAVE_SYS_SOCKIO_H)
+// Solaris defines SIOCGIFHWADDR here.
+#  include <sys/sockio.h>
+#endif
 #if defined(AF_LINK) && !defined(__sun) // BSD thing
 #  include <net/if_dl.h>    // struct sockaddr_dl
 #  include <net/if_types.h> // IFT_* constants
@@ -80,7 +84,7 @@
 
 #ifndef ETHER_HDR_LEN
 #  define ETHER_HDR_LEN sizeof (struct ether_header)
-#endif /* ETHER_ADDR_LEN && ETHERADDRL */
+#endif /* ETHER_HDR_LEN */
 
 #ifdef PTPD_PCAP
 #  ifdef HAVE_PCAP_PCAP_H

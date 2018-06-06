@@ -61,6 +61,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 #include "dep/constants_dep.h"
 #include "ptp_primitives.h"

@@ -6,6 +6,7 @@
 #endif /* HAVE_CONFIG_H */
 
 #include <stdio.h>
+#include <limits.h>
 #include <sys/param.h>
 #include <sys/socket.h> //Auto included by netinet/in.h
 #include <netinet/in.h>
@@ -13,6 +14,9 @@
 #if defined(HAVE_NET_IF_ARP_H)
 // Required by OpenBSD for netinet/if_ethers.h
 #  include <net/if_arp.h>
+#endif
+#if defined(HAVE_NET_IF_H)
+#  include <net/if.h>
 #endif
 #if defined(HAVE_NETINET_IF_ETHER_H)
 // Many BSD systems have this file, but OpenBSD defines ether_Addr here.
@@ -36,6 +40,11 @@
 
 #include "ptp_primitives.h"
 #include "dep/ipv4_acl.h"
+
+#if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
+// Solaris doesn't have ETHER_ADDR_LEN defined in net/ethernet.h
+#  define ETHER_ADDR_LEN ETHERADDRL
+#endif
 
 /**
 *\file

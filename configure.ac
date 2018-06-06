@@ -14,6 +14,9 @@ AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 
+# include macro for later that throws warnings if used after AN_INIT_AUTOMAKE
+AC_CANONICAL_TARGET
+
 AM_INIT_AUTOMAKE([1.9 foreign -Wall])
 
 [RELEASE_DATE]="RELEASE_DATE"
@@ -248,6 +251,18 @@ fi
 AC_MSG_NOTICE([************************************************************])
 AC_MSG_NOTICE([* PTPD BUILD FLAG AND LIBRARY DEPENDENCY CHECKS START HERE *])
 AC_MSG_NOTICE([************************************************************])
+
+# Detect the target system
+case "${target_os}" in
+    *sunos*)
+        OS_IS_SUN=yes
+        ;;
+    *solaris*)
+        OS_IS_SUN=yes
+        ;;
+esac
+AM_CONDITIONAL(OS_IS_SUN, test x$OS_IS_SUN = xyes)
+
 
 AC_CHECK_DECLS([MSG_ERRQUEUE], [], [], [[#include <sys/socket.h>]])
 
