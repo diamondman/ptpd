@@ -68,9 +68,6 @@
 #include "ptpd_utils.h"
 #include "dep/ptpd_dep.h"
 
-#include "ptpd.h" // For SET_ALARM
-
-
 /* Init ptpClock with run time values (initialization constants are in constants.h)*/
 void initData(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {

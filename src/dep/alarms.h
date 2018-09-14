@@ -95,9 +95,13 @@ typedef struct _alarmEntry AlarmEntry;
 void initAlarms(AlarmEntry* alarms, int count, void* userData); 			/* fill an array with initial alarm data */
 void configureAlarms(AlarmEntry* alarms, int count, void* userData); 			/* fill an array with initial alarm data */
 void enableAlarms(AlarmEntry* alarms, int count, Boolean enabled); 			/* enable/disable all alarms */
+void setAlarmCondition(AlarmEntry *alarm, Boolean condition, PtpClock *ptpClock);	/* set alarm condition and capture data */
 void updateAlarms(AlarmEntry *alarms, int count);					/* dispatch alarms: age, set, clear alarms etc. */
 void displayAlarms(AlarmEntry *alarms, int count);					/* display a formatted alarm summary table */
 int  getAlarmSummary(char * output, int size, AlarmEntry *alarms, int count);		/* produce a one-line alarm summary string */
 void handleAlarm(AlarmEntry *alarms, void *userData);
+
+#define SET_ALARM(alarm, val) \
+	setAlarmCondition(&ptpClock->alarms[alarm], val, ptpClock)
 
 #endif /*PTPDALARMS_H_*/

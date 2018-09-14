@@ -37,10 +37,6 @@
 #include "dep/alarms.h"
 #include "datatypes.h"
 
-
-#define SET_ALARM(alarm, val) \
-	setAlarmCondition(&ptpClock->alarms[alarm], val, ptpClock)
-
 /** \name management.c
  * -Management message support*/
  /**\{*/
@@ -57,9 +53,5 @@ char *dump_TimeInternal(const TimeInternal * p);
 char *dump_TimeInternal2(const char *st1, const TimeInternal * p1, const char *st2, const TimeInternal * p2);
 
 int snprint_TimeInternal(char *s, int max_len, const TimeInternal * p);
-
-/* alarms.c - this will be moved */
-void capturePtpEventData(PtpEventData *data, PtpClock *ptpClock, RunTimeOpts *rtOpts); 	/* capture data from an alarm event */
-void setAlarmCondition(AlarmEntry *alarm, Boolean condition, PtpClock *ptpClock); /* set alarm condition and capture data */
 
 #endif /*PTPD_H_*/

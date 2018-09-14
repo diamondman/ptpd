@@ -70,8 +70,6 @@
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 
-#include "ptpd.h" // For SET_ALARM
-
 // enable this line to show debug numbers in nanoseconds instead of microseconds
 // #define DEBUG_IN_NS
 #ifdef DEBUG_IN_NS

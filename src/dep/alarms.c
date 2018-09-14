@@ -46,12 +46,13 @@
 #include "ptpd_dep.h"
 #include "ptpd_logging.h"
 
-#include "ptpd.h" // For capturePtpEventData
-
 static const char* alarmStateToString(AlarmState state);
 
 static void dispatchEvent(AlarmEntry *alarm);
 static void dispatchAlarm(AlarmEntry *alarm);
+
+/* capture data from an alarm event */
+static void capturePtpEventData(PtpEventData *data, PtpClock *ptpClock, RunTimeOpts *rtOpts);
 
 static void getAlarmMessage(char *out, int count, AlarmEntry *alarm);
 
@@ -280,7 +281,7 @@ setAlarmCondition(AlarmEntry *alarm, Boolean condition, PtpClock *ptpClock)
 	alarm->unhandled = TRUE;
 }
 
-void
+static void
 capturePtpEventData(PtpEventData *eventData, PtpClock *ptpClock, RunTimeOpts *rtOpts)
 {
     eventData->defaultDS = ptpClock->defaultDS;
