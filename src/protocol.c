@@ -51,6 +51,13 @@
  *
  */
 
+/* Disable SO_TIMESTAMPING if configured to do so */
+#ifdef PTPD_DISABLE_SOTIMESTAMPING
+#  ifdef SO_TIMESTAMPING
+#    undef SO_TIMESTAMPING
+#  endif /* SO_TIMESTAMPING */
+#endif /* PTPD_DISABLE_SOTIMESTAMPING */
+
 #include <stdint.h>
 #include <sys/types.h>
 #include <string.h>

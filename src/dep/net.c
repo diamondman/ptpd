@@ -58,6 +58,13 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+/* Disable SO_TIMESTAMPING if configured to do so */
+#ifdef PTPD_DISABLE_SOTIMESTAMPING
+#  ifdef SO_TIMESTAMPING
+#    undef SO_TIMESTAMPING
+#  endif /* SO_TIMESTAMPING */
+#endif /* PTPD_DISABLE_SOTIMESTAMPING */
+
 #include <sys/types.h>
 #include <stdint.h>
 #include <stddef.h>
