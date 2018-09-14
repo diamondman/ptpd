@@ -71,6 +71,7 @@
 #include "ptp_timers.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
+#include "management.h"
 #include "protocol.h"
 #include "bmc.h"
 #include "display.h"
