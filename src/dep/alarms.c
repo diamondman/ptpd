@@ -39,11 +39,13 @@
 
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
+#include "arith.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
 #include "ptpd_dep.h"
-#include "ptpd.h"
 #include "ptpd_logging.h"
+
+#include "ptpd.h" // For portState_getName, capturePtpEventData
 
 static const char* alarmStateToString(AlarmState state);
 

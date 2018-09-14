@@ -16,6 +16,7 @@
 #include "ptp_primitives.h"
 #include "dep/constants_dep.h"
 #include "ptp_datatypes.h"
+#include "arith.h"
 #include "timingdomain.h"
 #include "dep/datatypes_dep.h"
 #include "dep/ntpengine/ntpdcontrol.h"
@@ -23,8 +24,6 @@
 #include "dep/ptpd_dep.h"
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
-
-#include "ptpd.h"
 
 #ifdef LOCAL_PREFIX
 #undef LOCAL_PREFIX

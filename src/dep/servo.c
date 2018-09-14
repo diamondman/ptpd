@@ -57,6 +57,7 @@
 #include "ptp_primitives.h"
 #include "ptp_timers.h"
 #include "ptp_datatypes.h"
+#include "arith.h"
 #include "dep/alarms.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
@@ -64,7 +65,7 @@
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 
-#include "ptpd.h"
+#include "ptpd.h" // For toState, SET_ALARM
 
 // enable this line to show debug numbers in nanoseconds instead of microseconds
 // #define DEBUG_IN_NS

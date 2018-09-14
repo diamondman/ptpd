@@ -56,6 +56,7 @@
 #include "constants.h"
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
+#include "arith.h"
 #include "dep/iniparser/dictionary.h"
 #include "datatypes.h"
 #include "dep/ptpd_dep.h"
@@ -63,7 +64,12 @@
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 
+/* For acceptPortIdentity, setPortState, respectUtcOffset,
+ * timestamp_display, accToString, getTimeSourceName,
+ * delayMechToString, toState
+ */
 #include "ptpd.h"
+
 
 static void handleMMNullManagement(MsgManagement*, MsgManagement*, PtpClock*);
 static void handleMMClockDescription(MsgManagement*, MsgManagement*, RunTimeOpts*, PtpClock*);

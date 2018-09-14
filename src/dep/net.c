@@ -102,12 +102,11 @@
 #include "ptp_primitives.h"
 #include "dep/constants_dep.h"
 #include "ptp_datatypes.h"
+#include "arith.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
 #include "ptpd_logging.h"
 #include "dep/ptpd_dep.h"
-
-#include "ptpd.h"
 
 /* choose kernel-level nanoseconds or microseconds resolution on the client-side */
 //SO_TIMESTAMPING may be cleared by ptpd.h, so be sure to include that first.

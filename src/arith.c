@@ -57,10 +57,9 @@
 
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
+#include "arith.h"
 #include "ptpd_logging.h"
 #include "dep/ptpd_dep.h" // For getTime
-
-#include "ptpd.h" // Just for isTimeInternalNegative
 
 void
 internalTime_to_integer64(TimeInternal internal, Integer64 *bigint)

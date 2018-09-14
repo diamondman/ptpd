@@ -124,8 +124,8 @@ main(int argc, char **argv)
 	if (rtOpts.ntpOptions.enableEngine) {
 		ntpSetup(&rtOpts, ptpClock);
 	} else {
-	    timingDomain.serviceCount = 1;
-	    timingDomain.services[1] = NULL;
+		timingDomain.serviceCount = 1;
+		timingDomain.services[1] = NULL;
 	}
 
 	timingDomain.init(&timingDomain);
