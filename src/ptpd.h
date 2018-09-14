@@ -34,16 +34,12 @@
 
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
-#include "ptp_timers.h"
-#include "dep/datatypes_dep.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
 
 
 #define SET_ALARM(alarm, val) \
 	setAlarmCondition(&ptpClock->alarms[alarm], val, ptpClock)
-
-/** \}*/
 
 /** \name management.c
  * -Management message support*/
@@ -56,24 +52,6 @@ void handleManagement(MsgHeader *header,
 		 Boolean isFromSelf, Integer32 sourceAddress, RunTimeOpts *rtOpts, PtpClock *ptpClock);
 
 /** \}*/
-
-/** \name signaling.c
- * -Signaling message support*/
- /**\{*/
-/* signaling.c */
-/**
- * \brief Signaling message support
- */
-UnicastGrantTable* findUnicastGrants(const PortIdentity* portIdentity, Integer32 TransportAddress, UnicastGrantTable *grantTable, UnicastGrantIndex *index, int nodeCount, Boolean update);
-void 	initUnicastGrantTable(UnicastGrantTable *grantTable, Enumeration8 delayMechanism, int nodeCount, UnicastDestination *destinations, const RunTimeOpts *rtOpts, PtpClock *ptpClock);
-
-void 	cancelUnicastTransmission(UnicastGrantData*, const RunTimeOpts*, PtpClock*);
-void 	cancelAllGrants(UnicastGrantTable *grantTable, int nodeCount, const RunTimeOpts *rtOpts, PtpClock *ptpClock);
-
-void 	handleSignaling(MsgHeader*, Boolean, Integer32, const RunTimeOpts*,PtpClock*);
-
-void 	refreshUnicastGrants(UnicastGrantTable *grantTable, int nodeCount, const RunTimeOpts *rtOpts, PtpClock *ptpClock);
-void 	updateUnicastGrantTable(UnicastGrantTable *grantTable, int nodeCount, const RunTimeOpts *rtOpts);
 
 /*
  * \brief Packing and Unpacking macros

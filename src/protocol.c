@@ -60,6 +60,7 @@
 #include "dep/constants_dep.h"
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
+#include "signaling.h"
 #include "ptp_timers.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
@@ -71,7 +72,7 @@
 #include "ptpd_utils.h"
 #include "ptpd_logging.h"
 
-#include "ptpd.h" // For ..., SO_TIMESTAMPING
+#include "ptpd.h" // For handleManagement, SO_TIMESTAMPING
 
 static Boolean doInit(RunTimeOpts*,PtpClock*);
 static void doState(RunTimeOpts*,PtpClock*);

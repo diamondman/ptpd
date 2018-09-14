@@ -61,13 +61,14 @@
 #include "ptp_timers.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
+#include "signaling.h"
 #include "bmc.h"
 #include "arith.h"
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 #include "dep/ptpd_dep.h"
 
-#include "ptpd.h" // For SET_ALARM, findUnicastGrants
+#include "ptpd.h" // For SET_ALARM
 
 
 /* Init ptpClock with run time values (initialization constants are in constants.h)*/

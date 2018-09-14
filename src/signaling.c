@@ -46,6 +46,7 @@
 #include "ptp_datatypes.h"
 #include "arith.h"
 #include "datatypes.h"
+#include "signaling.h"
 #include "protocol.h"
 #include "bmc.h"
 #include "dep/ptpd_dep.h"
@@ -75,7 +76,7 @@ static void issueSignaling(MsgSignaling *outgoing, Integer32 destination, const 
 static void cancelNodeGrants(UnicastGrantTable *nodeTable, const RunTimeOpts *rtOpts, PtpClock *ptpClock);
 
 /* Return unicast grant array index for given message type */
-int
+static int
 msgIndex(Enumeration8 messageType)
 {
     switch(messageType) {
