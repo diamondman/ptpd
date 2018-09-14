@@ -316,6 +316,16 @@ msgManagement_display(const MsgManagement * manage)
 	DBGV("actionField : %d\n", manage->actionField);
 }
 
+/**\brief Display Signaling message*/
+void
+msgSignaling_display(const MsgSignaling * signaling)
+{
+        DBGV("Signaling Message : \n");
+        DBGV("\n");
+        DBGV("targetPortIdentity : \n");
+	portIdentity_display(&signaling->targetPortIdentity);
+}
+
 /**\brief Display ManagementTLV Slave Only message*/
 void
 mMSlaveOnly_display(const MMSlaveOnly *slaveOnly, const PtpClock *ptpClock)
@@ -501,16 +511,6 @@ void
 mMErrorStatus_display(const MMErrorStatus* errorStatus, const PtpClock *ptpClock)
 {
 	/* TODO: implement me */
-}
-
-/**\brief Display Signaling message*/
-void
-msgSignaling_display(const MsgSignaling * signaling)
-{
-        DBGV("Signaling Message : \n");
-        DBGV("\n");
-        DBGV("targetPortIdentity : \n");
-	portIdentity_display(&signaling->targetPortIdentity);
 }
 
 void
@@ -823,33 +823,6 @@ displayBuffer(const PtpClock * ptpClock)
 	DBGV("\n");
 }
 
-/**\convert port state to string*/
-const char*
-portState_getName(Enumeration8 portState)
-{
-    static const char *ptpStates[] = {
-        [PTP_INITIALIZING] = "PTP_INITIALIZING",
-        [PTP_FAULTY] = "PTP_FAULTY",
-        [PTP_DISABLED] = "PTP_DISABLED",
-        [PTP_LISTENING] = "PTP_LISTENING",
-        [PTP_PRE_MASTER] = "PTP_PRE_MASTER",
-        [PTP_MASTER] = "PTP_MASTER",
-        [PTP_PASSIVE] = "PTP_PASSIVE",
-        [PTP_UNCALIBRATED] = "PTP_UNCALIBRATED",
-        [PTP_SLAVE] = "PTP_SLAVE"
-    };
-
-    /* converting to int to avoid compiler warnings when comparing enum*/
-    static const int max = PTP_SLAVE;
-    int intstate = portState;
-
-    if( intstate < 0 || intstate > max ) {
-        return("PTP_UNKNOWN");
-    }
-
-    return(ptpStates[portState]);
-}
-
 /**\brief Display all PTP clock (port) counters*/
 void
 displayCounters(const PtpClock * ptpClock)
@@ -981,6 +954,33 @@ displayCounters(const PtpClock * ptpClock)
 	INFO("              delaySMOutliersFound : %lu\n",
 		(unsigned long)ptpClock->counters.delaySMOutliersFound);
 #endif /* PTPD_STATISTICS */
+}
+
+/**\convert port state to string*/
+const char*
+portState_getName(Enumeration8 portState)
+{
+    static const char *ptpStates[] = {
+        [PTP_INITIALIZING] = "PTP_INITIALIZING",
+        [PTP_FAULTY] = "PTP_FAULTY",
+        [PTP_DISABLED] = "PTP_DISABLED",
+        [PTP_LISTENING] = "PTP_LISTENING",
+        [PTP_PRE_MASTER] = "PTP_PRE_MASTER",
+        [PTP_MASTER] = "PTP_MASTER",
+        [PTP_PASSIVE] = "PTP_PASSIVE",
+        [PTP_UNCALIBRATED] = "PTP_UNCALIBRATED",
+        [PTP_SLAVE] = "PTP_SLAVE"
+    };
+
+    /* converting to int to avoid compiler warnings when comparing enum*/
+    static const int max = PTP_SLAVE;
+    int intstate = portState;
+
+    if( intstate < 0 || intstate > max ) {
+        return("PTP_UNKNOWN");
+    }
+
+    return(ptpStates[portState]);
 }
 
 const char *

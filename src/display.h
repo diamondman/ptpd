@@ -7,7 +7,7 @@
 void integer64_display (const Integer64*);
 void uInteger48_display(const UInteger48*);
 void timeInternal_display(const TimeInternal*);
-void timestamp_display(const Timestamp * timestamp);
+void timestamp_display(const Timestamp* timestamp);
 void clockIdentity_display(const ClockIdentity);
 void clockUUID_display(const Octet*);
 void netPath_display(const NetPath*);
@@ -18,17 +18,18 @@ void clockQuality_display (const ClockQuality*);
 void PTPText_display(const PTPText*, const PtpClock*);
 void iFaceName_display(const Octet*);
 void unicast_display(const Octet*);
-void msgSync_display(const MsgSync *sync);
 
+void msgSync_display(const MsgSync *sync);
 void msgHeader_display(const MsgHeader*);
 void msgAnnounce_display(const MsgAnnounce*);
 void msgFollowUp_display(const MsgFollowUp*);
-void msgDelayReq_display(const MsgDelayReq * req);
-void msgDelayResp_display(const MsgDelayResp * resp);
+void msgDelayReq_display(const MsgDelayReq* req);
+void msgDelayResp_display(const MsgDelayResp* resp);
 void msgPdelayReq_display(const MsgPdelayReq*);
-void msgPdelayResp_display(const MsgPdelayResp * presp);
-void msgPdelayRespFollowUp_display(const MsgPdelayRespFollowUp * prespfollow);
-void msgManagement_display(const MsgManagement * manage);
+void msgPdelayResp_display(const MsgPdelayResp* presp);
+void msgPdelayRespFollowUp_display(const MsgPdelayRespFollowUp* prespfollow);
+void msgManagement_display(const MsgManagement* manage);
+void msgSignaling_display(const MsgSignaling* signaling);
 
 void mMSlaveOnly_display(const MMSlaveOnly*, const PtpClock*);
 void mMClockDescription_display(const MMClockDescription*, const PtpClock*);
@@ -56,29 +57,27 @@ void mMDelayMechanism_display(const MMDelayMechanism*, const PtpClock*);
 void mMLogMinPdelayReqInterval_display(const MMLogMinPdelayReqInterval*, const PtpClock*);
 void mMErrorStatus_display(const MMErrorStatus*, const PtpClock*);
 
-void msgSignaling_display(const MsgSignaling * signaling);
-
 void sMRequestUnicastTransmission_display(const SMRequestUnicastTransmission*, const PtpClock*);
 void sMGrantUnicastTransmission_display(const SMGrantUnicastTransmission*, const PtpClock*);
 void sMCancelUnicastTransmission_display(const SMCancelUnicastTransmission*, const PtpClock*);
 void sMAcknowledgeCancelUnicastTransmission_display(const SMAcknowledgeCancelUnicastTransmission*, const PtpClock*);
 
 void displayRunTimeOpts(const RunTimeOpts*);
-void displayDefault (const PtpClock*);
-void displayCurrent (const PtpClock*);
-void displayParent (const PtpClock*);
-void displayGlobal (const PtpClock*);
-void displayPort (const PtpClock*);
-void displayForeignMaster (const PtpClock*);
-void displayOthers (const PtpClock*);
-void displayBuffer (const PtpClock*);
-
-const char *portState_getName(Enumeration8 portState);
+void displayDefault(const PtpClock*);
+void displayCurrent(const PtpClock*);
+void displayParent(const PtpClock*);
+void displayGlobal(const PtpClock*);
+void displayPort(const PtpClock*);
+void displayForeignMaster(const PtpClock*);
+void displayOthers(const PtpClock*);
+void displayBuffer(const PtpClock*);
 void displayCounters(const PtpClock*);
-const char * getTimeSourceName(Enumeration8 timeSource);
-const char *getMessageTypeName(Enumeration8 messageType);
+
+const char* portState_getName(Enumeration8 portState);
+const char* getTimeSourceName(Enumeration8 timeSource);
+const char* getMessageTypeName(Enumeration8 messageType);
 const char* accToString(uint8_t acc);
 const char* delayMechToString(uint8_t mech);
 
 void displayStatistics(const PtpClock*);
-void displayPtpClock (const PtpClock*);
+void displayPtpClock(const PtpClock*);
