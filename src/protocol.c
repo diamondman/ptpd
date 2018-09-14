@@ -62,6 +62,7 @@
 #include "ptp_timers.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
+#include "display.h"
 #include "arith.h"
 #include "dep/ptpd_dep.h"
 #include "ptpd_utils.h"

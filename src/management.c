@@ -59,15 +59,13 @@
 #include "arith.h"
 #include "dep/iniparser/dictionary.h"
 #include "datatypes.h"
+#include "display.h"
 #include "dep/ptpd_dep.h"
 #include "dep/daemonconfig.h"
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 
-/* For acceptPortIdentity, setPortState, respectUtcOffset,
- * timestamp_display, accToString, getTimeSourceName,
- * delayMechToString, toState
- */
+// For acceptPortIdentity, setPortState, respectUtcOffset, toState
 #include "ptpd.h"
 
 

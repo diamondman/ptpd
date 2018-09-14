@@ -42,10 +42,11 @@
 #include "arith.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
+#include "display.h"
 #include "ptpd_dep.h"
 #include "ptpd_logging.h"
 
-#include "ptpd.h" // For portState_getName, capturePtpEventData
+#include "ptpd.h" // For capturePtpEventData
 
 static const char* alarmStateToString(AlarmState state);
 

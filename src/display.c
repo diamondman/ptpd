@@ -54,6 +54,7 @@
 
 #include <stdint.h>
 
+#include "display.h"
 #include "constants.h"
 #include "ptp_primitives.h"
 #include "dep/constants_dep.h"
@@ -61,6 +62,7 @@
 #include "ptp_timers.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
+#include "display.h"
 #include "ptpd_logging.h"
 
 /**\brief Display an Integer64 type*/

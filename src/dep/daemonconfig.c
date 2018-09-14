@@ -56,13 +56,12 @@
 #include "dep/iniparser/iniparser.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
+#include "display.h"
 #include "dep/configdefaults.h"
 #include "dep/daemonconfig.h"
 #include "dep/ptpd_dep.h"
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
-
-#include "ptpd.h"
 
 /*-
  * Helper macros - this is effectively the API for using the new config file interface.

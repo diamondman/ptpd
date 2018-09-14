@@ -138,10 +138,11 @@
 #include "dep/alarms.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
+#include "display.h"
 #include "dep/ptpd_dep.h"
 #include "ptpd_logging.h"
 
-#include "ptpd.h" // For portState_getName, getTimeSourceName, snprint_TimeInternal(only used here)
+#include "ptpd.h" // For snprint_TimeInternal(only used here)
 
 /* only C99 has the round function built-in */
 double round (double __x);
