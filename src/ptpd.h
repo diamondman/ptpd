@@ -53,31 +53,6 @@ void handleManagement(MsgHeader *header,
 
 /** \}*/
 
-/*
- * \brief Packing and Unpacking macros
- */
-#define DECLARE_PACK( type ) void pack##type( void*, void* );
-
-DECLARE_PACK( NibbleUpper )
-DECLARE_PACK( Enumeration4Lower )
-DECLARE_PACK( UInteger4Lower )
-DECLARE_PACK( UInteger4Upper )
-DECLARE_PACK( UInteger16 )
-DECLARE_PACK( UInteger8 )
-DECLARE_PACK( Octet )
-DECLARE_PACK( Integer8 )
-DECLARE_PACK( UInteger48 )
-DECLARE_PACK( Integer64 )
-
-#define DECLARE_UNPACK( type ) void unpack##type( void*, void*, PtpClock *ptpClock );
-
-DECLARE_UNPACK( Boolean )
-DECLARE_UNPACK( Enumeration4Lower )
-DECLARE_UNPACK( Enumeration4Upper )
-DECLARE_UNPACK( Octet )
-DECLARE_UNPACK( UInteger48 )
-DECLARE_UNPACK( Integer64 )
-
 char *dump_TimeInternal(const TimeInternal * p);
 char *dump_TimeInternal2(const char *st1, const TimeInternal * p1, const char *st2, const TimeInternal * p2);
 
