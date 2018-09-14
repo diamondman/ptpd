@@ -59,9 +59,11 @@
 #include "constants.h"
 #include "dep/constants_dep.h"
 #include "ptp_primitives.h"
+#include "ptp_datatypes.h"
 #include "ptp_timers.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
+#include "protocol.h"
 #include "bmc.h"
 #include "display.h"
 #include "arith.h"
@@ -71,10 +73,10 @@
 
 #include "ptpd.h" // For ..., SO_TIMESTAMPING
 
-Boolean doInit(RunTimeOpts*,PtpClock*);
+static Boolean doInit(RunTimeOpts*,PtpClock*);
 static void doState(RunTimeOpts*,PtpClock*);
 
-void handle(RunTimeOpts*,PtpClock*);
+static void handle(RunTimeOpts*,PtpClock*);
 
 static void handleAnnounce(MsgHeader*, ssize_t,Boolean, const RunTimeOpts*,PtpClock*);
 static void handleSync(const MsgHeader*, ssize_t,TimeInternal*,Boolean,Integer32, Integer32, const RunTimeOpts*,PtpClock*);
@@ -199,7 +201,7 @@ findSyncDestination(TimeInternal *timeStamp, const RunTimeOpts *rtOpts, PtpClock
     return 0;
 }
 
-void addForeign(Octet*,MsgHeader*,PtpClock*, UInteger8, UInteger32);
+static void addForeign(Octet*,MsgHeader*,PtpClock*, UInteger8, UInteger32);
 
 /* loop forever. doState() has a switch for the actions and events to be
    checked for 'port_state'. the actions and events may or may not change
@@ -746,7 +748,7 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 }
 
 
-Boolean
+static Boolean
 doInit(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {
 	char filterMask[200];
@@ -1239,7 +1241,7 @@ timestampCorrection(const RunTimeOpts * rtOpts, PtpClock *ptpClock, TimeInternal
 }
 
 
-void
+static void
 processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp, ssize_t length)
 {
     Boolean isFromSelf;
@@ -1445,7 +1447,7 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 
 
 /* check and handle received messages */
-void
+static void
 handle(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {
     int ret;
@@ -2124,7 +2126,7 @@ handleFollowUp(const MsgHeader *header, ssize_t length,
 	} /* Switch on (port_state) */
 }
 
-void
+static void
 handleDelayReq(const MsgHeader *header, ssize_t length,
 	       const TimeInternal *tint, Integer32 sourceAddress, Boolean isFromSelf,
 	       const RunTimeOpts *rtOpts, PtpClock *ptpClock)
@@ -3327,7 +3329,7 @@ issuePdelayRespFollowUp(const TimeInternal *tint, MsgHeader *header, Integer32 d
 	}
 }
 
-void
+static void
 addForeign(Octet *buf,MsgHeader *header,PtpClock *ptpClock, UInteger8 localPreference, UInteger32 sourceAddr)
 {
 	int i,j;

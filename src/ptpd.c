@@ -63,10 +63,9 @@
 #include "ptp_primitives.h"
 #include "timingdomain.h"
 #include "datatypes.h"
+#include "protocol.h"
 #include "dep/ptpd_dep.h"
 #include "ptpd_logging.h"
-
-#include "ptpd.h" // used for protocol()
 
 RunTimeOpts rtOpts;			/* statically allocated run-time
 					 * configuration data */

@@ -71,13 +71,12 @@
 #include "dep/alarms.h"
 #include "ptp_timers.h"
 #include "datatypes.h"
+#include "protocol.h"
 #include "display.h"
 #include "dep/daemonconfig.h"
 #include "dep/ptpd_dep.h"
 #include "dep/configdefaults.h"
 #include "ptpd_logging.h"
-
-#include "ptpd.h" // For toState, updateDatasets, clearCounters
 
 /*
  * valgrind 3.5.0 currently reports no errors (last check: 20110512)

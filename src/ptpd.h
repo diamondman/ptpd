@@ -43,19 +43,6 @@
 #define SET_ALARM(alarm, val) \
 	setAlarmCondition(&ptpClock->alarms[alarm], val, ptpClock)
 
-/** \name protocol.c
- * -Execute the protocol engine*/
- /**\{*/
-/**
- * \brief Protocol engine
- */
-/* protocol.c */
-void protocol(RunTimeOpts*,PtpClock*);
-void updateDatasets(PtpClock* ptpClock, const RunTimeOpts* rtOpts);
-void setPortState(PtpClock *ptpClock, Enumeration8 state);
-
-Boolean acceptPortIdentity(PortIdentity thisPort, PortIdentity targetPort);
-
 /** \}*/
 
 /** \name management.c
@@ -113,19 +100,10 @@ DECLARE_UNPACK( Octet )
 DECLARE_UNPACK( UInteger48 )
 DECLARE_UNPACK( Integer64 )
 
-
-
-void clearCounters(PtpClock *);
-
-
 char *dump_TimeInternal(const TimeInternal * p);
 char *dump_TimeInternal2(const char *st1, const TimeInternal * p1, const char *st2, const TimeInternal * p2);
 
 int snprint_TimeInternal(char *s, int max_len, const TimeInternal * p);
-
-void toState(UInteger8,const RunTimeOpts*,PtpClock*);
-
-Boolean respectUtcOffset(const RunTimeOpts * rtOpts, PtpClock * ptpClock);
 
 /* alarms.c - this will be moved */
 void capturePtpEventData(PtpEventData *data, PtpClock *ptpClock, RunTimeOpts *rtOpts); 	/* capture data from an alarm event */
