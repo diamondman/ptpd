@@ -21,7 +21,7 @@
 #  include "dep/statistics.h"
 #  include "dep/outlierfilter.h"
 #endif /* PTPD_STATISTICS */
-#include "dep/alarms.h"
+#include "dep/alarm_datatypes.h"
 #include "dep/datatypes_dep.h"
 #include "dep/constants_dep.h"
 

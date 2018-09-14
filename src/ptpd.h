@@ -18,12 +18,10 @@
 #ifndef PTPD_H_
 #define PTPD_H_
 
-#include <stdint.h>
 #include <stddef.h>
 
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
-#include "dep/alarms.h"
 #include "datatypes.h"
 
 /** \name management.c
@@ -40,7 +38,5 @@ void handleManagement(MsgHeader *header,
 
 char *dump_TimeInternal(const TimeInternal * p);
 char *dump_TimeInternal2(const char *st1, const TimeInternal * p1, const char *st2, const TimeInternal * p2);
-
-int snprint_TimeInternal(char *s, int max_len, const TimeInternal * p);
 
 #endif /*PTPD_H_*/

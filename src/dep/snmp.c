@@ -40,11 +40,10 @@
 #include "constants.h"
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
+#include "dep/alarm_datatypes.h"
 #include "arith.h"
-#include "dep/alarms.h"
+#include "datatypes.h"
 #include "ptpd_utils.h"
-
-#include "ptpd.h" // For PtpClock, RunTimeOpts, PtpdCounters, OID_LENGTH stuff
 
 #include <net-snmp/net-snmp-config.h>
 #include <net-snmp/net-snmp-includes.h>

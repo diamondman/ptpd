@@ -15,7 +15,7 @@
 
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
-#include "dep/alarms.h"
+#include "dep/alarm_datatypes.h"
 #include "dep/datatypes_dep.h"
 #include "dep/iniparser/dictionary.h"
 #include "datatypes.h"

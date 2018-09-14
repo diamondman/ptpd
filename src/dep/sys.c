@@ -135,14 +135,12 @@
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "arith.h"
-#include "dep/alarms.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
+#include "dep/alarms.h"
 #include "display.h"
 #include "dep/ptpd_dep.h"
 #include "ptpd_logging.h"
-
-#include "ptpd.h" // For snprint_TimeInternal(only used here)
 
 /* only C99 has the round function built-in */
 double round (double __x);
@@ -151,6 +149,7 @@ static int closeLog(LogFileHandler* handler);
 
 static Boolean maintainLogSize(LogFileHandler* handler);
 static void updateLogSize(LogFileHandler* handler);
+static int snprint_TimeInternal(char *s, int max_len, const TimeInternal * p);
 
 #ifdef __QNXNTO__
 typedef struct {
@@ -217,7 +216,7 @@ char *dump_TimeInternal2(const char *st1, const TimeInternal * p1, const char *s
 
 
 
-int
+static int
 snprint_TimeInternal(char *s, int max_len, const TimeInternal * p)
 {
 	int len = 0;

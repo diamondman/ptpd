@@ -54,13 +54,14 @@
 
 #include <string.h>
 
+#include "ptpd.h"
 #include "ptp_primitives.h"
 #include "constants.h"
 #include "dep/constants_dep.h"
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
-#include "dep/alarms.h"
 #include "datatypes.h"
+#include "dep/alarms.h"
 #include "signaling.h"
 #include "bmc.h"
 #include "arith.h"
