@@ -54,6 +54,10 @@
  * and include the getopt() command line argument parsing.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>

@@ -1,6 +1,10 @@
 #ifndef DATATYPES_H_
 #define DATATYPES_H_
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
 #include <limits.h>
 #include <sys/param.h>
 #include <stdio.h>

@@ -51,6 +51,10 @@
 #ifndef ISC_MD5_H
 #define ISC_MD5_H 1
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
 #include <stdint.h>
 
 #ifdef HAVE_STRINGS_H
