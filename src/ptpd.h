@@ -43,44 +43,6 @@
 #define SET_ALARM(alarm, val) \
 	setAlarmCondition(&ptpClock->alarms[alarm], val, ptpClock)
 
-/** \name bmc.c
- * -Best Master Clock Algorithm functions*/
- /**\{*/
-/* bmc.c */
-/**
- * \brief Compare data set of foreign masters and local data set
- * \return The recommended state for the port
- */
-
-UInteger8 bmc(ForeignMasterRecord*, const RunTimeOpts*,PtpClock*);
-
-/* compare two portIdentTitties */
-int cmpPortIdentity(const PortIdentity *a, const PortIdentity *b);
-/* check if portIdentity is all zero */
-Boolean portIdentityEmpty(PortIdentity *portIdentity);
-/* check if portIdentity is all ones */
-Boolean portIdentityAllOnes(PortIdentity *portIdentity);
-
-/**
- * \brief When recommended state is Master, copy local data into parent and grandmaster dataset
- */
-void m1(const RunTimeOpts *, PtpClock*);
-
-/**
- * \brief When recommended state is Slave, copy dataset of master into parent and grandmaster dataset
- */
-void s1(MsgHeader*,MsgAnnounce*,PtpClock*, const RunTimeOpts *);
-
-
-void p1(PtpClock *ptpClock, const RunTimeOpts *rtOpts);
-
-/**
- * \brief Initialize datas
- */
-void initData(RunTimeOpts*,PtpClock*);
-/** \}*/
-
-
 /** \name protocol.c
  * -Execute the protocol engine*/
  /**\{*/

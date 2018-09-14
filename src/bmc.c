@@ -61,6 +61,7 @@
 #include "ptp_timers.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
+#include "bmc.h"
 #include "arith.h"
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"

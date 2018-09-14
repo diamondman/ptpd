@@ -46,11 +46,12 @@
 #include "ptp_datatypes.h"
 #include "arith.h"
 #include "datatypes.h"
+#include "bmc.h"
 #include "dep/ptpd_dep.h"
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 
-#include "ptpd.h" // For cmpPortIdentity, portIdentityEmpty, toState, acceptPortIdentity
+#include "ptpd.h" // For toState, acceptPortIdentity
 
 /* how many times we send a cancel before we stop waiting for ack. 8 bit unsigned. */
 #define GRANT_CANCEL_ACK_TIMEOUT 3
