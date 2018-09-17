@@ -10,7 +10,7 @@
 #define PTPD_CONFIGDEFAULTS_H_
 
 #include "ptp_primitives.h"
-#include "iniparser/dictionary.h"
+#include "dep/iniparser/dictionary.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
 

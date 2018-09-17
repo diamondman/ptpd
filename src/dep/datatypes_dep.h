@@ -1,3 +1,8 @@
+/**
+ * \file
+ * \brief Implementation specific datatype
+ */
+
 #ifndef DATATYPES_DEP_H_
 #define DATATYPES_DEP_H_
 
@@ -15,9 +20,11 @@
 // Required by OpenBSD for netinet/if_ethers.h
 #  include <net/if_arp.h>
 #endif
+
 #if defined(HAVE_NET_IF_H)
 #  include <net/if.h>
 #endif
+
 #if defined(HAVE_NETINET_IF_ETHER_H)
 // Many BSD systems have this file, but OpenBSD defines ether_Addr here.
 #  include <netinet/if_ether.h>
@@ -38,18 +45,13 @@
 #  include <net/ethernet.h>
 #endif
 
-#include "ptp_primitives.h"
-#include "dep/ipv4_acl.h"
-
 #if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
 // Solaris doesn't have ETHER_ADDR_LEN defined in net/ethernet.h
 #  define ETHER_ADDR_LEN ETHERADDRL
 #endif
 
-/**
- *\file
- * \brief Implementation specific datatype
- */
+#include "ptp_primitives.h"
+#include "dep/ipv4_acl.h" // Only used for opaque type Ipv4AccessList
 
 /**
  * \brief Struct used to average the offset from master
@@ -149,7 +151,6 @@ typedef struct {
 	int maxFiles;
 
 } LogFileHandler;
-
 
 typedef struct{
 

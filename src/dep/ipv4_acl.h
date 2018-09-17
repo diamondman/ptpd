@@ -8,35 +8,14 @@
 #ifndef PTPD_IPV4_ACL_H_
 #define PTPD_IPV4_ACL_H_
 
-#include <stdint.h>
-
-#define IN_RANGE(num, min,max) \
-	(num >= min && num <= max)
-
 enum {
 	ACL_PERMIT_DENY,
 	ACL_DENY_PERMIT
 };
 
-typedef struct {
-	uint32_t network;
-	uint32_t bitmask;
-	uint16_t netmask;
-	uint32_t hitCount;
-} AclEntry;
-
-typedef struct {
-	int numEntries;
-	AclEntry* entries;
-} MaskTable;
-
-typedef struct {
-	MaskTable* permitTable;
-	MaskTable* denyTable;
-	int processingOrder;
-	uint32_t passedCounter;
-	uint32_t droppedCounter;
-} Ipv4AccessList;
+typedef struct AclEntry AclEntry;
+typedef struct MaskTable MaskTable;
+typedef struct Ipv4AccessList Ipv4AccessList;
 
 /* Parse string into AclEntry array */
 int maskParser(const char* input, AclEntry* output);

@@ -51,6 +51,29 @@
  * protect the original string, as strtok* modify it.
  */
 
+#define IN_RANGE(num, min,max)			\
+	(num >= min && num <= max)
+
+typedef struct AclEntry {
+	uint32_t network;
+	uint32_t bitmask;
+	uint16_t netmask;
+	uint32_t hitCount;
+} AclEntry;
+
+typedef struct MaskTable {
+	int numEntries;
+	AclEntry* entries;
+} MaskTable;
+
+typedef struct Ipv4AccessList {
+	MaskTable* permitTable;
+	MaskTable* denyTable;
+	int processingOrder;
+	uint32_t passedCounter;
+	uint32_t droppedCounter;
+} Ipv4AccessList;
+
 /* count tokens in string delimited by delim */
 static int countTokens(const char* text, const char* delim)
 {
