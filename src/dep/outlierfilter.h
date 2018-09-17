@@ -1,11 +1,6 @@
 #ifndef OUTLIERFILTER_H_
 #define OUTLIERFILTER_H_
 
-#include "ptp_primitives.h"
-#include "dep/statistics.h"
-
-#define OUTLIERFILTER_MAX_DESC 20
-
 /*-
  * Copyright (c) 2014      Wojciech Owczarek,
  *
@@ -40,6 +35,11 @@
  * @brief  Function definitions for the outlier filter
  *
  */
+
+#include "ptp_primitives.h"
+#include "dep/statistics.h"
+
+#define OUTLIERFILTER_MAX_DESC 20
 
 typedef struct {
 

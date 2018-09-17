@@ -47,15 +47,14 @@
 #endif
 
 /**
-*\file
-* \brief Implementation specific datatype
-
+ *\file
+ * \brief Implementation specific datatype
  */
 
 /**
-* \brief Struct used to average the offset from master
-*
-* The FIR filtering of the offset from master input is a simple, two-sample average
+ * \brief Struct used to average the offset from master
+ *
+ * The FIR filtering of the offset from master input is a simple, two-sample average
  */
 typedef struct {
     Integer32  nsec_prev, y;
@@ -74,7 +73,7 @@ typedef struct {
 } one_way_delay_filter;
 
 /**
-* \brief Struct containing interface information and capabilities
+ * \brief Struct containing interface information and capabilities
  */
 typedef struct {
         struct sockaddr afAddress;
@@ -87,7 +86,7 @@ typedef struct {
 } InterfaceInfo;
 
 /**
-* \brief Struct describing network transport data
+ * \brief Struct describing network transport data
  */
 typedef struct {
 	Integer32 eventSock, generalSock;

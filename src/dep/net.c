@@ -115,10 +115,7 @@
 #include "ptpd_logging.h"
 #include "dep/ptpd_dep.h"
 
-#include "ptpd.h" // For SO_TIMESTAMPING
-
 /* choose kernel-level nanoseconds or microseconds resolution on the client-side */
-//SO_TIMESTAMPING may be cleared by ptpd.h, so be sure to include that first.
 #if !defined(SO_TIMESTAMPING) && !defined(SO_TIMESTAMPNS) && !defined(SO_TIMESTAMP) && !defined(SO_BINTIME)
 #  error No kernel-level support for packet timestamping detected!
 #endif

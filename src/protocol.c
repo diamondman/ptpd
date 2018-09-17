@@ -80,8 +80,6 @@
 #include "ptpd_utils.h"
 #include "ptpd_logging.h"
 
-#include "ptpd.h" // For handleManagement, SO_TIMESTAMPING
-
 static Boolean doInit(RunTimeOpts*,PtpClock*);
 static void doState(RunTimeOpts*,PtpClock*);
 
