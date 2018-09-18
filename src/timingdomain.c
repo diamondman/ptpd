@@ -239,7 +239,7 @@ prepareLeapFlags(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	int utcOffset;
 
 	if(getKernelUtcOffset(&utcOffset) && utcOffset != 0) {
-	    ptpClock->clockStatus.utcOffset = utcOffset;
+		ptpClock->clockStatus.utcOffset = utcOffset;
 	}
 #  endif /* MOD_TAI */
 
@@ -252,18 +252,16 @@ prepareLeapFlags(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	getTime(&now);
 
-
 	ptpClock->clockStatus.override = FALSE;
 
-	    /* then we try the offset from leap file if valid - takes priority over kernel */
-	    if(rtOpts->leapInfo.offsetValid) {
-		    ptpClock->clockStatus.utcOffset =
-			rtOpts->leapInfo.currentOffset;
-		    ptpClock->clockStatus.override = TRUE;
-	    }
+	/* then we try the offset from leap file if valid - takes priority over kernel */
+	if(rtOpts->leapInfo.offsetValid) {
+		ptpClock->clockStatus.utcOffset = rtOpts->leapInfo.currentOffset;
+		ptpClock->clockStatus.override = TRUE;
+	}
 
-	    /* if we have valid leap second info from leap file, we use it */
-	    if(rtOpts->leapInfo.valid) {
+	/* if we have valid leap second info from leap file, we use it */
+	if(rtOpts->leapInfo.valid) {
 
 		ptpClock->clockStatus.leapInsert = FALSE;
 		ptpClock->clockStatus.leapDelete = FALSE;
@@ -272,37 +270,31 @@ prepareLeapFlags(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		    now.seconds < rtOpts->leapInfo.endTime) {
 			DBG("Leap second pending - leap file\n");
 			if(rtOpts->leapInfo.leapType == 1) {
-			    ptpClock->clockStatus.leapInsert = TRUE;
+				ptpClock->clockStatus.leapInsert = TRUE;
 			}
 			if(rtOpts->leapInfo.leapType == -1) {
-			    ptpClock->clockStatus.leapDelete = TRUE;
+				ptpClock->clockStatus.leapDelete = TRUE;
 			}
 
 			ptpClock->clockStatus.override = TRUE;
-
 		}
-		 if(now.seconds >= rtOpts->leapInfo.endTime) {
-		    ptpClock->clockStatus.utcOffset =
-			    rtOpts->leapInfo.nextOffset;
-		    	    ptpClock->clockStatus.override = TRUE;
-		    if(strcmp(rtOpts->leapFile,"")) {
-			memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));
-			parseLeapFile(rtOpts->leapFile, &rtOpts->leapInfo);
+		if(now.seconds >= rtOpts->leapInfo.endTime) {
+			ptpClock->clockStatus.utcOffset = rtOpts->leapInfo.nextOffset;
+			ptpClock->clockStatus.override = TRUE;
+			if(strcmp(rtOpts->leapFile,"")) {
+				memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));
+				parseLeapFile(rtOpts->leapFile, &rtOpts->leapInfo);
 
-			if(rtOpts->leapInfo.offsetValid) {
-				ptpClock->clockStatus.utcOffset =
-				rtOpts->leapInfo.currentOffset;
-
+				if(rtOpts->leapInfo.offsetValid) {
+					ptpClock->clockStatus.utcOffset = rtOpts->leapInfo.currentOffset;
+				}
 			}
-
-		    }
-
 		}
-	    /* otherwise we try using the kernel info, but not when we're slave */
-	    } else if(ptpClock->portDS.portState != PTP_SLAVE) {
-		    ptpClock->clockStatus.leapInsert = leapInsert;
-		    ptpClock->clockStatus.leapDelete = leapDelete;
-	    }
+		/* otherwise we try using the kernel info, but not when we're slave */
+	} else if(ptpClock->portDS.portState != PTP_SLAVE) {
+		ptpClock->clockStatus.leapInsert = leapInsert;
+		ptpClock->clockStatus.leapDelete = leapDelete;
+	}
 }
 
 static int
@@ -324,8 +316,9 @@ ptpServiceUpdate (TimingService* service)
 	}
 
 	/* read current UTC offset from leap file or from kernel if not configured */
-	if(ptpClock->timePropertiesDS.ptpTimescale && ( ptpClock->portDS.portState == PTP_SLAVE ||
-	    (ptpClock->portDS.portState == PTP_MASTER && rtOpts->timeProperties.currentUtcOffset == 0))) {
+	if(ptpClock->timePropertiesDS.ptpTimescale &&
+	   ( ptpClock->portDS.portState == PTP_SLAVE ||
+	     (ptpClock->portDS.portState == PTP_MASTER && rtOpts->timeProperties.currentUtcOffset == 0))) {
 		prepareLeapFlags(rtOpts, ptpClock);
 	}
 
@@ -365,44 +358,42 @@ ptpServiceUpdate (TimingService* service)
 	if(ptpClock->portDS.portState != PTP_SLAVE) {
 		FLAGS_UNSET(service->flags, TIMINGSERVICE_IDLE);
 		if(service->flags & TIMINGSERVICE_HOLD) {
-		    if((service->holdTimeLeft)<=0) {
-			FLAGS_UNSET(service->flags, TIMINGSERVICE_AVAILABLE);
-			FLAGS_UNSET(service->flags, TIMINGSERVICE_HOLD);
+			if((service->holdTimeLeft)<=0) {
+				FLAGS_UNSET(service->flags, TIMINGSERVICE_AVAILABLE);
+				FLAGS_UNSET(service->flags, TIMINGSERVICE_HOLD);
 
-			ptpClock->clockControl.available = FALSE;
-			if(service->holdTime) {
-			    INFO_LOCAL_ID(service,"hold time expired\n");
+				ptpClock->clockControl.available = FALSE;
+				if(service->holdTime) {
+					INFO_LOCAL_ID(service,"hold time expired\n");
+				}
 			}
-		    }
 		} else if(ptpClock->clockControl.available) {
-		        FLAGS_SET(service->flags, TIMINGSERVICE_HOLD);
+			FLAGS_SET(service->flags, TIMINGSERVICE_HOLD);
 			/* if we're already in hold time, don't restart it */
 			if(service->holdTimeLeft <=0) {
-			    service->holdTimeLeft = service->holdTime;
+				service->holdTimeLeft = service->holdTime;
 			}
-		        if(service->holdTimeLeft>0) {
-		    	    DBG_LOCAL_ID(service,"hold started - %d seconds\n",service->holdTimeLeft);
+			if(service->holdTimeLeft>0) {
+				DBG_LOCAL_ID(service,"hold started - %d seconds\n",service->holdTimeLeft);
 			}
 		}
 	} else {
 	/* slave: ready to acquire clock control, hold time over */
 		if(ptpClock->clockControl.available) {
-		    if(!(service->flags & TIMINGSERVICE_AVAILABLE)) {
+			if(!(service->flags & TIMINGSERVICE_AVAILABLE)) {
+				INFO_LOCAL_ID(service,"now available\n");
+				FLAGS_SET(service->flags, TIMINGSERVICE_AVAILABLE);
+			}
 
-			INFO_LOCAL_ID(service,"now available\n");
-			FLAGS_SET(service->flags, TIMINGSERVICE_AVAILABLE);
+			if(service->flags & TIMINGSERVICE_HOLD) {
+				DBG_LOCAL_ID(service, "hold cancelled\n");
+				FLAGS_UNSET(service->flags, TIMINGSERVICE_HOLD);
+				service->holdTimeLeft = 0;
+			}
 
-		    }
-
-		    if(service->flags & TIMINGSERVICE_HOLD) {
-			DBG_LOCAL_ID(service, "hold cancelled\n");
-			FLAGS_UNSET(service->flags, TIMINGSERVICE_HOLD);
-			service->holdTimeLeft = 0;
-		    }
-
-		    DBGV("TimingService %s available for clock control\n", service->id);
+			DBGV("TimingService %s available for clock control\n", service->id);
 		} else {
-		    FLAGS_UNSET(service->flags, TIMINGSERVICE_AVAILABLE);
+			FLAGS_UNSET(service->flags, TIMINGSERVICE_AVAILABLE);
 		}
 	}
 
@@ -450,46 +441,46 @@ ptpServiceClockUpdate (TimingService* service)
 #if defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP)
 
 	if(clockStatus->inSync & !inSync) {
-	    clockStatus->inSync = FALSE;
-            unsetTimexFlags(STA_UNSYNC, TRUE);
+		clockStatus->inSync = FALSE;
+		unsetTimexFlags(STA_UNSYNC, TRUE);
 	}
 
-	    informClockSource(ptpClock);
+	informClockSource(ptpClock);
 
-    if(rtOpts->leapSecondHandling == LEAP_ACCEPT) {
-	/* withdraw kernel flags if needed, unless this is during the event */
-	if(!ptpClock->leapSecondInProgress) {
-	    if(leapInsert && !clockStatus->leapInsert) {
-		DBG_LOCAL_ID(service,"STA_INS in kernel but not in PTP: withdrawing\n");
-		unsetTimexFlags(STA_INS, TRUE);
-	    }
+	if(rtOpts->leapSecondHandling == LEAP_ACCEPT) {
+		/* withdraw kernel flags if needed, unless this is during the event */
+		if(!ptpClock->leapSecondInProgress) {
+			if(leapInsert && !clockStatus->leapInsert) {
+				DBG_LOCAL_ID(service,"STA_INS in kernel but not in PTP: withdrawing\n");
+				unsetTimexFlags(STA_INS, TRUE);
+			}
 
-	    if(leapDelete && !clockStatus->leapDelete) {
-		DBG_LOCAL_ID(service,"STA_DEL in kernel but not in PTP: withdrawing\n");
-		unsetTimexFlags(STA_DEL, TRUE);
-	    }
-	}
+			if(leapDelete && !clockStatus->leapDelete) {
+				DBG_LOCAL_ID(service,"STA_DEL in kernel but not in PTP: withdrawing\n");
+				unsetTimexFlags(STA_DEL, TRUE);
+			}
+		}
 
-	if(!leapInsert && clockStatus->leapInsert) {
-		WARNING("Leap second pending! Setting clock to insert one second at midnight\n");
-		setTimexFlags(STA_INS, FALSE);
-	}
+		if(!leapInsert && clockStatus->leapInsert) {
+			WARNING("Leap second pending! Setting clock to insert one second at midnight\n");
+			setTimexFlags(STA_INS, FALSE);
+		}
 
-	if(!leapDelete && clockStatus->leapDelete) {
-		WARNING("Leap second pending! Setting clock to delete one second at midnight\n");
-		setTimexFlags(STA_DEL, FALSE);
+		if(!leapDelete && clockStatus->leapDelete) {
+			WARNING("Leap second pending! Setting clock to delete one second at midnight\n");
+			setTimexFlags(STA_DEL, FALSE);
+		}
+	} else {
+		if(leapInsert || leapDelete) {
+			DBG("leap second handling is not set to accept - withdrawing kernel leap flags!\n");
+			unsetTimexFlags(STA_INS, TRUE);
+			unsetTimexFlags(STA_DEL, TRUE);
+		}
 	}
-    } else {
-	if(leapInsert || leapDelete) {
-		DBG("leap second handling is not set to accept - withdrawing kernel leap flags!\n");
-		unsetTimexFlags(STA_INS, TRUE);
-		unsetTimexFlags(STA_DEL, TRUE);
-	}
-    }
 #else
 	if(clockStatus->leapInsert || clockStatus->leapDelete) {
 		if(rtOpts->leapSecondHandling != LEAP_SMEAR) {
-		    WARNING("Leap second pending! No kernel leap second "
+			WARNING("Leap second pending! No kernel leap second "
 			"API support - expect a clock offset at "
 			"midnight!\n");
 		}
@@ -501,22 +492,22 @@ ptpServiceClockUpdate (TimingService* service)
 
 	/* Major time change */
 	if(clockStatus->majorChange){
-	    /* re-parse leap seconds file */
-	    if(strcmp(rtOpts->leapFile,"")) {
-		memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));
-		parseLeapFile(rtOpts->leapFile, &rtOpts->leapInfo);
-	    }
+		/* re-parse leap seconds file */
+		if(strcmp(rtOpts->leapFile,"")) {
+			memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));
+			parseLeapFile(rtOpts->leapFile, &rtOpts->leapInfo);
+		}
 #ifdef HAVE_LINUX_RTC_H
-	    if(rtOpts->setRtc) {
-		NOTICE_LOCAL_ID(service, "Major time change - syncing the RTC\n");
-		setRtc(&newTime);
-		clockStatus->majorChange = FALSE;
-	    }
+		if(rtOpts->setRtc) {
+			NOTICE_LOCAL_ID(service, "Major time change - syncing the RTC\n");
+			setRtc(&newTime);
+			clockStatus->majorChange = FALSE;
+		}
 #endif /* HAVE_LINUX_RTC_H */
-	    /* need to inform utmp / wtmp */
-	    if(oldTime.seconds != newTime.seconds) {
-		updateXtmp(oldTime, newTime);
-	    }
+		/* need to inform utmp / wtmp */
+		if(oldTime.seconds != newTime.seconds) {
+			updateXtmp(oldTime, newTime);
+		}
 	}
 
 	ptpClock->clockStatus.update = FALSE;
@@ -533,21 +524,21 @@ ntpServiceInit (TimingService* service)
 	INFO_LOCAL_ID(service,"NTP service init\n");
 
 	if(!config->enableEngine) {
-	    INFO_LOCAL_ID(service,"NTP service not enabled\n");
-	    FLAGS_UNSET(service->flags, TIMINGSERVICE_OPERATIONAL);
-	    FLAGS_UNSET(service->flags, TIMINGSERVICE_AVAILABLE);
-	    return 1;
+		INFO_LOCAL_ID(service,"NTP service not enabled\n");
+		FLAGS_UNSET(service->flags, TIMINGSERVICE_OPERATIONAL);
+		FLAGS_UNSET(service->flags, TIMINGSERVICE_AVAILABLE);
+		return 1;
 	}
 
 	if(ntpInit(config, controller)) {
-	    FLAGS_SET(service->flags, TIMINGSERVICE_OPERATIONAL);
-	    INFO_LOCAL_ID(service,"NTP service started\n");
-	    return 1;
+		FLAGS_SET(service->flags, TIMINGSERVICE_OPERATIONAL);
+		INFO_LOCAL_ID(service,"NTP service started\n");
+		return 1;
 	} else {
-	    FLAGS_UNSET(service->flags, TIMINGSERVICE_OPERATIONAL);
-	    FLAGS_UNSET(service->flags, TIMINGSERVICE_AVAILABLE);
-	    INFO_LOCAL_ID(service,"Could not start NTP service. Will keep retrying.\n");
-	    return 0;
+		FLAGS_UNSET(service->flags, TIMINGSERVICE_OPERATIONAL);
+		FLAGS_UNSET(service->flags, TIMINGSERVICE_AVAILABLE);
+		INFO_LOCAL_ID(service,"Could not start NTP service. Will keep retrying.\n");
+		return 0;
 	}
 }
 
@@ -560,8 +551,8 @@ ntpServiceShutdown (TimingService* service)
 	INFO_LOCAL_ID(service,"NTP service shutting down\n");
 
 	if(controller->flagsCaptured) {
-	    INFO_LOCAL_ID(service,"Restoring original NTP state\n");
-	    ntpShutdown(config, controller);
+		INFO_LOCAL_ID(service,"Restoring original NTP state\n");
+		ntpShutdown(config, controller);
 	}
 
 	FLAGS_UNSET(service->flags, TIMINGSERVICE_OPERATIONAL);
@@ -577,7 +568,7 @@ ntpServiceAcquire (TimingService* service)
 
 	if(!config->enableControl) {
 		if (!controller->requestFailed) {
-		    WARNING_LOCAL_ID(service, "control disabled, cannot acquire clock control\n");
+			WARNING_LOCAL_ID(service, "control disabled, cannot acquire clock control\n");
 		}
 		controller->requestFailed = TRUE;
 		return 1;
@@ -591,7 +582,7 @@ ntpServiceAcquire (TimingService* service)
 			return 1;
 		default:
 			if (!controller->requestFailed) {
-			    WARNING_LOCAL_ID(service,"failed to acquire clock control - clock may drift!\n");
+				WARNING_LOCAL_ID(service,"failed to acquire clock control - clock may drift!\n");
 			}
 			controller->requestFailed = TRUE;
 			return 0;
@@ -608,7 +599,7 @@ ntpServiceRelease (TimingService* service, int reason)
 
 	if(!config->enableControl) {
 		if (!controller->requestFailed) {
-		    WARNING_LOCAL_ID(service, "control disabled, cannot release clock control\n");
+			WARNING_LOCAL_ID(service, "control disabled, cannot release clock control\n");
 		}
 		controller->requestFailed = TRUE;
 		return 1;
@@ -625,8 +616,8 @@ ntpServiceRelease (TimingService* service, int reason)
 			return 1;
 		default:
 			if(!controller->requestFailed) {
-			    WARNING_LOCAL_ID(service,"failed to release clock control, reason: %s - clock may be unstable!\n",
-				reasonToString(reason));
+				WARNING_LOCAL_ID(service,"failed to release clock control, reason: %s - clock may be unstable!\n",
+						 reasonToString(reason));
 			}
 			controller->requestFailed = TRUE;
 			return 0;
@@ -649,7 +640,7 @@ ntpServiceUpdate (TimingService* service)
 
 	if (res != INFO_YES && res != INFO_NO) {
 		if(!controller->checkFailed) {
-		    WARNING_LOCAL_ID(service,"Could not verify NTP status  - will keep checking\n");
+			WARNING_LOCAL_ID(service,"Could not verify NTP status  - will keep checking\n");
 		}
 		controller->checkFailed = TRUE;
 		FLAGS_UNSET(service->flags, TIMINGSERVICE_OPERATIONAL);
@@ -660,19 +651,19 @@ ntpServiceUpdate (TimingService* service)
 	FLAGS_SET(service->flags, TIMINGSERVICE_OPERATIONAL);
 
 	if(service->flags & TIMINGSERVICE_AVAILABLE) {
-	    service->activity = TRUE;
+		service->activity = TRUE;
 	} else {
-	    controller->checkFailed = FALSE;
-	    INFO_LOCAL_ID(service,"now available\n");
-	    FLAGS_SET(service->flags, TIMINGSERVICE_AVAILABLE);
-        }
+		controller->checkFailed = FALSE;
+		INFO_LOCAL_ID(service,"now available\n");
+		FLAGS_SET(service->flags, TIMINGSERVICE_AVAILABLE);
+	}
 
 	/*
 	 * notify the service that we are in control,
 	 * so that the watchdog can react if we are and it wasn't granted
 	 */
 	if (res == INFO_YES) {
-	    FLAGS_SET(service->flags, TIMINGSERVICE_IN_CONTROL);
+		FLAGS_SET(service->flags, TIMINGSERVICE_IN_CONTROL);
 	}
 
 	controller->checkFailed = FALSE;
@@ -722,7 +713,7 @@ timingDomainShutdown(TimingDomain *domain)
 	for(i=domain->serviceCount - 1; i >= 0; i--) {
 		service = domain->services[i];
 		if(service != NULL) {
-		    service->shutdown(service);
+			service->shutdown(service);
 		}
 	}
 
@@ -754,8 +745,8 @@ timingDomainUpdate(TimingDomain *domain)
 	DBGV("Timing domain update\n");
 
 	if(domain->serviceCount < 1) {
-	    DBG("No TimingServices in TimingDomain: nothing to do\n");
-	    return 0;
+		DBG("No TimingServices in TimingDomain: nothing to do\n");
+		return 0;
 	}
 
 	/* first pass: check if alive, update idle times, release where needed */
@@ -767,10 +758,10 @@ timingDomainUpdate(TimingDomain *domain)
 
 		/* decrement the hold time counter */
 		if(service->holdTimeLeft > 0) {
-		    service->holdTimeLeft -= domain->updateInterval;
-		    DBG_LOCAL_ID(service, "hold time left %d\n", service->holdTimeLeft);
+			service->holdTimeLeft -= domain->updateInterval;
+			DBG_LOCAL_ID(service, "hold time left %d\n", service->holdTimeLeft);
 		} else {
-		    service->holdTimeLeft = 0;
+			service->holdTimeLeft = 0;
 		}
 
 		/* each TimingService can have a different update interval: skip when not due */
@@ -778,7 +769,7 @@ timingDomainUpdate(TimingDomain *domain)
 			service->updateDue = TRUE;
 			service->lastUpdate = 0;
 		} else {
-		    continue;
+			continue;
 		}
 
 		DBG("TimingService %s due for update\n", service->id);
@@ -798,7 +789,7 @@ timingDomainUpdate(TimingDomain *domain)
 				FLAGS_UNSET(service->flags, TIMINGSERVICE_IDLE);
 				service->idleTime = 0;
 				if((service->holdTimeLeft>0) && !(service->flags & TIMINGSERVICE_HOLD)) {
-				    service->holdTimeLeft = 0;
+					service->holdTimeLeft = 0;
 				}
 			}
 
@@ -806,14 +797,14 @@ timingDomainUpdate(TimingDomain *domain)
 
 			if( (service->flags & TIMINGSERVICE_AVAILABLE) &&
 			    !(service->flags & TIMINGSERVICE_HOLD) &&
-				    (service->idleTime > service->minIdleTime) &&
-				(service->idleTime > service->timeout)) {
+			    (service->idleTime > service->minIdleTime) &&
+			    (service->idleTime > service->timeout)) {
 
 				service->idleTime = 0;
 				if(!(service->flags & TIMINGSERVICE_IDLE)) {
 					INFO_LOCAL_ID(service, "has gone idle\n");
 					if(service == domain->current) {
-					    service->holdTimeLeft = service->holdTime;
+						service->holdTimeLeft = service->holdTime;
 					}
 				}
 
@@ -822,30 +813,29 @@ timingDomainUpdate(TimingDomain *domain)
 				}
 
 				FLAGS_SET(service->flags, TIMINGSERVICE_IDLE);
-					if((service == domain->current) &&
-					    (service->holdTimeLeft <= 0)) {
-						INFO_LOCAL_ID(service,"idle time hold start\n");
-						service->release(service, REASON_IDLE);
-						service->released = TRUE;
-						domain->electionLeft = domain->electionDelay;
-						domain->current = NULL;
+				if((service == domain->current) &&
+				   (service->holdTimeLeft <= 0)) {
+					INFO_LOCAL_ID(service,"idle time hold start\n");
+					service->release(service, REASON_IDLE);
+					service->released = TRUE;
+					domain->electionLeft = domain->electionDelay;
+					domain->current = NULL;
 
-					}
-
+				}
 			}
 		}
 
 		/* inactive or inoperational and in control: release */
 		if((!(service->flags & TIMINGSERVICE_AVAILABLE) ||
 		    !(service->flags & TIMINGSERVICE_OPERATIONAL)) &&
-		    (service->flags & TIMINGSERVICE_IN_CONTROL) ) {
+		   (service->flags & TIMINGSERVICE_IN_CONTROL) ) {
 			if(service->holdTimeLeft <= 0) {
-			    service->release(service, REASON_ELIGIBLE);
-			    service->released = TRUE;
-			    if(service == domain->current) {
-				domain->electionLeft = domain->electionDelay;
-				domain->current = NULL;
-			    }
+				service->release(service, REASON_ELIGIBLE);
+				service->released = TRUE;
+				if(service == domain->current) {
+					domain->electionLeft = domain->electionDelay;
+					domain->current = NULL;
+				}
 			}
 		}
 
@@ -893,10 +883,10 @@ timingDomainUpdate(TimingDomain *domain)
 		domain->current = best;
 
 		if(FLAGS_ARESET(best->flags, TIMINGSERVICE_OPERATIONAL | TIMINGSERVICE_AVAILABLE)) {
-		    NOTIFY_LOCAL_ID(best,"elected best TimingService\n");
+			NOTIFY_LOCAL_ID(best,"elected best TimingService\n");
 		} else {
-		    domain->current  = NULL;
-		    domain->best = NULL;
+			domain->current  = NULL;
+			domain->best = NULL;
 		}
 	}
 
@@ -906,8 +896,8 @@ timingDomainUpdate(TimingDomain *domain)
 		if((service != domain->current) && (service->flags & TIMINGSERVICE_IN_CONTROL)) {
 			if (service->updateDue) {
 				if(service->holdTimeLeft <= 0) {
-				    service->release(service, REASON_CTRL_NOT_BEST);
-				    service->released = FALSE;
+					service->release(service, REASON_CTRL_NOT_BEST);
+					service->released = FALSE;
 				}
 			}
 		}
@@ -925,16 +915,16 @@ timingDomainUpdate(TimingDomain *domain)
 		service = domain->services[i];
 
 		if(service->flags & TIMINGSERVICE_OPERATIONAL)
-		    domain->operationalCount++;
+			domain->operationalCount++;
 
 		if(service->flags & TIMINGSERVICE_AVAILABLE)
-		    domain->availableCount++;
+			domain->availableCount++;
 
 		if(service->flags & TIMINGSERVICE_IDLE)
-		    domain->idleCount++;
+			domain->idleCount++;
 
 		if(service->flags & TIMINGSERVICE_IN_CONTROL)
-		    domain->controlCount++;
+			domain->controlCount++;
 
 	}
 
@@ -950,7 +940,7 @@ timingDomainUpdate(TimingDomain *domain)
 
 	if(best == NULL) {
 		if (!domain->noneAvailable)
-		    WARNING_LOCAL("No TimingService available\n");
+			WARNING_LOCAL("No TimingService available\n");
 		domain->noneAvailable = TRUE;
 		domain->current = NULL;
 		return 0;
@@ -958,7 +948,7 @@ timingDomainUpdate(TimingDomain *domain)
 
 	if(!(best->flags & TIMINGSERVICE_OPERATIONAL)) {
 		if (!domain->noneAvailable)
-		    WARNING_LOCAL("No operational TimingService available\n");
+			WARNING_LOCAL("No operational TimingService available\n");
 		domain->noneAvailable = TRUE;
 		domain->current = NULL;
 		return 0;
@@ -966,7 +956,7 @@ timingDomainUpdate(TimingDomain *domain)
 
 	if(!(best->flags & TIMINGSERVICE_AVAILABLE)) {
 		if (!domain->noneAvailable)
-		    WARNING_LOCAL("No TimingService available for clock sync\n");
+			WARNING_LOCAL("No TimingService available for clock sync\n");
 		domain->noneAvailable = TRUE;
 		domain->current = NULL;
 		return 0;
@@ -981,7 +971,7 @@ timingDomainUpdate(TimingDomain *domain)
 
 	/* update clock source info */
 	if(best->flags & TIMINGSERVICE_IN_CONTROL) {
-	    best->clockUpdate(best);
+		best->clockUpdate(best);
 	}
 
 	return 1;

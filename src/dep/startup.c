@@ -175,14 +175,14 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	/* Check the new configuration for errors, fill in the blanks from defaults */
 	if( ( rtOpts->candidateConfig = parseConfig(CFGOP_PARSE, NULL, baseConfig, &tmpOpts)) == NULL ) {
-	    WARNING("Configuration has errors, reload aborted\n");
-	    return;
+		WARNING("Configuration has errors, reload aborted\n");
+		return;
 	}
 
 	/* Check for changes between old and new configuration */
 	if(compareConfig(rtOpts->candidateConfig,rtOpts->currentConfig)) {
-	    INFO("Configuration unchanged\n");
-	    goto cleanup;
+		INFO("Configuration unchanged\n");
+		goto cleanup;
 	}
 
 	/*
@@ -204,33 +204,33 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	if(rtOpts->restartSubsystems & PTPD_RESTART_NETWORK) {
 		INFO("Network configuration changed - checking interface(s)\n");
 		if(!testInterface(tmpOpts.primaryIfaceName, &tmpOpts)) {
-		    reloadSuccessful = FALSE;
-		    ERROR("Error: Cannot use %s interface\n",tmpOpts.primaryIfaceName);
+			reloadSuccessful = FALSE;
+			ERROR("Error: Cannot use %s interface\n",tmpOpts.primaryIfaceName);
 		}
 		if(rtOpts->backupIfaceEnabled && !testInterface(tmpOpts.backupIfaceName, &tmpOpts)) {
-		    rtOpts->restartSubsystems = -1;
-		    ERROR("Error: Cannot use %s interface as backup\n",tmpOpts.backupIfaceName);
+			rtOpts->restartSubsystems = -1;
+			ERROR("Error: Cannot use %s interface as backup\n",tmpOpts.backupIfaceName);
 		}
 	}
 #if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined(__QNXNTO__)
-        /* Changing the CPU affinity mask */
-        if(rtOpts->restartSubsystems & PTPD_CHANGE_CPUAFFINITY) {
-                NOTIFY("Applying CPU binding configuration: changing selected CPU core\n");
+	/* Changing the CPU affinity mask */
+	if(rtOpts->restartSubsystems & PTPD_CHANGE_CPUAFFINITY) {
+		NOTIFY("Applying CPU binding configuration: changing selected CPU core\n");
 
-                if(setCpuAffinity(tmpOpts.cpuNumber) < 0) {
-                        if(tmpOpts.cpuNumber == -1) {
-                                ERROR("Could not unbind from CPU core %d\n", rtOpts->cpuNumber);
-                        } else {
-                                ERROR("Could bind to CPU core %d\n", tmpOpts.cpuNumber);
-                        }
+		if(setCpuAffinity(tmpOpts.cpuNumber) < 0) {
+			if(tmpOpts.cpuNumber == -1) {
+				ERROR("Could not unbind from CPU core %d\n", rtOpts->cpuNumber);
+			} else {
+				ERROR("Could bind to CPU core %d\n", tmpOpts.cpuNumber);
+			}
 			reloadSuccessful = FALSE;
-                } else {
-                        if(tmpOpts.cpuNumber > -1)
-                                INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", tmpOpts.cpuNumber);
-                        else
-                                INFO("Successfully unbound "PTPD_PROGNAME" from cpu core CPU core %d\n", rtOpts->cpuNumber);
-                }
-         }
+		} else {
+			if(tmpOpts.cpuNumber > -1)
+				INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", tmpOpts.cpuNumber);
+			else
+				INFO("Successfully unbound "PTPD_PROGNAME" from cpu core CPU core %d\n", rtOpts->cpuNumber);
+		}
+	}
 #endif
 
 	if(!reloadSuccessful) {
@@ -255,7 +255,7 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock)
 				 "  - this is a BUG - report the following: \n");
 
 			if ((rtOpts->currentConfig = parseConfig(CFGOP_PARSE, NULL, rtOpts->candidateConfig,rtOpts)) == NULL)
-			    CRITICAL("*****************" PTPD_PROGNAME" shutting down **********************\n");
+				CRITICAL("*****************" PTPD_PROGNAME" shutting down **********************\n");
 			/*
 			 * Could be assert(), but this should be done any time this happens regardless of
 			 * compile options. Anyhow, if we're here, the daemon will no doubt segfault soon anyway
@@ -292,21 +292,21 @@ do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	/* if we don't have a config file specified, we're done - just reopen log files*/
 	if(strlen(rtOpts->configFile) !=  0) {
 
-	    dictionary* tmpConfig = dictionary_new(0);
+		dictionary* tmpConfig = dictionary_new(0);
 
-	    /* Try reloading the config file */
-	    NOTIFY("Reloading configuration file: %s\n",rtOpts->configFile);
+		/* Try reloading the config file */
+		NOTIFY("Reloading configuration file: %s\n",rtOpts->configFile);
 
-            if(!loadConfigFile(&tmpConfig, rtOpts)) {
+		if(!loadConfigFile(&tmpConfig, rtOpts)) {
 
-		    dictionary_del(&tmpConfig);
+			dictionary_del(&tmpConfig);
 
-	    } else {
-		    dictionary_merge(rtOpts->cliConfig, tmpConfig, 1, 1, "from command line");
-		    applyConfig(tmpConfig, rtOpts, ptpClock);
-		    dictionary_del(&tmpConfig);
+		} else {
+			dictionary_merge(rtOpts->cliConfig, tmpConfig, 1, 1, "from command line");
+			applyConfig(tmpConfig, rtOpts, ptpClock);
+			dictionary_del(&tmpConfig);
 
-	    }
+		}
 
 	}
 
@@ -327,139 +327,139 @@ do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 void
 restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {
-			DBG("RestartSubsystems: %d\n",rtOpts->restartSubsystems);
-		    /* So far, PTP_INITIALIZING is required for both network and protocol restart */
-		    if((rtOpts->restartSubsystems & PTPD_RESTART_PROTOCOL) ||
-			(rtOpts->restartSubsystems & PTPD_RESTART_NETWORK)) {
+	DBG("RestartSubsystems: %d\n",rtOpts->restartSubsystems);
+	/* So far, PTP_INITIALIZING is required for both network and protocol restart */
+	if((rtOpts->restartSubsystems & PTPD_RESTART_PROTOCOL) ||
+	   (rtOpts->restartSubsystems & PTPD_RESTART_NETWORK)) {
 
-			    if(rtOpts->restartSubsystems & PTPD_RESTART_NETWORK) {
-				NOTIFY("Applying network configuration: going into PTP_INITIALIZING\n");
-			    }
-
-			    /* These parameters have to be passed to ptpClock before re-init */
-			    ptpClock->defaultDS.clockQuality.clockClass = rtOpts->clockQuality.clockClass;
-			    ptpClock->defaultDS.slaveOnly = rtOpts->slaveOnly;
-			    ptpClock->disabled = rtOpts->portDisabled;
-
-			    if(rtOpts->restartSubsystems & PTPD_RESTART_PROTOCOL) {
-				INFO("Applying protocol configuration: going into %s\n",
-				ptpClock->disabled ? "PTP_DISABLED" : "PTP_INITIALIZING");
-			    }
-
-			    /* Move back to primary interface only during configuration changes. */
-			    ptpClock->runningBackupInterface = FALSE;
-			    toState(ptpClock->disabled ? PTP_DISABLED : PTP_INITIALIZING, rtOpts, ptpClock);
-
-		    } else {
-		    /* Nothing happens here for now - SIGHUP handler does this anyway */
-		    if(rtOpts->restartSubsystems & PTPD_UPDATE_DATASETS) {
-				NOTIFY("Applying PTP engine configuration: updating datasets\n");
-				updateDatasets(ptpClock, rtOpts);
-		    }}
-		    /* Nothing happens here for now - SIGHUP handler does this anyway */
-		    if(rtOpts->restartSubsystems & PTPD_RESTART_LOGGING) {
-				NOTIFY("Applying logging configuration: restarting logging\n");
-		    }
-
-
-    		if(rtOpts->restartSubsystems & PTPD_RESTART_ACLS) {
-            		NOTIFY("Applying access control list configuration\n");
-            		/* re-compile ACLs */
-            		freeIpv4AccessList(&ptpClock->netPath.timingAcl);
-            		freeIpv4AccessList(&ptpClock->netPath.managementAcl);
-            		if(rtOpts->timingAclEnabled) {
-                    	    ptpClock->netPath.timingAcl=createIpv4AccessList(rtOpts->timingAclPermitText,
-                                rtOpts->timingAclDenyText, rtOpts->timingAclOrder);
-            		}
-            		if(rtOpts->managementAclEnabled) {
-                    	    ptpClock->netPath.managementAcl=createIpv4AccessList(rtOpts->managementAclPermitText,
-                                rtOpts->managementAclDenyText, rtOpts->managementAclOrder);
-            		}
-    		}
-
-    		if(rtOpts->restartSubsystems & PTPD_RESTART_ALARMS) {
-		    NOTIFY("Applying alarm configuration\n");
-		    configureAlarms(ptpClock->alarms, ALRM_MAX, (void*)ptpClock);
+		if(rtOpts->restartSubsystems & PTPD_RESTART_NETWORK) {
+			NOTIFY("Applying network configuration: going into PTP_INITIALIZING\n");
 		}
 
+		/* These parameters have to be passed to ptpClock before re-init */
+		ptpClock->defaultDS.clockQuality.clockClass = rtOpts->clockQuality.clockClass;
+		ptpClock->defaultDS.slaveOnly = rtOpts->slaveOnly;
+		ptpClock->disabled = rtOpts->portDisabled;
+
+		if(rtOpts->restartSubsystems & PTPD_RESTART_PROTOCOL) {
+			INFO("Applying protocol configuration: going into %s\n",
+			     ptpClock->disabled ? "PTP_DISABLED" : "PTP_INITIALIZING");
+		}
+
+		/* Move back to primary interface only during configuration changes. */
+		ptpClock->runningBackupInterface = FALSE;
+		toState(ptpClock->disabled ? PTP_DISABLED : PTP_INITIALIZING, rtOpts, ptpClock);
+
+	} else {
+		/* Nothing happens here for now - SIGHUP handler does this anyway */
+		if(rtOpts->restartSubsystems & PTPD_UPDATE_DATASETS) {
+			NOTIFY("Applying PTP engine configuration: updating datasets\n");
+			updateDatasets(ptpClock, rtOpts);
+		}
+	}
+	/* Nothing happens here for now - SIGHUP handler does this anyway */
+	if(rtOpts->restartSubsystems & PTPD_RESTART_LOGGING) {
+		NOTIFY("Applying logging configuration: restarting logging\n");
+	}
+
+
+	if(rtOpts->restartSubsystems & PTPD_RESTART_ACLS) {
+		NOTIFY("Applying access control list configuration\n");
+		/* re-compile ACLs */
+		freeIpv4AccessList(&ptpClock->netPath.timingAcl);
+		freeIpv4AccessList(&ptpClock->netPath.managementAcl);
+		if(rtOpts->timingAclEnabled) {
+			ptpClock->netPath.timingAcl=createIpv4AccessList(rtOpts->timingAclPermitText,
+							rtOpts->timingAclDenyText, rtOpts->timingAclOrder);
+		}
+		if(rtOpts->managementAclEnabled) {
+			ptpClock->netPath.managementAcl=createIpv4AccessList(rtOpts->managementAclPermitText,
+			        rtOpts->managementAclDenyText, rtOpts->managementAclOrder);
+		}
+	}
+
+	if(rtOpts->restartSubsystems & PTPD_RESTART_ALARMS) {
+		NOTIFY("Applying alarm configuration\n");
+		configureAlarms(ptpClock->alarms, ALRM_MAX, (void*)ptpClock);
+	}
+
 #ifdef PTPD_STATISTICS
-                    /* Reinitialising the outlier filter containers */
-                    if(rtOpts->restartSubsystems & PTPD_RESTART_FILTERS) {
+	/* Reinitialising the outlier filter containers */
+	if(rtOpts->restartSubsystems & PTPD_RESTART_FILTERS) {
 
-                                NOTIFY("Applying filter configuration: re-initialising filters\n");
+		NOTIFY("Applying filter configuration: re-initialising filters\n");
 
-				freeDoubleMovingStatFilter(&ptpClock->filterMS);
-				freeDoubleMovingStatFilter(&ptpClock->filterSM);
+		freeDoubleMovingStatFilter(&ptpClock->filterMS);
+		freeDoubleMovingStatFilter(&ptpClock->filterSM);
 
-				ptpClock->oFilterMS.shutdown(&ptpClock->oFilterMS);
-				ptpClock->oFilterSM.shutdown(&ptpClock->oFilterSM);
+		ptpClock->oFilterMS.shutdown(&ptpClock->oFilterMS);
+		ptpClock->oFilterSM.shutdown(&ptpClock->oFilterSM);
 
-				outlierFilterSetup(&ptpClock->oFilterMS);
-				outlierFilterSetup(&ptpClock->oFilterSM);
+		outlierFilterSetup(&ptpClock->oFilterMS);
+		outlierFilterSetup(&ptpClock->oFilterSM);
 
-				ptpClock->oFilterMS.init(&ptpClock->oFilterMS,&rtOpts->oFilterMSConfig, "delayMS");
-				ptpClock->oFilterSM.init(&ptpClock->oFilterSM,&rtOpts->oFilterSMConfig, "delaySM");
+		ptpClock->oFilterMS.init(&ptpClock->oFilterMS,&rtOpts->oFilterMSConfig, "delayMS");
+		ptpClock->oFilterSM.init(&ptpClock->oFilterSM,&rtOpts->oFilterSMConfig, "delaySM");
 
 
-				if(rtOpts->filterMSOpts.enabled) {
-					ptpClock->filterMS = createDoubleMovingStatFilter(&rtOpts->filterMSOpts,"delayMS");
-				}
+		if(rtOpts->filterMSOpts.enabled) {
+			ptpClock->filterMS = createDoubleMovingStatFilter(&rtOpts->filterMSOpts,"delayMS");
+		}
 
-				if(rtOpts->filterSMOpts.enabled) {
-					ptpClock->filterSM = createDoubleMovingStatFilter(&rtOpts->filterSMOpts, "delaySM");
-				}
+		if(rtOpts->filterSMOpts.enabled) {
+			ptpClock->filterSM = createDoubleMovingStatFilter(&rtOpts->filterSMOpts, "delaySM");
+		}
 
-		    }
+	}
 #endif /* PTPD_STATISTICS */
 
 
-	    ptpClock->timingService.reloadRequested = TRUE;
+	ptpClock->timingService.reloadRequested = TRUE;
 
 #ifdef PTPD_FEATURE_NTP
-            if(rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE && timingDomain.serviceCount > 1) {
+	if(rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE && timingDomain.serviceCount > 1) {
 		ptpClock->ntpControl.timingService.shutdown(&ptpClock->ntpControl.timingService);
-	    }
+	}
 
-	    if((rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE) ||
-        	(rtOpts->restartSubsystems & PTPD_RESTART_NTPCONFIG)) {
-        	ntpSetup(rtOpts, ptpClock);
-    	    }
-		if((rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE) && rtOpts->ntpOptions.enableEngine) {
-		    timingServiceSetup(&ptpClock->ntpControl.timingService);
-		    ptpClock->ntpControl.timingService.init(&ptpClock->ntpControl.timingService);
-		}
+	if((rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE) ||
+	   (rtOpts->restartSubsystems & PTPD_RESTART_NTPCONFIG)) {
+		ntpSetup(rtOpts, ptpClock);
+	}
+	if((rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE) && rtOpts->ntpOptions.enableEngine) {
+		timingServiceSetup(&ptpClock->ntpControl.timingService);
+		ptpClock->ntpControl.timingService.init(&ptpClock->ntpControl.timingService);
+	}
 
-		//TODO: Check that disabling this with NTP doesn't break stuff.
-		ptpClock->timingService.dataSet.priority1 = rtOpts->preferNTP;
+	//TODO: Check that disabling this with NTP doesn't break stuff.
+	ptpClock->timingService.dataSet.priority1 = rtOpts->preferNTP;
 
-		timingDomain.services[0]->holdTime = rtOpts->ntpOptions.failoverTimeout;
+	timingDomain.services[0]->holdTime = rtOpts->ntpOptions.failoverTimeout;
 
-		if(timingDomain.services[0]->holdTimeLeft >
-			timingDomain.services[0]->holdTime) {
-			timingDomain.services[0]->holdTimeLeft =
-			rtOpts->ntpOptions.failoverTimeout;
-		}
+	if(timingDomain.services[0]->holdTimeLeft >
+	   timingDomain.services[0]->holdTime) {
+		timingDomain.services[0]->holdTimeLeft = rtOpts->ntpOptions.failoverTimeout;
+	}
 #else
-		// When ntp is disabled, set priority to 0 (the value of preferNTP).
-		ptpClock->timingService.dataSet.priority1 = 0;
+	// When ntp is disabled, set priority to 0 (the value of preferNTP).
+	ptpClock->timingService.dataSet.priority1 = 0;
 #endif
 
-		timingDomain.electionDelay = rtOpts->electionDelay;
-		if(timingDomain.electionLeft > timingDomain.electionDelay) {
-			timingDomain.electionLeft = timingDomain.electionDelay;
-		}
+	timingDomain.electionDelay = rtOpts->electionDelay;
+	if(timingDomain.electionLeft > timingDomain.electionDelay) {
+		timingDomain.electionLeft = timingDomain.electionDelay;
+	}
 
-		ptpClock->timingService.timeout = rtOpts->idleTimeout;
+	ptpClock->timingService.timeout = rtOpts->idleTimeout;
 
-		    /* Update PI servo parameters */
-		    setupPIservo(&ptpClock->servo, rtOpts);
-		    /* Config changes don't require subsystem restarts - acknowledge it */
-		    if(rtOpts->restartSubsystems == PTPD_RESTART_NONE) {
-				NOTIFY("Applying configuration\n");
-		    }
+	/* Update PI servo parameters */
+	setupPIservo(&ptpClock->servo, rtOpts);
+	/* Config changes don't require subsystem restarts - acknowledge it */
+	if(rtOpts->restartSubsystems == PTPD_RESTART_NONE) {
+		NOTIFY("Applying configuration\n");
+	}
 
-		    if(rtOpts->restartSubsystems != -1)
-			    rtOpts->restartSubsystems = 0;
+	if(rtOpts->restartSubsystems != -1)
+		rtOpts->restartSubsystems = 0;
 }
 
 
@@ -481,18 +481,18 @@ checkSignals(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 
 	if(sighup_received){
 		do_signal_sighup(rtOpts, ptpClock);
-	sighup_received=0;
+		sighup_received=0;
 	}
 
 	if(sigusr1_received){
-	    if(ptpClock->portDS.portState == PTP_SLAVE){
-		    WARNING("SIGUSR1 received, stepping clock to current known OFM\n");
-                    stepClock(rtOpts, ptpClock);                                                                                                        
-//		    ptpClock->clockControl.stepRequired = TRUE;
-	    } else {
-		    ERROR("SIGUSR1 received - will not step clock, not in PTP_SLAVE state\n");
-	    }
-	sigusr1_received = 0;
+		if(ptpClock->portDS.portState == PTP_SLAVE){
+			WARNING("SIGUSR1 received, stepping clock to current known OFM\n");
+			stepClock(rtOpts, ptpClock);
+			//ptpClock->clockControl.stepRequired = TRUE;
+		} else {
+			ERROR("SIGUSR1 received - will not step clock, not in PTP_SLAVE state\n");
+		}
+		sigusr1_received = 0;
 	}
 
 	if(sigusr2_received){
@@ -539,14 +539,14 @@ checkSignals(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 void enable_runtime_debug(void )
 {
 	extern RunTimeOpts rtOpts;
-	
+
 	rtOpts.debug_level = max(LOG_DEBUGV, rtOpts.debug_level);
 }
 
 void disable_runtime_debug(void )
 {
 	extern RunTimeOpts rtOpts;
-	
+
 	rtOpts.debug_level = LOG_INFO;
 }
 #endif
@@ -564,9 +564,9 @@ writeLockFile(RunTimeOpts * rtOpts)
 	}
 	if (lockFile(fileno(G_lockFilePointer)) < 0) {
 		if ( checkLockStatus(fileno(G_lockFilePointer),
-			DEFAULT_LOCKMODE, &lockPid) == 0) {
-			     ERROR("Another "PTPD_PROGNAME" instance is running: %s locked by PID %d\n",
-				    rtOpts->lockFile, lockPid);
+				     DEFAULT_LOCKMODE, &lockPid) == 0) {
+			ERROR("Another "PTPD_PROGNAME" instance is running: %s locked by PID %d\n",
+			      rtOpts->lockFile, lockPid);
 		} else {
 			PERROR("Could not acquire lock on %s:", rtOpts->lockFile);
 		}
@@ -594,11 +594,11 @@ void
 ptpdShutdown(PtpClock * ptpClock)
 {
 	extern RunTimeOpts rtOpts;
-	
+
 	/*
-         * go into DISABLED state so the FSM can call any PTP-specific shutdown actions,
+	 * go into DISABLED state so the FSM can call any PTP-specific shutdown actions,
 	 * such as canceling unicast transmission
-         */
+	 */
 	toState(PTP_DISABLED, &rtOpts, ptpClock);
 	/* process any outstanding events before exit */
 	updateAlarms(ptpClock->alarms, ALRM_MAX);
@@ -624,8 +624,8 @@ ptpdShutdown(PtpClock * ptpClock)
 #else
 	ptpClock->oFilterMS.shutdown(&ptpClock->oFilterMS);
 	ptpClock->oFilterSM.shutdown(&ptpClock->oFilterSM);
-        freeDoubleMovingStatFilter(&ptpClock->filterMS);
-        freeDoubleMovingStatFilter(&ptpClock->filterSM);
+	freeDoubleMovingStatFilter(&ptpClock->filterMS);
+	freeDoubleMovingStatFilter(&ptpClock->filterSM);
 
 	/* We are running statistics code - save drift on exit only if we're not monitoring servo stability */
 	if(!rtOpts.servoStabilityDetection && !ptpClock->servo.runningMaxOutput)
@@ -649,8 +649,8 @@ ptpdShutdown(PtpClock * ptpClock)
 
 	/* properly clean lockfile (eventough new deaemons can acquire the lock after we die) */
 	if(!rtOpts.ignore_daemon_lock && G_lockFilePointer != NULL) {
-	    fclose(G_lockFilePointer);
-	    G_lockFilePointer = NULL;
+		fclose(G_lockFilePointer);
+		G_lockFilePointer = NULL;
 	}
 	unlink(rtOpts.lockFile);
 
@@ -672,14 +672,14 @@ void dump_command_line_parameters(int argc, char **argv)
 	char sbuf[1000];
 	char *st = sbuf;
 	int len = 0;
-	
+
 	*st = '\0';
 	for(i=0; i < argc; i++){
 		if(strcmp(argv[i],"") == 0)
-		    continue;
+			continue;
 		len += snprintf(sbuf + len,
-					     sizeof(sbuf) - len,
-					     "%s ", argv[i]);
+				sizeof(sbuf) - len,
+				"%s ", argv[i]);
 	}
 	INFO("Starting %s daemon with parameters:      %s\n", PTPD_PROGNAME, sbuf);
 }
@@ -733,7 +733,7 @@ ptpdStartup(int argc, char **argv, Integer16 * ret, RunTimeOpts * rtOpts)
 	loadCommandLineKeys(rtOpts->cliConfig,argc,argv);
 	/* parse the normal short and long options, exit on error */
 	if (!loadCommandLineOptions(rtOpts, rtOpts->cliConfig, argc, argv, ret)) {
-	    goto fail;
+		goto fail;
 	}
 
 	/* Display startup info and argv if not called with -? or -H */
@@ -747,9 +747,9 @@ ptpdStartup(int argc, char **argv, Integer16 * ret, RunTimeOpts * rtOpts)
 	if(geteuid() != 0)
 	{
 		printf("Error: "PTPD_PROGNAME" daemon can only be run as root\n");
-			*ret = 1;
-			goto fail;
-		}
+		*ret = 1;
+		goto fail;
+	}
 
 	/* Have we got a config file? */
 	if(strlen(rtOpts->configFile) > 0) {
@@ -758,9 +758,9 @@ ptpdStartup(int argc, char **argv, Integer16 * ret, RunTimeOpts * rtOpts)
 		if(loadConfigFile(&rtOpts->candidateConfig, rtOpts)) {
 			dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
 		} else {
-		    *ret = 1;
+			*ret = 1;
 			dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
-		    goto configcheck;
+			goto configcheck;
 		}
 	} else {
 		dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
@@ -772,16 +772,16 @@ ptpdStartup(int argc, char **argv, Integer16 * ret, RunTimeOpts * rtOpts)
 	 * etc. The getopt loop in loadCommandLineOptions() only sets keys verified here.
 	 */
 	if( ( rtOpts->currentConfig = parseConfig(CFGOP_PARSE, NULL, rtOpts->candidateConfig,rtOpts)) == NULL ) {
-	    *ret = 1;
-	    dictionary_del(&rtOpts->candidateConfig);
-	    goto configcheck;
+		*ret = 1;
+		dictionary_del(&rtOpts->candidateConfig);
+		goto configcheck;
 	}
 
 	/* we've been told to print the lock file and exit cleanly */
 	if(rtOpts->printLockFile) {
-	    printf("%s\n", rtOpts->lockFile);
-	    *ret = 0;
-	    goto fail;
+		printf("%s\n", rtOpts->lockFile);
+		*ret = 0;
+		goto fail;
 	}
 
 	/* we don't need the candidate config any more */
@@ -789,14 +789,14 @@ ptpdStartup(int argc, char **argv, Integer16 * ret, RunTimeOpts * rtOpts)
 
 	/* Check network before going into background */
 	if(!testInterface(rtOpts->primaryIfaceName, rtOpts)) {
-	    ERROR("Error: Cannot use %s interface\n",rtOpts->primaryIfaceName);
-	    *ret = 1;
-	    goto configcheck;
+		ERROR("Error: Cannot use %s interface\n",rtOpts->primaryIfaceName);
+		*ret = 1;
+		goto configcheck;
 	}
 	if(rtOpts->backupIfaceEnabled && !testInterface(rtOpts->backupIfaceName, rtOpts)) {
-	    ERROR("Error: Cannot use %s interface as backup\n",rtOpts->backupIfaceName);
-	    *ret = 1;
-	    goto configcheck;
+		ERROR("Error: Cannot use %s interface as backup\n",rtOpts->backupIfaceName);
+		*ret = 1;
+		goto configcheck;
 	}
 
 
@@ -805,13 +805,12 @@ configcheck:
 	 * We've been told to check config only - clean exit before checking locks
 	 */
 	if(rtOpts->checkConfigOnly) {
-	    if(*ret != 0) {
-		printf("Configuration has errors\n");
-		*ret = 1;
-		}
-	    else
-		printf("Configuration OK\n");
-	    goto fail;
+		if(*ret != 0) {
+			printf("Configuration has errors\n");
+			*ret = 1;
+		} else
+			printf("Configuration OK\n");
+		goto fail;
 	}
 
 	/* Previous errors - exit */
@@ -869,10 +868,10 @@ configcheck:
 	/* Init to 0 net buffer */
 	memset(ptpClock->msgIbuf, 0, PACKET_SIZE);
 	memset(ptpClock->msgObuf, 0, PACKET_SIZE);
-	
+
 	/* Init outgoing management message */
 	ptpClock->outgoingManageTmp.tlv = NULL;
-	
+
 
 	/*  DAEMON */
 #ifdef PTPD_NO_DAEMON
@@ -919,10 +918,10 @@ configcheck:
 #if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined(__QNXNTO__)
 	/* Try binding to a single CPU core if configured to do so */
 	if(rtOpts->cpuNumber > -1) {
-    		if(setCpuAffinity(rtOpts->cpuNumber) < 0) {
-		    ERROR("Could not bind to CPU core %d\n", rtOpts->cpuNumber);
+		if(setCpuAffinity(rtOpts->cpuNumber) < 0) {
+			ERROR("Could not bind to CPU core %d\n", rtOpts->cpuNumber);
 		} else {
-		    INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", rtOpts->cpuNumber);
+			INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", rtOpts->cpuNumber);
 		}
 	}
 #endif
@@ -943,7 +942,7 @@ configcheck:
 	ptpClock->alarmDelay = rtOpts->alarmInitialDelay;
 	/* we're delaying alarm processing - disable alarms for now */
 	if(ptpClock->alarmDelay) {
-	    enableAlarms(ptpClock->alarms, ALRM_MAX, FALSE);
+		enableAlarms(ptpClock->alarms, ALRM_MAX, FALSE);
 	}
 
 
@@ -989,17 +988,17 @@ configcheck:
 #endif
 
 #ifdef PTPD_PCAP
-		ptpClock->netPath.pcapEventSock = -1;
-		ptpClock->netPath.pcapGeneralSock = -1;
+	ptpClock->netPath.pcapEventSock = -1;
+	ptpClock->netPath.pcapGeneralSock = -1;
 #endif /* PTPD_PCAP */
 
-		ptpClock->netPath.generalSock = -1;
-		ptpClock->netPath.eventSock = -1;
+	ptpClock->netPath.generalSock = -1;
+	ptpClock->netPath.eventSock = -1;
 
 	*ret = 0;
 
 	return ptpClock;
-	
+
 fail:
 	dictionary_del(&rtOpts->cliConfig);
 	dictionary_del(&rtOpts->candidateConfig);
@@ -1014,22 +1013,22 @@ ntpSetup (RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	TimingService *ts = &ptpClock->ntpControl.timingService;
 
 	if (rtOpts->ntpOptions.enableEngine) {
-	    timingDomain.services[1] = ts;
-	    strncpy(ts->id, "NTP0", TIMINGSERVICE_MAX_DESC);
-	    ts->dataSet.priority1 = 0;
-	    ts->dataSet.type = TIMINGSERVICE_NTP;
-	    ts->config = &rtOpts->ntpOptions;
-	    ts->controller = &ptpClock->ntpControl;
-	    /* for now, NTP is considered always active, so will never go idle */
-	    ts->timeout = 60;
-	    ts->updateInterval = rtOpts->ntpOptions.checkInterval;
-	    timingDomain.serviceCount = 2;
+		timingDomain.services[1] = ts;
+		strncpy(ts->id, "NTP0", TIMINGSERVICE_MAX_DESC);
+		ts->dataSet.priority1 = 0;
+		ts->dataSet.type = TIMINGSERVICE_NTP;
+		ts->config = &rtOpts->ntpOptions;
+		ts->controller = &ptpClock->ntpControl;
+		/* for now, NTP is considered always active, so will never go idle */
+		ts->timeout = 60;
+		ts->updateInterval = rtOpts->ntpOptions.checkInterval;
+		timingDomain.serviceCount = 2;
 	} else {
-	    timingDomain.serviceCount = 1;
-	    timingDomain.services[1] = NULL;
-	    if(timingDomain.best == ts || timingDomain.current == ts || timingDomain.preferred == ts) {
-		timingDomain.best = timingDomain.current = timingDomain.preferred = NULL;
-	    }
+		timingDomain.serviceCount = 1;
+		timingDomain.services[1] = NULL;
+		if(timingDomain.best == ts || timingDomain.current == ts || timingDomain.preferred == ts) {
+			timingDomain.best = timingDomain.current = timingDomain.preferred = NULL;
+		}
 	}
 }
 #endif

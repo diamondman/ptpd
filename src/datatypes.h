@@ -119,34 +119,34 @@ typedef struct
  */
 
 typedef struct{
-    int maxOutput;
-    Integer32 input;
-    double output;
-    double observedDrift;
-    double kP, kI;
-    TimeInternal lastUpdate;
-    Boolean runningMaxOutput;
-    int dTmethod;
-    double dT;
-    int maxdT;
+	int maxOutput;
+	Integer32 input;
+	double output;
+	double observedDrift;
+	double kP, kI;
+	TimeInternal lastUpdate;
+	Boolean runningMaxOutput;
+	int dTmethod;
+	double dT;
+	int maxdT;
 #ifdef PTPD_STATISTICS
-    int updateCount;
-    int stableCount;
-    Boolean statsUpdated;
-    Boolean statsCalculated;
-    Boolean isStable;
-    double stabilityThreshold;
-    int stabilityPeriod;
-    int stabilityTimeout;
-    double driftMean;
-    double driftStdDev;
-    double driftMedian;
-    double driftMin;
-    double driftMax;
-    double driftMinFinal;
-    double driftMaxFinal;
-    DoublePermanentStdDev driftStats;
-    DoublePermanentMedian driftMedianContainer;
+	int updateCount;
+	int stableCount;
+	Boolean statsUpdated;
+	Boolean statsCalculated;
+	Boolean isStable;
+	double stabilityThreshold;
+	int stabilityPeriod;
+	int stabilityTimeout;
+	double driftMean;
+	double driftStdDev;
+	double driftMedian;
+	double driftMin;
+	double driftMax;
+	double driftMinFinal;
+	double driftMaxFinal;
+	DoublePermanentStdDev driftStats;
+	DoublePermanentMedian driftMedianContainer;
 #endif /* PTPD_STATISTICS */
 } PIservo;
 
@@ -213,16 +213,16 @@ typedef struct {
 
 /* Unicast destination configuration: Address, domain, preference, last Sync timestamp sent */
 typedef struct {
-    Integer32 		transportAddress;		/* destination address */
-    UInteger8 		domainNumber;			/* domain number - for slaves with masters in multiple domains */
-    UInteger8 		localPreference;		/* local preference to influence BMC */
-    TimeInternal 	lastSyncTimestamp;			/* last Sync timestamp sent */
+	Integer32		transportAddress;		/* destination address */
+	UInteger8		domainNumber;			/* domain number - for slaves with masters in multiple domains */
+	UInteger8		localPreference;		/* local preference to influence BMC */
+	TimeInternal		lastSyncTimestamp;		/* last Sync timestamp sent */
 } UnicastDestination;
 
 
 
 typedef struct {
-    Integer32 transportAddress;
+	Integer32 transportAddress;
 } SyncDestEntry;
 
 
@@ -420,7 +420,7 @@ typedef struct {
 	 *  When enabled, ptpd ensures that Sync message sequence numbers
 	 *  are increasing (consecutive sync is not lower than last).
 	 *  This can prevent reordered sequences, but can also lock the slave
-         *  up if, say, GM restarted and reset sequencing.
+	 *  up if, say, GM restarted and reset sequencing.
 	 */
 	Boolean syncSequenceChecking;
 
@@ -428,7 +428,7 @@ typedef struct {
 	  * (seconds) - if set to non-zero, slave will reset if no clock updates
 	  * after this amount of time. Used to "unclog" slave stuck on offset filter
 	  * threshold or after GM reset the Sync sequence number
-          */
+	  */
 	int clockUpdateTimeout;
 
 #ifdef	PTPD_STATISTICS
@@ -501,8 +501,8 @@ typedef struct {
 	ParentDS parentDS; 			/* Parent data set */
 
 	/* Leap second related flags */
-        Boolean leapSecondInProgress;
-        Boolean leapSecondPending;
+	Boolean leapSecondInProgress;
+	Boolean leapSecondPending;
 
 	/* Foreign master data set */
 	ForeignMasterRecord *foreign;
@@ -566,41 +566,40 @@ typedef struct {
 
 	int followUpGap;
 
-/*
+	/*
 	20110630: These variables were deprecated in favor of the ones that appear in the stats log (delayMS and delaySM)
 
 	TimeInternal  master_to_slave_delay;
 	TimeInternal  slave_to_master_delay;
-
 	*/
 
-	TimeInternal  pdelay_req_receive_time;
-	TimeInternal  pdelay_req_send_time;
-	TimeInternal  pdelay_resp_receive_time;
-	TimeInternal  pdelay_resp_send_time;
-	TimeInternal  sync_receive_time;
-	TimeInternal  delay_req_send_time;
-	TimeInternal  delay_req_receive_time;
-	MsgHeader		PdelayReqHeader;
-	MsgHeader		delayReqHeader;
+	TimeInternal	pdelay_req_receive_time;
+	TimeInternal	pdelay_req_send_time;
+	TimeInternal	pdelay_resp_receive_time;
+	TimeInternal	pdelay_resp_send_time;
+	TimeInternal	sync_receive_time;
+	TimeInternal	delay_req_send_time;
+	TimeInternal	delay_req_receive_time;
+	MsgHeader	PdelayReqHeader;
+	MsgHeader	delayReqHeader;
 	TimeInternal	pdelayMS;
 	TimeInternal	pdelaySM;
 	TimeInternal	delayMS;
 	TimeInternal	delaySM;
-	TimeInternal  lastSyncCorrectionField;
-	TimeInternal  lastPdelayRespCorrectionField;
+	TimeInternal	lastSyncCorrectionField;
+	TimeInternal	lastPdelayRespCorrectionField;
 
-	Boolean  sentPdelayReq;
-	UInteger16  sentPdelayReqSequenceId;
-	UInteger16  sentDelayReqSequenceId;
-	UInteger16  sentSyncSequenceId;
-	UInteger16  sentAnnounceSequenceId;
-	UInteger16  sentSignalingSequenceId;
-	UInteger16  recvPdelayReqSequenceId;
-	UInteger16  recvSyncSequenceId;
-	UInteger16  recvPdelayRespSequenceId;
-	Boolean  waitingForFollow;
-	Boolean  waitingForDelayResp;
+	Boolean		sentPdelayReq;
+	UInteger16	sentPdelayReqSequenceId;
+	UInteger16	sentDelayReqSequenceId;
+	UInteger16	sentSyncSequenceId;
+	UInteger16	sentAnnounceSequenceId;
+	UInteger16	sentSignalingSequenceId;
+	UInteger16	recvPdelayReqSequenceId;
+	UInteger16	recvSyncSequenceId;
+	UInteger16	recvPdelayRespSequenceId;
+	Boolean		waitingForFollow;
+	Boolean		waitingForDelayResp;
 
 	offset_from_master_filter  ofm_filt;
 	one_way_delay_filter  mpd_filt;
