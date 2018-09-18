@@ -415,6 +415,7 @@ restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	    ptpClock->timingService.reloadRequested = TRUE;
 
+#ifdef PTPD_FEATURE_NTP
             if(rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE && timingDomain.serviceCount > 1) {
 		ptpClock->ntpControl.timingService.shutdown(&ptpClock->ntpControl.timingService);
 	    }
@@ -428,12 +429,8 @@ restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		    ptpClock->ntpControl.timingService.init(&ptpClock->ntpControl.timingService);
 		}
 
+		//TODO: Check that disabling this with NTP doesn't break stuff.
 		ptpClock->timingService.dataSet.priority1 = rtOpts->preferNTP;
-
-		timingDomain.electionDelay = rtOpts->electionDelay;
-		if(timingDomain.electionLeft > timingDomain.electionDelay) {
-			timingDomain.electionLeft = timingDomain.electionDelay;
-		}
 
 		timingDomain.services[0]->holdTime = rtOpts->ntpOptions.failoverTimeout;
 
@@ -441,6 +438,15 @@ restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			timingDomain.services[0]->holdTime) {
 			timingDomain.services[0]->holdTimeLeft =
 			rtOpts->ntpOptions.failoverTimeout;
+		}
+#else
+		// When ntp is disabled, set priority to 0 (the value of preferNTP).
+		ptpClock->timingService.dataSet.priority1 = 0;
+#endif
+
+		timingDomain.electionDelay = rtOpts->electionDelay;
+		if(timingDomain.electionLeft > timingDomain.electionDelay) {
+			timingDomain.electionLeft = timingDomain.electionDelay;
 		}
 
 		ptpClock->timingService.timeout = rtOpts->idleTimeout;
@@ -1001,6 +1007,7 @@ fail:
 	return 0;
 }
 
+#ifdef PTPD_FEATURE_NTP
 void
 ntpSetup (RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {
@@ -1025,7 +1032,4 @@ ntpSetup (RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	    }
 	}
 }
-
-
-
-
+#endif

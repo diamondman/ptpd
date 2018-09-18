@@ -393,6 +393,8 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 	rtOpts->maxListen = 5;
 
 	rtOpts->panicModeReleaseClock = FALSE;
+
+#ifdef PTPD_FEATURE_NTP
 	rtOpts->ntpOptions.enableEngine = FALSE;
 	rtOpts->ntpOptions.enableControl = FALSE;
 	rtOpts->ntpOptions.enableFailover = FALSE;
@@ -401,6 +403,7 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 	rtOpts->ntpOptions.keyId = 0;
 	strncpy(rtOpts->ntpOptions.hostAddress,"localhost",MAXHOSTNAMELEN); 	/* not configurable, but could be */
 	rtOpts->preferNTP = FALSE;
+#endif
 
 	rtOpts->leapSecondPausePeriod = 5;
 	/* by default, announce the leap second 12 hours before the event:

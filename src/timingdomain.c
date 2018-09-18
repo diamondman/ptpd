@@ -8,7 +8,7 @@
 // Required by sys/timex.h in NetBSD.
 #  include <sys/time.h>
 #endif
-#ifdef HAVE_SYS_TIMEX_H
+#if defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP)
 #  include <sys/timex.h>
 #endif
 
@@ -42,13 +42,14 @@ static int ptpServiceRelease (TimingService* service, int reason);
 static int ptpServiceUpdate (TimingService* service);
 static int ptpServiceClockUpdate (TimingService* service);
 
+#if defined(PTPD_FEATURE_NTP)
 static int ntpServiceInit (TimingService* service);
 static int ntpServiceShutdown (TimingService* service);
 static int ntpServiceAcquire (TimingService* service);
 static int ntpServiceRelease (TimingService* service, int reason);
 static int ntpServiceUpdate (TimingService* service);
 static int ntpServiceClockUpdate (TimingService* service);
-
+#endif
 
 static int timingDomainInit(TimingDomain *domain);
 static int timingDomainShutdown(TimingDomain *domain);
@@ -57,6 +58,7 @@ static int timingDomainUpdate(TimingDomain *domain);
 int
 timingDomainSetup(TimingDomain *domain)
 {
+	memset(domain, 0, sizeof(timingDomain));
 	domain->init = timingDomainInit;
 	domain->shutdown = timingDomainShutdown;
 	domain->update = timingDomainUpdate;
@@ -73,6 +75,7 @@ timingServiceSetup(TimingService *service)
 
 	switch (service->dataSet.type) {
 
+#if defined(PTPD_FEATURE_NTP)
 	    case TIMINGSERVICE_NTP:
 		    service->init = ntpServiceInit;
 		    service->shutdown = ntpServiceShutdown;
@@ -81,6 +84,7 @@ timingServiceSetup(TimingService *service)
 		    service->update = ntpServiceUpdate;
 		    service->clockUpdate = ntpServiceClockUpdate;
 		break;
+#endif
 	    case TIMINGSERVICE_PTP:
 		    service->init = ptpServiceInit;
 		    service->shutdown = ptpServiceShutdown;
@@ -227,7 +231,7 @@ prepareLeapFlags(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {
 	TimeInternal now;
 	Boolean leapInsert = FALSE, leapDelete = FALSE;
-#ifdef HAVE_SYS_TIMEX_H
+#if defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP)
 	int flags;
 
 	/* first get the offset from kernel if we can */
@@ -244,7 +248,7 @@ prepareLeapFlags(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	leapInsert = ((flags & STA_INS) == STA_INS);
 	leapDelete = ((flags & STA_DEL) == STA_DEL);
 
-#endif 	/* HAVE_SYS_TIMEX_H  */
+#endif 	/* defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP) */
 
 	getTime(&now);
 
@@ -325,6 +329,7 @@ ptpServiceUpdate (TimingService* service)
 		prepareLeapFlags(rtOpts, ptpClock);
 	}
 
+#if defined(PTPD_FEATURE_NTP)
 	/* temporary: this is only to maintain PTPd's current config options */
 	/* if NTP failover disabled, pretend PTP always owns the clock */
 	if(!rtOpts->ntpOptions.enableFailover) {
@@ -336,6 +341,7 @@ ptpServiceUpdate (TimingService* service)
 		FLAGS_SET(service->flags, TIMINGSERVICE_AVAILABLE);
 		return 1;
 	}
+#endif
 
 	/* keep the activity heartbeat in check */
 	if(ptpClock->clockControl.activity) {
@@ -417,13 +423,13 @@ ptpServiceClockUpdate (TimingService* service)
 
 	TimeInternal newTime, oldTime;
 
-#ifdef HAVE_SYS_TIMEX_H
+#if defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP)
 	int flags = getTimexFlags();
 
 	Boolean leapInsert = flags & STA_INS;
 	Boolean leapDelete = flags & STA_DEL;
 	Boolean inSync = !(flags & STA_UNSYNC);
-#endif /* HAVE_SYS_TIMEX_H */
+#endif /* defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP) */
 
 	ClockStatusInfo *clockStatus = &ptpClock->clockStatus;
 
@@ -441,7 +447,7 @@ ptpServiceClockUpdate (TimingService* service)
 	    clockStatus->utcOffset);
 #endif
 
-#ifdef HAVE_SYS_TIMEX_H
+#if defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP)
 
 	if(clockStatus->inSync & !inSync) {
 	    clockStatus->inSync = FALSE;
@@ -488,7 +494,7 @@ ptpServiceClockUpdate (TimingService* service)
 			"midnight!\n");
 		}
 	}
-#endif /* HAVE_SYS_TIMEX_H */
+#endif /* defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP) */
 
 	getTime(&oldTime);
 	subTime(&newTime, &oldTime, &ptpClock->currentDS.offsetFromMaster);
@@ -517,6 +523,7 @@ ptpServiceClockUpdate (TimingService* service)
 	return 1;
 }
 
+#if defined(PTPD_FEATURE_NTP)
 static int
 ntpServiceInit (TimingService* service)
 {
@@ -678,6 +685,7 @@ ntpServiceClockUpdate (TimingService* service)
 {
 	return 1;
 }
+#endif /* defined(PTPD_FEATURE_NTP) */
 
 static int
 timingDomainInit(TimingDomain *domain)

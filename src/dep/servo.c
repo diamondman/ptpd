@@ -105,8 +105,11 @@ initClock(const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 {
 	DBG("initClock\n");
 
+#ifdef PTPD_FEATURE_NTP
 	/* If we've been suppressing ntpdc error messages, show them once again */
 	ptpClock->ntpControl.requestFailed = FALSE;
+#endif
+
 	ptpClock->disabled = rtOpts->portDisabled;
 
 /* do not reset frequency here - restoreDrift will do it if necessary */
@@ -803,7 +806,7 @@ adjFreq_wrapper(const RunTimeOpts * rtOpts, PtpClock * ptpClock, double adj)
 	    DBGV("QNX: failed to call ClockAdjust: %s\n", strerror(errno));
 	}
 /* regular adjFreq */
-#elif defined(HAVE_SYS_TIMEX_H)
+#elif defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP)
 	DBG2("     adjFreq2: call adjfreq to %.09f us \n", adj / DBG_UNIT);
 	adjFreq(adj);
 /* otherwise use adjtime */
@@ -818,7 +821,7 @@ adjFreq_wrapper(const RunTimeOpts * rtOpts, PtpClock * ptpClock, double adj)
 	    tv.tv_usec *= ptpClock->servo.dT;
 	}
 	adjtime(&tv, NULL);
-#endif
+#endif /* defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP) */
 }
 
 /* check if it's OK to update the clock, deal with panic mode, call for clock step */

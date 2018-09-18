@@ -109,7 +109,7 @@
 #  include <net/if_ether.h>
 #endif
 
-#ifdef HAVE_SYS_TIMEX_H
+#if defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP)
 #  include <sys/timex.h>
 #endif
 
@@ -1905,7 +1905,7 @@ end:
 
 /* Whole block of adjtimex() functions starts here - only for systems with sys/timex.h */
 
-#ifdef HAVE_SYS_TIMEX_H
+#if defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP)
 
 /*
  * Apply a tick / frequency shift to the kernel clock
@@ -2212,7 +2212,7 @@ setTimexFlags(int flags, Boolean quiet)
 	}
 }
 
-#endif /* HAVE_SYS_TIMEX_H */
+#endif /* defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP) */
 
 #define DRIFTFORMAT "%.0f"
 
@@ -2266,11 +2266,11 @@ restoreDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet)
 			}
 
 		case DRIFT_KERNEL:
-#ifdef HAVE_SYS_TIMEX_H
+#if defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP)
 			recovered_drift = -getAdjFreq();
 #else
 			recovered_drift = 0;
-#endif /* HAVE_SYS_TIMEX_H */
+#endif /* defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP) */
 			if(recovered_drift == 0)
 				recovered_drift = 0;
 

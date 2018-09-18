@@ -12,6 +12,7 @@
 
 #include "constants.h"
 #include "ptp_primitives.h"
+#include "timingdomain.h"
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
 
@@ -457,8 +458,10 @@ typedef struct {
 
 	UInteger32 ofmAlarmThreshold;
 
+#ifdef PTPD_FEATURE_NTP
 	NTPoptions ntpOptions;
 	Boolean preferNTP;
+#endif
 
 	int electionDelay; /* timing domain election delay to prevent flapping */
 
@@ -705,7 +708,9 @@ typedef struct {
 
 	Boolean isCalibrated;
 
+#ifdef PTPD_FEATURE_NTP
 	NTPcontrol ntpControl;
+#endif
 
 	/* the interface to TimingDomain */
 	TimingService timingService;

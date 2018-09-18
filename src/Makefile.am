@@ -12,7 +12,7 @@ AM_LDFLAGS	= $(SNMP_LIBS) $(PCAP_LIBS)
 if LINUX_KERNEL_HEADERS
 AM_CFLAGS += $(LINUX_KERNEL_INCLUDES)
 endif
-AM_CPPFLAGS    += -DDATADIR='"$(datadir)"' $(PTP_DBL) $(PTP_DAEMON) $(PTP_EXP) $(PTP_SNMP) $(PTP_PCAP) $(PTP_STATISTICS) $(PTP_SLAVE_ONLY) $(PTP_PTIMERS) $(PTP_UNICAST_MAX) $(PTP_DISABLE_SOTIMESTAMPING)
+AM_CPPFLAGS    += -DDATADIR='"$(datadir)"' $(PTP_DBL) $(PTP_DAEMON) $(PTP_EXP) $(PTP_SNMP) $(PTP_PCAP) $(PTP_STATISTICS) $(PTP_SLAVE_ONLY) $(PTP_PTIMERS) $(PTP_UNICAST_MAX) $(PTP_DISABLE_SOTIMESTAMPING) $(PTP_FEATURE_NTP)
 
 if OS_IS_SUN
 AM_CFLAGS += -D_XPG6 -D_XOPEN_SOURCE=500 -D__EXTENSIONS__
@@ -59,10 +59,6 @@ ptpd2_SOURCES =				\
 	management.c			\
 	signaling.c			\
 	protocol.c			\
-	dep/ntpengine/ntp_isc_md5.c	\
-	dep/ntpengine/ntp_isc_md5.h	\
-	dep/ntpengine/ntpdcontrol.c	\
-	dep/ntpengine/ntpdcontrol.h	\
 	timingdomain.h			\
 	timingdomain.c			\
 	dep/alarms.h			\
@@ -70,6 +66,15 @@ ptpd2_SOURCES =				\
 	ptpd.c				\
 	ptpd.h				\
 	$(NULL)
+
+if FEATURE_NTP
+ptpd2_SOURCES +=                        \
+	dep/ntpengine/ntp_isc_md5.c	\
+	dep/ntpengine/ntp_isc_md5.h	\
+	dep/ntpengine/ntpdcontrol.c	\
+	dep/ntpengine/ntpdcontrol.h	\
+	$(NULL)
+endif
 
 # SNMP
 if SNMP

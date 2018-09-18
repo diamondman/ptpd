@@ -245,7 +245,9 @@ void applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock
 void enable_runtime_debug(void );
 void disable_runtime_debug(void );
 
+#ifdef PTPD_FEATURE_NTP
 void ntpSetup(RunTimeOpts *rtOpts, PtpClock *ptpClock);
+#endif
 
 #define D_ON      do { enable_runtime_debug();  } while (0);
 #define D_OFF     do { disable_runtime_debug(); } while (0);
@@ -289,7 +291,7 @@ void adjFreq_wrapper(const RunTimeOpts * rtOpts, PtpClock * ptpClock, double adj
 Boolean adjFreq(double);
 double getAdjFreq(void);
 
-#ifdef HAVE_SYS_TIMEX_H
+#if defined(HAVE_SYS_TIMEX_H) && defined(PTPD_FEATURE_NTP)
 void informClockSource(PtpClock* ptpClock);
 
 /* Helper function to manage ntpadjtime / adjtimex flags */
@@ -303,7 +305,7 @@ void setKernelUtcOffset(int utc_offset);
 Boolean getKernelUtcOffset(int *utc_offset);
 #  endif /* MOD_TAI */
 
-#endif /* HAVE_SYS_TIMEX_H */
+#endif /* HAVE_SYS_TIMEX_H && PTPD_FEATURE_NTP */
 
 /* Observed drift save / recovery functions */
 void restoreDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet);

@@ -92,7 +92,6 @@ main(int argc, char **argv)
 
 	startupInProgress = TRUE;
 
-	memset(&timingDomain, 0, sizeof(timingDomain));
 	timingDomainSetup(&timingDomain);
 
 	timingDomain.electionLeft = 10;
@@ -109,23 +108,27 @@ main(int argc, char **argv)
 	/* configure PTP TimeService */
 
 	timingDomain.services[0] = &ptpClock->timingService;
+	timingDomain.serviceCount = 1;
 	ts = timingDomain.services[0];
 	strncpy(ts->id, "PTP0", TIMINGSERVICE_MAX_DESC);
-	ts->dataSet.priority1 = rtOpts.preferNTP;
 	ts->dataSet.type = TIMINGSERVICE_PTP;
 	ts->config = &rtOpts;
 	ts->controller = ptpClock;
 	ts->timeout = rtOpts.idleTimeout;
 	ts->updateInterval = 1;
+
+#if defined(PTPD_FEATURE_NTP)
+	// TODO: Check that removing ntp doesn't break something here.
+	ts->dataSet.priority1 = rtOpts.preferNTP;
 	ts->holdTime = rtOpts.ntpOptions.failoverTimeout;
-	timingDomain.serviceCount = 1;
 
 	if (rtOpts.ntpOptions.enableEngine) {
 		ntpSetup(&rtOpts, ptpClock);
-	} else {
-		timingDomain.serviceCount = 1;
-		timingDomain.services[1] = NULL;
 	}
+#else
+	// When ntp is disabled, set priority to 0 (the value of preferNTP).
+	ts->dataSet.priority1 = 0; // preferNTP would be 0.
+#endif
 
 	timingDomain.init(&timingDomain);
 	timingDomain.updateInterval = 1;

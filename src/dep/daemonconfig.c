@@ -1793,6 +1793,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 		PTPD_RESTART_PROTOCOL, &rtOpts->pidAsClockId, rtOpts->pidAsClockId,
 	"Use PTPd's process ID as the middle part of the PTP clock ID - useful for running multiple instances.");
 
+#ifdef PTPD_FEATURE_NTP
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "ptpengine:ntp_failover",
 		PTPD_RESTART_NONE, &rtOpts->ntpOptions.enableFailover, rtOpts->ntpOptions.enableFailover,
 		"Fail over to NTP when PTP time sync not available - requires\n"
@@ -1817,6 +1818,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 		"Legacy option from 2.3.0: same as ptpengine:panic_mode_release_clock");
 
 	CONFIG_KEY_DEPENDENCY("ptpengine:panic_mode_ntp", "ntpengine:enabled");
+#endif
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "ptpengine:sigusr2_clears_counters",
 		PTPD_RESTART_NONE, &rtOpts->clearCounters, rtOpts->clearCounters,
@@ -2346,6 +2348,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 
 /* ===== ntpengine section ===== */
 
+#ifdef PTPD_FEATURE_NTP
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "ntpengine:enabled",
 		PTPD_RESTART_NTPENGINE, &rtOpts->ntpOptions.enableEngine, rtOpts->ntpOptions.enableEngine,
 	"Enable NTPd integration");
@@ -2374,7 +2377,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 
 	CONFIG_KEY_DEPENDENCY("ntpengine:control:enabled", "ntpengine:key_id");
 	CONFIG_KEY_DEPENDENCY("ntpengine:control:enabled", "ntpengine:key");
-
+#endif
 
 /* ============== END CONFIG MAPPINGS, TRIGGERS AND DEPENDENCIES =========== */
 

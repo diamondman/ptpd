@@ -98,7 +98,7 @@ AC_CHECK_HEADERS([endian.h machine/endian.h sys/isa_defs.h])
 
 AC_CHECK_HEADERS([math.h],[],[AC_MSG_ERROR([math.h is required to compile PTPd])],[])
 
-# MUST chck for cpuset AFTER the check for param as the latter needs 
+# MUST chck for cpuset AFTER the check for param as the latter needs
 # the former to pass the compile check.
 AC_CHECK_HEADERS([sys/cpuset.h], [], [],
 [#ifdef HAVE_SYS_PARAM_H
@@ -277,7 +277,9 @@ AC_CHECK_DECLS([POSIX_TIMERS_SUPPORTED], [posix_timers=true], [posix_timers=fals
 #endif
 ])
 
-# ALL USER-CONTROLLED KNOBS START HERE
+##########################################
+#  ALL USER-CONTROLLED KNOBS START HERE  #
+##########################################
 
 AC_ARG_ENABLE([posix_timers],
 	    AS_HELP_STRING( [--disable-posix-timers (enabled by default if supported)],
@@ -304,7 +306,7 @@ esac
 
 AC_SUBST(PTP_PTIMERS)
 
-
+##########################################
 AC_ARG_WITH(
     [pcap-config],
     [AS_HELP_STRING(
@@ -345,6 +347,7 @@ case "$PROG_PCAP_CONFIG" in
     ;;
 esac
 
+##########################################
 AC_MSG_CHECKING([if we want to build with libpcap support])
 AC_ARG_ENABLE(
     [pcap],
@@ -484,11 +487,10 @@ case "$try_pcap" in
 
 esac
 
-
-
 AC_SUBST(PTP_PCAP)
 AM_CONDITIONAL([PCAP], [test x$ptpd_pcap_enabled = x1])
 
+##########################################
 AC_ARG_WITH(
     [net-snmp-config],
     [AS_HELP_STRING(
@@ -529,6 +531,7 @@ case "$PROG_NET_SNMP_CONFIG" in
     ;;
 esac
 
+##########################################
 AC_MSG_CHECKING([if we want to try building SNMP support])
 AC_ARG_ENABLE(
     [snmp],
@@ -602,7 +605,7 @@ case "$try_snmp" in
 		;;
 	esac
 	;;
-     *) 
+     *)
 	# This case can't be triggered - we won't get here unless we
 	# have an absolute path to net-snmp-config.
 	AC_MSG_WARN([Cannot build with SNMP support - net-snmp-config cannot be found])
@@ -614,8 +617,7 @@ esac
 AC_SUBST(PTP_SNMP)
 AM_CONDITIONAL([SNMP], [test x$ptpd_snmp_enabled = x1])
 
-
-
+##########################################
 AC_MSG_CHECKING([for RUNTIME_DEBUG])
 AC_ARG_ENABLE(
     [runtime-debug],
@@ -661,13 +663,14 @@ case "$enable_runtime_debug" in
 esac
 AC_SUBST(PTP_DBL)
 
+##########################################
 AC_MSG_CHECKING([for maximum unicast destination table size])
 AC_ARG_WITH(
     [max-unicast-destinations],
     [AS_HELP_STRING(
 	[--with-max-unicast-destinations = [ 16 .. 2048 (default: 128)]],
-	[Change maximum supported number of unicast destinations - 
-	    this determines the maximum supported number of slaves 
+	[Change maximum supported number of unicast destinations -
+	    this determines the maximum supported number of slaves
 	    in unicast mode (with and without signaling)]
     )],
     [max_destinations=$with_max_unicast_destinations],
@@ -681,6 +684,7 @@ PTP_UNICAST_MAX="-DPTPD_UNICAST_MAX=$max_destinations"
 AC_SUBST([PTP_UNICAST_MAX])
 AC_MSG_RESULT([$max_destinations])
 
+##########################################
 AC_MSG_CHECKING([for daemon mode])
 AC_ARG_ENABLE(
     [daemon],
@@ -699,6 +703,7 @@ case "$enable_daemon" in
 esac
 AC_SUBST(PTP_DAEMON)
 
+##########################################
 AC_MSG_CHECKING([for experimental options])
 AC_ARG_ENABLE(
     [experimental-options],
@@ -718,6 +723,7 @@ esac
 AC_SUBST(PTP_EXP)
 AM_CONDITIONAL([EXP], [test x$enable_experimental_options = xyes])
 
+##########################################
 AC_MSG_CHECKING([for realtime statistics support])
 AC_ARG_ENABLE(
     [statistics],
@@ -738,6 +744,7 @@ AC_SUBST(PTP_STATISTICS)
 
 AM_CONDITIONAL([STATISTICS], [test x$enable_statistics = xyes])
 
+##########################################
 AC_MSG_CHECKING([if we want to enable SO_TIMESTAMPING support on Linux if available])
 AC_ARG_ENABLE(
     [so-timestamping],
@@ -758,8 +765,8 @@ AC_SUBST(PTP_DISABLE_SOTIMESTAMPING)
 
 AM_CONDITIONAL([DISABLE_SOTIMESTAMPING], [test x$enable_so_timestamping = xno])
 
+##########################################
 AC_MSG_CHECKING([if we're building a slave-only build])
-
 AC_ARG_ENABLE(
     [slave-only],
     [AS_HELP_STRING(
@@ -775,9 +782,31 @@ case "$enable_slave_only" in
     PTP_SLAVE_ONLY="-DPTPD_SLAVE_ONLY"
     ;;
 esac
-
 AC_SUBST(PTP_SLAVE_ONLY)
+
 AM_CONDITIONAL([SLAVE_ONLY], [test x$enable_slave_only = xyes])
+
+##########################################
+AC_MSG_CHECKING([if we're building ptpd with ntp support.])
+AC_ARG_ENABLE(
+    [ntp],
+    [AS_HELP_STRING(
+        [--disable-ntp (enabled by default)],
+        [Disable NTP support in ptpd.]
+    )],
+    [enable_ntp=no],
+    [enable_ntp=yes]
+)
+AC_MSG_RESULT([$enable_ntp])
+case "$enable_ntp" in
+ yes)
+    PTP_FEATURE_NTP="-DPTPD_FEATURE_NTP"
+    ;;
+esac
+AC_SUBST(PTP_FEATURE_NTP)
+
+AM_CONDITIONAL([FEATURE_NTP], [test x$enable_ntp = xyes])
+
 
 AC_MSG_NOTICE([************************************************************])
 AC_MSG_NOTICE([*   END OF PTPD BUILD FLAG AND LIBRARY DEPENDENCY CHECKS   *])
