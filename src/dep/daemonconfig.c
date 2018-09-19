@@ -2956,6 +2956,9 @@ printShortHelp()
 			"WARNING: *** long options below (--some-option) are not supported on this system! \n"
 			"NOTE:    *** config file style options (--section:key=value) are still supported\n"
 #endif
+#ifndef PTPD_FEATURE_NTP
+			"NOTE:    *** This build of ptpd2 does not include NTP support.\n"
+#endif
 			"\n"
 			"Basic options: \n"
 			"\n"
