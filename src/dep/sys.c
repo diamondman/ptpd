@@ -136,10 +136,11 @@
 #include "ptp_datatypes.h"
 #include "arith.h"
 #include "dep/datatypes_dep.h"
+#include "dep/servo.h" // For adjFreq_wrapper
 #include "datatypes.h"
 #include "dep/alarms.h"
 #include "display.h"
-#include "dep/ptpd_dep.h" // For getTime, adjFreq_wrapper
+#include "dep/ptpd_dep.h" // For getTime, getTimexFlags
 #include "ptpd_logging.h"
 
 /* only C99 has the round function built-in */

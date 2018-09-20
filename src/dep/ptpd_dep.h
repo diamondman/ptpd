@@ -63,21 +63,6 @@ void alarmHandler_snmp(AlarmEntry *alarm);
 /** \}*/
 #endif
 
-/** \name servo.c
- * -Clock servo*/
- /**\{*/
-
-void initClock(const RunTimeOpts*,PtpClock*);
-void updatePeerDelay (one_way_delay_filter*, const RunTimeOpts*,PtpClock*,TimeInternal*,Boolean);
-void updateDelay (one_way_delay_filter*, const RunTimeOpts*, PtpClock*,TimeInternal*);
-void updateOffset(TimeInternal*,TimeInternal*,
-  offset_from_master_filter*,const RunTimeOpts*,PtpClock*,TimeInternal*);
-void checkOffset(const RunTimeOpts*, PtpClock*);
-void updateClock(const RunTimeOpts*,PtpClock*);
-void stepClock(const RunTimeOpts * rtOpts, PtpClock * ptpClock);
-
-/** \}*/
-
 /** \name startup.c (Unix API dependent)
  * -Handle with runtime options*/
  /**\{*/
@@ -135,8 +120,6 @@ Boolean checkOtherLocks(RunTimeOpts *rtOpts);
 
 void recordSync(UInteger16 sequenceId, TimeInternal * time);
 
-void adjFreq_wrapper(const RunTimeOpts * rtOpts, PtpClock * ptpClock, double adj);
-
 Boolean adjFreq(double);
 double getAdjFreq(void);
 
@@ -161,17 +144,6 @@ void restoreDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet
 void saveDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet);
 
 int parseLeapFile(char * path, LeapSecondInfo *info);
-
-void
-resetWarnings(const RunTimeOpts * rtOpts, PtpClock * ptpClock);
-
-void setupPIservo(PIservo* servo, const RunTimeOpts* rtOpts);
-void resetPIservo(PIservo* servo);
-double runPIservo(PIservo* servo, const Integer32 input);
-
-#ifdef PTPD_STATISTICS
-void updatePtpEngineStats (PtpClock* ptpClock, const RunTimeOpts* rtOpts);
-#endif /* PTPD_STATISTICS */
 
 void writeStatusFile(PtpClock *ptpClock, const RunTimeOpts *rtOpts, Boolean quiet);
 void updateXtmp (TimeInternal oldTime, TimeInternal newTime);

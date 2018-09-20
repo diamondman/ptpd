@@ -64,6 +64,7 @@
 #include "arith.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
+#include "dep/servo.h"
 #include "dep/msg.h" // Only for msgDump
 #include "dep/alarms.h"
 #include "protocol.h"
@@ -738,7 +739,7 @@ stepClock(const RunTimeOpts * rtOpts, PtpClock * ptpClock)
         }
 }
 
-void
+static void
 warn_operator_fast_slewing(const RunTimeOpts * rtOpts, PtpClock * ptpClock, double adj)
 {
 	if(ptpClock->warned_operator_fast_slewing == 0){
@@ -749,7 +750,7 @@ warn_operator_fast_slewing(const RunTimeOpts * rtOpts, PtpClock * ptpClock, doub
 	}
 }
 
-void
+static void
 warn_operator_slow_slewing(const RunTimeOpts * rtOpts, PtpClock * ptpClock )
 {
 	if(ptpClock->warned_operator_slow_slewing == 0){

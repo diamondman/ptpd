@@ -75,6 +75,7 @@
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
 #include "datatypes.h"
+#include "dep/servo.h"
 #include "dep/msg.h"
 #include "dep/alarms.h"
 #include "protocol.h"
