@@ -493,7 +493,7 @@ typedef struct {
  * \brief Main program data structure
  */
 /* main program data structure */
-typedef struct {
+typedef struct PtpClock {
 
 	/* PTP datsets */
 	DefaultDS defaultDS; 			/* Default data set */

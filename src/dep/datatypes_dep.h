@@ -192,23 +192,6 @@ typedef struct{
 
 } UInteger16_option;
 
-typedef union { uint32_t *uintval; int32_t *intval; double *doubleval; Boolean *boolval; char *strval; } ConfigPointer;
-typedef union { uint32_t uintval; int32_t intval; double doubleval; Boolean boolval; char *strval; } ConfigSetting;
-
-typedef struct ConfigOption ConfigOption;
-
-struct ConfigOption {
-    char *key;
-    enum { CO_STRING, CO_INT, CO_UINT, CO_DOUBLE, CO_BOOL, CO_SELECT } type;
-    enum { CO_MIN, CO_MAX, CO_RANGE, CO_STRLEN } restriction;
-    ConfigPointer target;
-    ConfigPointer defvalue;
-    ConfigSetting constraint1;
-    ConfigSetting constraint2;
-    int restartFlags;
-    ConfigOption *next;
-};
-
 typedef struct {
     int currentOffset;
     int nextOffset;

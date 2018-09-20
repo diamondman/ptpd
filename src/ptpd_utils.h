@@ -20,6 +20,8 @@
 #include "ptpd_logging.h"
 
 //TODO: Forward Declare ptpdShutdown or something.
+typedef struct PtpClock PtpClock;
+void ptpdShutdown(PtpClock*);
 
 /* NOTE: this macro can be refactored into a function */
 #define XMALLOC(ptr,size) \

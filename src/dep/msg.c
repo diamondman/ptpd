@@ -59,7 +59,6 @@
 #include "dep/msg.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
-#include "dep/ptpd_dep.h" // Only used by XMALLOC for ptpdShutdown
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 
