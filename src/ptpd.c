@@ -63,8 +63,8 @@
 #include "ptp_primitives.h"
 #include "timingdomain.h"
 #include "datatypes.h"
+#include "dep/startup.h" // For ptpdStartup, ntpSetup
 #include "protocol.h"
-#include "dep/ptpd_dep.h" // Only for ptpdStartup
 #include "ptpd_logging.h"
 
 RunTimeOpts rtOpts;			/* statically allocated run-time

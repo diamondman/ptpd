@@ -75,6 +75,7 @@
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
 #include "datatypes.h"
+#include "dep/startup.h"
 #include "dep/servo.h"
 #include "dep/msg.h"
 #include "dep/alarms.h"
@@ -124,7 +125,7 @@ FILE* G_lockFilePointer;
  *
  * Please do NOT call any functions inside this handler - especially DBG() and its friends, or any glibc.
  */
-void catchSignals(int sig)
+static void catchSignals(int sig)
 {
 	switch (sig) {
 	case SIGINT:
@@ -156,7 +157,7 @@ void catchSignals(int sig)
 /*
  * exit the program cleanly
  */
-void
+static void
 do_signal_close(PtpClock * ptpClock)
 {
 	timingDomain.shutdown(&timingDomain);
@@ -278,7 +279,7 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock)
  *
  * @param sig
  */
-void
+static void
 do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 {
 	NOTIFY("SIGHUP received\n");
@@ -553,7 +554,7 @@ void disable_runtime_debug(void )
 }
 #endif
 
-int
+static int
 writeLockFile(RunTimeOpts * rtOpts)
 {
 	int lockPid = 0;
@@ -668,7 +669,7 @@ ptpdShutdown(PtpClock * ptpClock)
 	stopLogging(&rtOpts);
 }
 
-void dump_command_line_parameters(int argc, char **argv)
+static void dump_command_line_parameters(int argc, char **argv)
 {
 	int i = 0;
 	char sbuf[1000];

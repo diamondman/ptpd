@@ -63,32 +63,6 @@ void alarmHandler_snmp(AlarmEntry *alarm);
 /** \}*/
 #endif
 
-/** \name startup.c (Unix API dependent)
- * -Handle with runtime options*/
- /**\{*/
-int setCpuAffinity(int cpu);
-int logToFile(RunTimeOpts * rtOpts);
-int recordToFile(RunTimeOpts * rtOpts);
-PtpClock * ptpdStartup(int,char**,Integer16*,RunTimeOpts*);
-
-void ptpdShutdown(PtpClock * ptpClock);
-void checkSignals(RunTimeOpts * rtOpts, PtpClock * ptpClock);
-void restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock);
-void applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock);
-
-void enable_runtime_debug(void );
-void disable_runtime_debug(void );
-
-#ifdef PTPD_FEATURE_NTP
-void ntpSetup(RunTimeOpts *rtOpts, PtpClock *ptpClock);
-#endif
-
-#define D_ON      do { enable_runtime_debug();  } while (0);
-#define D_OFF     do { disable_runtime_debug(); } while (0);
-
-
-/** \}*/
-
 /** \name sys.c (Unix API dependent)
  * -Manage timing system API*/
  /**\{*/
@@ -97,6 +71,7 @@ void ntpSetup(RunTimeOpts *rtOpts, PtpClock *ptpClock);
 char *time2st(const TimeInternal * p);
 void DBG_time(const char *name, const TimeInternal  p);
 
+int setCpuAffinity(int cpu);
 void logStatistics(PtpClock *ptpClock);
 int restartLog(LogFileHandler* handler, Boolean quiet);
 void restartLogging(RunTimeOpts* rtOpts);
