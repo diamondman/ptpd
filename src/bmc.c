@@ -60,13 +60,14 @@
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
 #include "datatypes.h"
+#include "dep/msg.h" // Only for copyClockIdentity
 #include "dep/alarms.h"
 #include "signaling.h"
 #include "bmc.h"
 #include "arith.h"
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
-#include "dep/ptpd_dep.h"
+#include "dep/ptpd_dep.h" // Only for displayPortIdentity, displayStatus
 
 /* Init ptpClock with run time values (initialization constants are in constants.h)*/
 void initData(RunTimeOpts *rtOpts, PtpClock *ptpClock)

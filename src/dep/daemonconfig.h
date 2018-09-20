@@ -77,14 +77,8 @@ Boolean loadConfigFile (dictionary**, RunTimeOpts*);
 void loadCommandLineKeys(dictionary*, int, char**);
 Boolean loadCommandLineOptions(RunTimeOpts*, dictionary*, int, char** , Integer16*);
 dictionary* parseConfig (int, void*, dictionary*, RunTimeOpts*);
-int reloadConfig ( RunTimeOpts*, PtpClock* );
 Boolean compareConfig(dictionary* source, dictionary* target);
 int checkSubsystemRestart(dictionary* newConfig, dictionary* oldConfig, RunTimeOpts *rtOpts);
-void printConfigHelp();
-void printDefaultConfig();
-void printShortHelp();
-void printLongHelp();
-void printSettingHelp(char*);
 void setConfig(dictionary *dict, const char* key, const char *value);
 
 #endif /*PTPD_DAEMONCONFIG_H_*/

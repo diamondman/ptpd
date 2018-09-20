@@ -64,7 +64,7 @@
 #include "timingdomain.h"
 #include "datatypes.h"
 #include "protocol.h"
-#include "dep/ptpd_dep.h"
+#include "dep/ptpd_dep.h" // Only for ptpdStartup
 #include "ptpd_logging.h"
 
 RunTimeOpts rtOpts;			/* statically allocated run-time

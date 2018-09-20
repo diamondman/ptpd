@@ -44,7 +44,7 @@
 #include "datatypes.h"
 #include "dep/alarms.h"
 #include "display.h"
-#include "ptpd_dep.h"
+#include "ptpd_dep.h" // For alarmHandler_snmp, alarmHandler_log, getTime
 #include "ptpd_logging.h"
 
 static const char* alarmStateToString(AlarmState state);

@@ -64,9 +64,10 @@
 #include "arith.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
+#include "dep/msg.h" // Only for msgDump
 #include "dep/alarms.h"
 #include "protocol.h"
-#include "dep/ptpd_dep.h"
+#include "dep/ptpd_dep.h" // For devent amount of stuff
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 

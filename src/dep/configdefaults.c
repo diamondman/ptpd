@@ -47,7 +47,6 @@
 #include "dep/iniparser/iniparser.h"
 #include "datatypes.h"
 #include "dep/configdefaults.h"
-#include "dep/ptpd_dep.h"
 #include "ptpd_logging.h"
 
 #define CONFIG_ISTRUE(key) \

@@ -60,7 +60,6 @@
 #include "display.h"
 #include "dep/configdefaults.h"
 #include "dep/daemonconfig.h"
-#include "dep/ptpd_dep.h"
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 
@@ -2586,7 +2585,7 @@ loadCommandLineKeys(dictionary* dict, int argc,char** argv)
  * Set the "secret" key in the dictionary, causing parseConfig
  * to switch from parse mode to print default mode
  */
-void
+static void
 printDefaultConfig()
 {
 	RunTimeOpts rtOpts;
@@ -2618,7 +2617,7 @@ printDefaultConfig()
  * Set the "secret" key in the dictionary, causing parseConfig
  * to switch from parse mode to help mode.
  */
-void
+static void
 printConfigHelp()
 {
 	RunTimeOpts rtOpts;
@@ -2640,7 +2639,7 @@ printConfigHelp()
  * Set the "secret" key in the dictionary, causing parseConfig
  * to switch from parse mode to help mode, for a selected key only.
  */
-void
+static void
 printSettingHelp(char* key)
 {
 	RunTimeOpts rtOpts;
@@ -2664,6 +2663,12 @@ printSettingHelp(char* key)
 	dictionary_del(&dict);
 	free(origKey);
 }
+
+// It would be nice if these functions were defined before
+// loadCommandLineOptions, but I don't want to make that big of a
+// diff, so declaring them here.
+static void printShortHelp();
+static void printLongHelp();
 
 /**
  * Handle standard options with getopt_long. Returns FALSE if ptpd should not continue.
@@ -2943,7 +2948,7 @@ printPresetHelp()
 }
 
 /* print "short" help - standard parameters only */
-void
+static void
 printShortHelp()
 {
 	printf(
@@ -3046,7 +3051,7 @@ printShortHelp()
 }
 
 /* Print the full help */
-void
+static void
 printLongHelp()
 {
 	printShortHelp();

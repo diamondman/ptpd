@@ -21,7 +21,7 @@
 #include "dep/datatypes_dep.h"
 #include "dep/ntpengine/ntpdcontrol.h"
 #include "datatypes.h"
-#include "dep/ptpd_dep.h"
+#include "dep/ptpd_dep.h" // Only for parseLeapFile, ptpdShutdown, getTime, updateXtmp
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 

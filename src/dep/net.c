@@ -114,7 +114,6 @@
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
 #include "ptpd_logging.h"
-#include "dep/ptpd_dep.h"
 
 /* choose kernel-level nanoseconds or microseconds resolution on the client-side */
 #if !defined(SO_TIMESTAMPING) && !defined(SO_TIMESTAMPNS) && !defined(SO_TIMESTAMP) && !defined(SO_BINTIME)

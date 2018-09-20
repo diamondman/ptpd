@@ -75,11 +75,12 @@
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
 #include "datatypes.h"
+#include "dep/msg.h"
 #include "dep/alarms.h"
 #include "protocol.h"
 #include "display.h"
 #include "dep/daemonconfig.h"
-#include "dep/ptpd_dep.h"
+#include "dep/ptpd_dep.h" // Used for lots of stuff
 #include "dep/configdefaults.h"
 #include "ptpd_logging.h"
 

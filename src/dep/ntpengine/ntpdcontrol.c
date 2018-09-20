@@ -76,7 +76,7 @@
 #include "ptp_primitives.h"
 #include "ptpd_logging.h"
 #include "dep/ntpengine/ntpdcontrol.h"
-#include "dep/ptpd_dep.h"
+#include "dep/ptpd_dep.h" // Only for hostLookup
 
 #define NTP_PORT 123
 

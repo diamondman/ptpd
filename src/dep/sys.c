@@ -139,7 +139,7 @@
 #include "datatypes.h"
 #include "dep/alarms.h"
 #include "display.h"
-#include "dep/ptpd_dep.h"
+#include "dep/ptpd_dep.h" // For getTime, adjFreq_wrapper
 #include "ptpd_logging.h"
 
 /* only C99 has the round function built-in */

@@ -59,9 +59,10 @@
 #include "arith.h"
 #include "dep/iniparser/dictionary.h"
 #include "datatypes.h"
+#include "dep/msg.h"
 #include "protocol.h"
 #include "display.h"
-#include "dep/ptpd_dep.h"
+#include "dep/ptpd_dep.h" // For applyConfig, ptpdShutdown, getTime, netSendGeneral
 #include "dep/daemonconfig.h"
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"

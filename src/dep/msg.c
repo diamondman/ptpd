@@ -56,9 +56,10 @@
 #include "dep/constants_dep.h"
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
+#include "dep/msg.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
-#include "dep/ptpd_dep.h"
+#include "dep/ptpd_dep.h" // Only used by XMALLOC for ptpdShutdown
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 
@@ -143,6 +144,23 @@ FREE ( UInteger32 )
 FREE ( Enumeration4 )
 FREE ( UInteger4 )
 FREE ( Nibble )
+
+static void freeMMTLV(ManagementTLV*);
+static void freeMMErrorStatusTLV(ManagementTLV*);
+static void msgDebugHeader(MsgHeader *header);
+static void msgDebugSync(MsgSync *sync);
+static void msgDebugAnnounce(MsgAnnounce *announce);
+static void msgDebugManagement(MsgManagement *manage);
+
+static void unpackMsgSignaling(Octet *, MsgSignaling*, PtpClock*);
+static void packMsgSignaling(MsgSignaling*, Octet *);
+static void unpackSignalingTLV(Octet*, MsgSignaling*, PtpClock*);
+static void packSignalingTLV(SignalingTLV*, Octet*);
+
+static void unpackMsgManagement(Octet *, MsgManagement*, PtpClock*);
+static void packMsgManagement(MsgManagement*, Octet *);
+static void unpackManagementTLV(Octet*, int, MsgManagement*, PtpClock*);
+static void packManagementTLV(ManagementTLV*, Octet*);
 
 static inline int bufGuard(int max, long base, int len, long beginning, int size);
 
@@ -2383,7 +2401,7 @@ msgPackSignalingTLV(Octet *buf, MsgSignaling *outgoing, PtpClock *ptpClock)
 	packSignalingTLV((SignalingTLV*)outgoing->tlv, buf);
 }
 
-void
+static void
 freeMMTLV(ManagementTLV* tlv) {
 	DBGV("cleanup managementTLV data\n");
 	switch(tlv->managementId)
@@ -2427,7 +2445,7 @@ freeMMTLV(ManagementTLV* tlv) {
 	}
 }
 
-void
+static void
 freeMMErrorStatusTLV(ManagementTLV *tlv) {
 	DBGV("cleanup managementErrorStatusTLV data \n");
 	freeMMErrorStatus((MMErrorStatus*)tlv->dataField);
@@ -2579,7 +2597,7 @@ void msgDump(PtpClock *ptpClock)
  * @param header a pre-filled msg header structure
  */
 
-void msgDebugHeader(MsgHeader *header)
+static void msgDebugHeader(MsgHeader *header)
 {
 	NOTIFY("msgDebugHeader: messageType %d\n", header->messageType);
 	NOTIFY("msgDebugHeader: versionPTP %d\n", header->versionPTP);
@@ -2612,7 +2630,7 @@ void msgDebugHeader(MsgHeader *header)
  * @param sync A pre-filled MsgSync structure
  */
 
-void msgDebugSync(MsgSync *sync)
+static void msgDebugSync(MsgSync *sync)
 {
 	NOTIFY("msgDebugSync: originTimestamp.seconds %u\n",
 	       sync->originTimestamp.secondsField);
@@ -2626,7 +2644,7 @@ void msgDebugSync(MsgSync *sync)
  * @param sync A pre-filled MsgAnnounce structure
  */
 
-void msgDebugAnnounce(MsgAnnounce *announce)
+static void msgDebugAnnounce(MsgAnnounce *announce)
 {
 	NOTIFY("msgDebugAnnounce: originTimestamp.seconds %u\n",
 	       announce->originTimestamp.secondsField);
@@ -2712,7 +2730,7 @@ void msgDebugDelayResp(MsgDelayResp *resp)
  * @param manage a pre-filled MsgManagement structure
  */
 
-void msgDebugManagement(MsgManagement *manage)
+static void msgDebugManagement(MsgManagement *manage)
 {
 	NOTIFY("msgDebugDelayManage: targetPortIdentity.clockIdentity "
 	       "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx\n",
