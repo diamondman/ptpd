@@ -17,7 +17,9 @@
 #include "ptp_timers.h"
 
 #include "dep/iniparser/dictionary.h"
-#include "dep/ntpengine/ntpdcontrol.h"
+#ifdef PTPD_FEATURE_NTP
+#  include "dep/ntpengine/ntpdcontrol.h"
+#endif
 #ifdef PTPD_STATISTICS
 #  include "dep/statistics.h"
 #  include "dep/outlierfilter.h"
