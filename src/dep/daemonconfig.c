@@ -2376,6 +2376,21 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 
 	CONFIG_KEY_DEPENDENCY("ntpengine:control:enabled", "ntpengine:key_id");
 	CONFIG_KEY_DEPENDENCY("ntpengine:control:enabled", "ntpengine:key");
+#else
+	if(!(opCode & CFGOP_PARSE_QUIET) && CONFIG_ISTRUE("ntpengine:enabled"))
+	    INFO("NTP support not enabled. Please compile with PTPD_FEATURE_NTP to use ntpengine:enabled\n");
+
+	if(!(opCode & CFGOP_PARSE_QUIET) && CONFIG_ISTRUE("ntpengine:control_enabled"))
+	    INFO("NTP support not enabled. Please compile with PTPD_FEATURE_NTP to use ntpengine:control_enabled\n");
+
+	if(!(opCode & CFGOP_PARSE_QUIET) && CONFIG_ISTRUE("ntpengine:check_interval"))
+	    INFO("NTP support not enabled. Please compile with PTPD_FEATURE_NTP to use ntpengine:check_interval\n");
+
+	if(!(opCode & CFGOP_PARSE_QUIET) && CONFIG_ISTRUE("ntpengine:key_id"))
+	    INFO("NTP support not enabled. Please compile with PTPD_FEATURE_NTP to use ntpengine:key_id\n");
+
+	if(!(opCode & CFGOP_PARSE_QUIET) && CONFIG_ISTRUE("ntpengine:key"))
+	    INFO("NTP support not enabled. Please compile with PTPD_FEATURE_NTP to use ntpengine:key\n");
 #endif
 
 /* ============== END CONFIG MAPPINGS, TRIGGERS AND DEPENDENCIES =========== */
