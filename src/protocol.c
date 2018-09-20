@@ -72,6 +72,7 @@
 #include "ptp_timers.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
+#include "dep/net.h"
 #include "dep/startup.h"
 #include "dep/servo.h"
 #include "dep/msg.h"

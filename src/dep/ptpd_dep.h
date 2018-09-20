@@ -26,42 +26,6 @@
 ./dep/sys.c:#define PRINT_MAC_ADDRESSES
 ./dep/timer.c:#define US_TIMER_INTERVAL 125000
 */
-#define USE_BINDTODEVICE
-
-/** \name net.c (Unix API dependent)
- * -Init network stuff, send and receive datas*/
- /**\{*/
-
-Boolean testInterface(char* ifaceName, const RunTimeOpts* rtOpts);
-Boolean netInit(NetPath*,RunTimeOpts*,PtpClock*);
-Boolean netShutdown(NetPath*);
-int netSelect(TimeInternal*,NetPath*,fd_set*);
-ssize_t netRecvEvent(Octet*,TimeInternal*,NetPath*,int);
-ssize_t netRecvGeneral(Octet*,NetPath*);
-ssize_t netSendEvent(Octet*,UInteger16,NetPath*,const RunTimeOpts*,Integer32,TimeInternal*);
-ssize_t netSendGeneral(Octet*,UInteger16,NetPath*,const RunTimeOpts*,Integer32 );
-ssize_t netSendPeerGeneral(Octet*,UInteger16,NetPath*,const RunTimeOpts*, Integer32);
-ssize_t netSendPeerEvent(Octet*,UInteger16,NetPath*,const RunTimeOpts*,Integer32,TimeInternal*);
-Boolean netRefreshIGMP(NetPath *, const RunTimeOpts *, PtpClock *);
-Boolean hostLookup(const char* hostname, Integer32* addr);
-
-/** \}*/
-
-#if defined PTPD_SNMP
-/** \name snmp.c (SNMP subsystem)
- * -Handle SNMP subsystem*/
- /**\{*/
-
-void snmpInit(RunTimeOpts *, PtpClock *);
-void snmpShutdown();
-void eventHandler_snmp(AlarmEntry *alarm);
-void alarmHandler_snmp(AlarmEntry *alarm);
-
-//void sendNotif(int eventType, PtpEventData *eventData);
-
-
-/** \}*/
-#endif
 
 /** \name sys.c (Unix API dependent)
  * -Manage timing system API*/

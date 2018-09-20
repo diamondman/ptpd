@@ -54,6 +54,9 @@
  *
  */
 
+// Configuration: Should the network BIND to the Network Device
+#define USE_BINDTODEVICE
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
@@ -110,6 +113,7 @@
 #include "dep/constants_dep.h"
 #include "dep/ipv4_acl.h"
 #include "ptp_datatypes.h"
+#include "dep/net.h"
 #include "arith.h"
 #include "dep/datatypes_dep.h"
 #include "datatypes.h"
@@ -1873,7 +1877,7 @@ netRecvGeneral(Octet * buf, NetPath * netPath)
 
 
 #ifdef PTPD_PCAP
-ssize_t
+static ssize_t
 netSendPcapEther(Octet * buf,  UInteger16 length,
 			struct ether_addr * dst, struct ether_addr * src,
 			pcap_t * pcap) {

@@ -40,6 +40,7 @@
 #include "constants.h"
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
+#include "dep/snmp.h"
 #include "dep/alarm_datatypes.h"
 #include "arith.h"
 #include "datatypes.h"

@@ -46,11 +46,12 @@
 #include "ptp_datatypes.h"
 #include "arith.h"
 #include "datatypes.h"
+#include "dep/net.h"
 #include "dep/msg.h"
 #include "signaling.h"
 #include "protocol.h"
 #include "bmc.h"
-#include "dep/ptpd_dep.h" // For snprint_PortIdentity, netSendGeneral, getRand
+#include "dep/ptpd_dep.h" // For snprint_PortIdentity, getRand
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 

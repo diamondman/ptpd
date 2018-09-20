@@ -75,6 +75,10 @@
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
 #include "datatypes.h"
+#ifdef PTPD_SNMP
+#  include "dep/snmp.h"
+#endif
+#include "dep/net.h"
 #include "dep/startup.h"
 #include "dep/servo.h"
 #include "dep/msg.h"
