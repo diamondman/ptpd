@@ -42,12 +42,12 @@
 #include "arith.h"
 #include "dep/alarm_datatypes.h"
 #include "datatypes.h"
+#include "dep/sys.h" // For getTime
 #ifdef PTPD_SNMP
 #  include "dep/snmp.h"
 #endif
 #include "dep/alarms.h"
 #include "display.h"
-#include "ptpd_dep.h" // For getTime
 #include "ptpd_logging.h"
 
 static const char* alarmStateToString(AlarmState state);

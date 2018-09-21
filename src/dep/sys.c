@@ -51,6 +51,9 @@
  *
  */
 
+//OPTIONS
+//#define PRINT_MAC_ADDRESSES
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
@@ -138,9 +141,9 @@
 #include "dep/datatypes_dep.h"
 #include "dep/servo.h" // For adjFreq_wrapper
 #include "datatypes.h"
+#include "dep/sys.h" // For getTime, getTimexFlags
 #include "dep/alarms.h"
 #include "display.h"
-#include "dep/ptpd_dep.h" // For getTime, getTimexFlags
 #include "ptpd_logging.h"
 
 /* only C99 has the round function built-in */
@@ -250,7 +253,7 @@ void DBG_time(const char *name, const TimeInternal  p)
 }
 
 
-char *
+static char *
 translatePortState(PtpClock *ptpClock)
 {
 	char *s;
@@ -277,7 +280,7 @@ translatePortState(PtpClock *ptpClock)
 }
 
 
-int
+static int
 snprint_ClockIdentity(char *s, int max_len, const ClockIdentity id)
 {
 	int len = 0;
@@ -294,8 +297,9 @@ snprint_ClockIdentity(char *s, int max_len, const ClockIdentity id)
 }
 
 
+#ifdef PRINT_MAC_ADDRESSES
 /* show the mac address in an easy way */
-int
+static int
 snprint_ClockIdentity_mac(char *s, int max_len, const ClockIdentity id)
 {
 	int len = 0;
@@ -319,6 +323,7 @@ snprint_ClockIdentity_mac(char *s, int max_len, const ClockIdentity id)
 
 	return len;
 }
+#endif
 
 
 /*
@@ -327,7 +332,7 @@ snprint_ClockIdentity_mac(char *s, int max_len, const ClockIdentity id)
  * so it only have different output on a failover or at restart
  *
  */
-int ether_ntohost_cache(char *hostname, struct ether_addr *addr)
+static int ether_ntohost_cache(char *hostname, struct ether_addr *addr)
 {
 	static int valid = 0;
 	static struct ether_addr prev_addr;
@@ -364,7 +369,7 @@ int ether_ntohost_cache(char *hostname, struct ether_addr *addr)
 
 
 /* Show the hostname configured in /etc/ethers */
-int
+static int
 snprint_ClockIdentity_ntohost(char *s, int max_len, const ClockIdentity id)
 {
 	int len = 0;
@@ -411,7 +416,7 @@ snprint_PortIdentity(char *s, int max_len, const PortIdentity *id)
 }
 
 /* Write a formatted string to file pointer */
-int writeMessage(FILE* destination, uint32_t *lastHash, int priority, const char * format, va_list ap)
+static int writeMessage(FILE* destination, uint32_t *lastHash, int priority, const char * format, va_list ap)
 {
 	extern RunTimeOpts rtOpts;
 	extern Boolean startupInProgress;

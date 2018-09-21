@@ -75,6 +75,7 @@
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
 #include "datatypes.h"
+#include "dep/sys.h" // Used for lots of stuff
 #ifdef PTPD_SNMP
 #  include "dep/snmp.h"
 #endif
@@ -86,7 +87,6 @@
 #include "protocol.h"
 #include "display.h"
 #include "dep/daemonconfig.h"
-#include "dep/ptpd_dep.h" // Used for lots of stuff
 #include "dep/configdefaults.h"
 #include "ptpd_logging.h"
 

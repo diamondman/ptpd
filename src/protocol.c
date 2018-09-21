@@ -72,6 +72,7 @@
 #include "ptp_timers.h"
 #include "dep/alarms.h"
 #include "datatypes.h"
+#include "dep/sys.h"
 #include "dep/net.h"
 #include "dep/startup.h"
 #include "dep/servo.h"
@@ -81,7 +82,6 @@
 #include "bmc.h"
 #include "display.h"
 #include "arith.h"
-#include "dep/ptpd_dep.h" // For a LOT of stuff
 #include "ptpd_utils.h"
 #include "ptpd_logging.h"
 
