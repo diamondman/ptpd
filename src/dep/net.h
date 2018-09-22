@@ -3,7 +3,8 @@
 
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
-#include "datatypes.h"
+#include "dep/datatypes_dep.h"
+#include "datatypes_stub.h"
 
 Boolean netShutdown(NetPath*);
 Boolean testInterface(char* ifaceName, const RunTimeOpts* rtOpts);

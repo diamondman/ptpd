@@ -90,7 +90,7 @@ typedef struct {
 /**
  * \brief Struct describing network transport data
  */
-typedef struct {
+typedef struct NetPath {
 	Integer32 eventSock, generalSock;
 	Integer32 multicastAddr, peerMulticastAddr;
 

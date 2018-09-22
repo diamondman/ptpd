@@ -2,7 +2,7 @@
 #include "ptp_datatypes.h"
 #include "dep/datatypes_dep.h"
 #include "ptp_timers.h"
-#include "datatypes.h"
+#include "datatypes_stub.h"
 
 void integer64_display (const Integer64*);
 void uInteger48_display(const UInteger48*);

@@ -3,7 +3,7 @@
 
 #include "dep/iniparser/dictionary.h"
 #include "ptp_primitives.h"
-#include "datatypes.h"
+#include "datatypes_stub.h"
 
 
 void applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock);

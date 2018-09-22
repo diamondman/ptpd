@@ -16,6 +16,7 @@
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
 
+#include "datatypes_stub.h"
 #include "dep/iniparser/dictionary.h"
 #ifdef PTPD_FEATURE_NTP
 #  include "dep/ntpengine/ntpdcontrol.h"
@@ -27,6 +28,7 @@
 #include "dep/alarm_datatypes.h"
 #include "dep/datatypes_dep.h"
 #include "dep/constants_dep.h"
+#include "dep/servo.h"
 
 
 /**
@@ -115,43 +117,6 @@ typedef struct
 
 } PtpdCounters;
 
-/**
- * \struct PIservo
- * \brief PI controller model structure
- */
-
-typedef struct{
-	int maxOutput;
-	Integer32 input;
-	double output;
-	double observedDrift;
-	double kP, kI;
-	TimeInternal lastUpdate;
-	Boolean runningMaxOutput;
-	int dTmethod;
-	double dT;
-	int maxdT;
-#ifdef PTPD_STATISTICS
-	int updateCount;
-	int stableCount;
-	Boolean statsUpdated;
-	Boolean statsCalculated;
-	Boolean isStable;
-	double stabilityThreshold;
-	int stabilityPeriod;
-	int stabilityTimeout;
-	double driftMean;
-	double driftStdDev;
-	double driftMedian;
-	double driftMin;
-	double driftMax;
-	double driftMinFinal;
-	double driftMaxFinal;
-	DoublePermanentStdDev driftStats;
-	DoublePermanentMedian driftMedianContainer;
-#endif /* PTPD_STATISTICS */
-} PIservo;
-
 typedef struct {
 	Boolean activity; 		/* periodic check, updateClock sets this to let the watchdog know we're holding clock control */
 	Boolean	available; 	/* flags that we can control the clock */
@@ -177,7 +142,7 @@ typedef struct {
 
 typedef struct UnicastGrantTable UnicastGrantTable;
 
-typedef struct {
+typedef struct UnicastGrantData {
 	UInteger32      duration;		/* grant duration */
 	Boolean		requestable;		/* is this mesage type even requestable? */
 	Boolean		requested;		/* slave: we have requested this */
@@ -208,13 +173,13 @@ struct UnicastGrantTable {
 };
 
 /* Unicast index holder: data + port mask */
-typedef struct {
+typedef struct UnicastGrantIndex {
 	UnicastGrantTable* data[UNICAST_MAX_DESTINATIONS];
 	UInteger16 portMask;
 } UnicastGrantIndex;
 
 /* Unicast destination configuration: Address, domain, preference, last Sync timestamp sent */
-typedef struct {
+typedef struct UnicastDestination {
 	Integer32		transportAddress;		/* destination address */
 	UInteger8		domainNumber;			/* domain number - for slaves with masters in multiple domains */
 	UInteger8		localPreference;		/* local preference to influence BMC */
@@ -233,7 +198,7 @@ typedef struct {
  * \brief Program options set at run-time
  */
 /* program options set at run-time */
-typedef struct {
+typedef struct RunTimeOpts {
 	Integer8 logAnnounceInterval;
 	Integer8 announceReceiptTimeout;
 	Integer8 logSyncInterval;

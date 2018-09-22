@@ -4,7 +4,7 @@
 #include "ptp_primitives.h"
 #include "dep/datatypes_dep.h"
 #include "ptp_datatypes.h"
-#include "datatypes.h"
+#include "datatypes_stub.h"
 
 char *dump_TimeInternal(const TimeInternal * p);
 char *dump_TimeInternal2(const char *st1, const TimeInternal * p1, const char *st2, const TimeInternal * p2);

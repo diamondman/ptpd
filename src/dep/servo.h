@@ -2,9 +2,49 @@
 #define SERVO_H_
 
 #include "ptp_primitives.h"
+#ifdef PTPD_STATISTICS
+#  include "dep/statistics.h"
+#endif /* PTPD_STATISTICS */
 #include "ptp_datatypes.h"
 #include "dep/datatypes_dep.h"
-#include "datatypes.h"
+#include "datatypes_stub.h"
+
+/**
+ * \struct PIservo
+ * \brief PI controller model structure
+ */
+
+typedef struct{
+	int maxOutput;
+	Integer32 input;
+	double output;
+	double observedDrift;
+	double kP, kI;
+	TimeInternal lastUpdate;
+	Boolean runningMaxOutput;
+	int dTmethod;
+	double dT;
+	int maxdT;
+#ifdef PTPD_STATISTICS
+	int updateCount;
+	int stableCount;
+	Boolean statsUpdated;
+	Boolean statsCalculated;
+	Boolean isStable;
+	double stabilityThreshold;
+	int stabilityPeriod;
+	int stabilityTimeout;
+	double driftMean;
+	double driftStdDev;
+	double driftMedian;
+	double driftMin;
+	double driftMax;
+	double driftMinFinal;
+	double driftMaxFinal;
+	DoublePermanentStdDev driftStats;
+	DoublePermanentMedian driftMedianContainer;
+#endif /* PTPD_STATISTICS */
+} PIservo;
 
 void resetWarnings(const RunTimeOpts * rtOpts, PtpClock * ptpClock);
 void initClock(const RunTimeOpts*,PtpClock*);

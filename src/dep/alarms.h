@@ -39,7 +39,7 @@
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "dep/alarm_datatypes.h"
-#include "datatypes.h"
+#include "datatypes_stub.h"
 
 void initAlarms(AlarmEntry* alarms, int count, void* userData); 			/* fill an array with initial alarm data */
 void configureAlarms(AlarmEntry* alarms, int count, void* userData); 			/* fill an array with initial alarm data */

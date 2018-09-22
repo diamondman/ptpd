@@ -1,6 +1,6 @@
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
-#include "datatypes.h" // Just for PtpClock
+#include "datatypes_stub.h" // Just for PtpClock
 
 
 void msgUnpackHeader(Octet * buf,MsgHeader*);

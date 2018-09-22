@@ -2,7 +2,7 @@
 #define SNMP_H_
 
 #include "dep/alarm_datatypes.h"
-#include "datatypes.h"
+#include "datatypes_stub.h"
 
 void snmpInit(RunTimeOpts *, PtpClock *);
 void snmpShutdown();

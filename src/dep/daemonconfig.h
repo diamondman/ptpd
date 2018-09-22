@@ -11,7 +11,7 @@
 
 #include "ptp_primitives.h"
 #include "dep/iniparser/dictionary.h"
-#include "datatypes.h"
+#include "datatypes_stub.h"
 
 /* Config reload - component restart status flags */
 

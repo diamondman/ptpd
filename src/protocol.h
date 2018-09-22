@@ -1,6 +1,6 @@
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
-#include "datatypes.h"
+#include "datatypes_stub.h"
 
 void protocol(RunTimeOpts*, PtpClock*);
 void setPortState(PtpClock* ptpClock, Enumeration8 state);
