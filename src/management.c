@@ -59,6 +59,7 @@
 #include "arith.h"
 #include "dep/iniparser/dictionary.h"
 #include "datatypes.h"
+#include "management.h"
 #include "dep/sys.h" // For getTime
 #include "dep/net.h" // Only for netSendGeneral
 #include "dep/startup.h" // Only for applyConfig
