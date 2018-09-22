@@ -11,7 +11,7 @@
 
 #include "ptp_primitives.h"
 #include "dep/iniparser/dictionary.h"
-#include "dep/datatypes_dep.h"
+#include "dep/datatypes_dep_stub.h"
 #include "datatypes_stub.h"
 
 #define DEFAULT_TEMPLATE_FILE DATADIR"/"PACKAGE_NAME"/templates.conf"

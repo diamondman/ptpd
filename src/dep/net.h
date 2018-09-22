@@ -3,7 +3,7 @@
 
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
-#include "dep/datatypes_dep.h"
+#include "dep/datatypes_dep_stub.h"
 #include "datatypes_stub.h"
 
 Boolean netShutdown(NetPath*);

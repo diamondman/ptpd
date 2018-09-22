@@ -51,6 +51,7 @@
 #endif
 
 #include "ptp_primitives.h"
+#include "dep/datatypes_dep_stub.h"
 #include "dep/ipv4_acl.h" // Only used for opaque type Ipv4AccessList
 
 /**
@@ -134,7 +135,7 @@ typedef struct NetPath {
 
 } NetPath;
 
-typedef struct {
+typedef struct LogFileHandler {
 
 	char* logID;
 	char* openMode;
@@ -192,7 +193,7 @@ typedef struct{
 
 } UInteger16_option;
 
-typedef struct {
+typedef struct LeapSecondInfo {
     int currentOffset;
     int nextOffset;
     int leapType;
