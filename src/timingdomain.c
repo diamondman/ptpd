@@ -14,11 +14,11 @@
 
 #include "constants.h"
 #include "ptp_primitives.h"
+#include "dep/datatypes_dep.h"
 #include "dep/constants_dep.h"
 #include "ptp_datatypes.h"
 #include "arith.h"
 #include "timingdomain.h"
-#include "dep/datatypes_dep.h"
 #include "dep/ntpengine/ntpdcontrol.h"
 #include "datatypes.h"
 #include "dep/sys.h" // Only for parseLeapFile, getTime, updateXtmp

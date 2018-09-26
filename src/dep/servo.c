@@ -62,7 +62,6 @@
 #include "ptp_timers.h"
 #include "ptp_datatypes.h"
 #include "arith.h"
-#include "dep/datatypes_dep.h"
 #include "datatypes.h"
 #include "dep/sys.h" // For logStatistics, getTime, setTime, restoreDrift, getTimeMonotonic, saveDrift
 #include "dep/servo.h"

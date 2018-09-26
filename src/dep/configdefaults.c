@@ -42,7 +42,6 @@
 #include "constants.h"
 #include "ptp_primitives.h"
 #include "dep/ipv4_acl.h"
-#include "dep/datatypes_dep.h"
 #include "dep/iniparser/dictionary.h"
 #include "dep/iniparser/iniparser.h"
 #include "datatypes.h"

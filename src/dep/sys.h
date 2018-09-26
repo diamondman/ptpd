@@ -2,7 +2,7 @@
 #define SYS_H_
 
 #include "ptp_primitives.h"
-#include "dep/datatypes_dep_stub.h"
+#include "dep/datatypes_dep.h"
 #include "ptp_datatypes.h"
 #include "datatypes_stub.h"
 

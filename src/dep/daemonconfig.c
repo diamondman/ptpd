@@ -55,7 +55,6 @@
 #include "ptp_primitives.h"
 #include "dep/iniparser/dictionary.h"
 #include "dep/iniparser/iniparser.h"
-#include "dep/datatypes_dep.h"
 #include "datatypes.h"
 #include "display.h"
 #include "dep/configdefaults.h"

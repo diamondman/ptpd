@@ -8,9 +8,5 @@
 
 typedef struct RunTimeOpts RunTimeOpts;
 typedef struct PtpClock PtpClock;
-typedef struct UnicastGrantTable UnicastGrantTable;
-typedef struct UnicastGrantData UnicastGrantData;
-typedef struct UnicastGrantIndex UnicastGrantIndex;
-typedef struct UnicastDestination UnicastDestination;
 
 #endif

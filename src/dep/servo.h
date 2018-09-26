@@ -5,9 +5,28 @@
 #ifdef PTPD_STATISTICS
 #  include "dep/statistics.h"
 #endif /* PTPD_STATISTICS */
-#include "ptp_datatypes.h"
-#include "dep/datatypes_dep_stub.h"
 #include "datatypes_stub.h"
+
+/**
+ * \brief Struct used to average the offset from master
+ *
+ * The FIR filtering of the offset from master input is a simple, two-sample average
+ */
+typedef struct offset_from_master_filter {
+    Integer32  nsec_prev, y;
+} offset_from_master_filter;
+
+/**
+* \brief Struct used to average the one way delay
+*
+* It is a variable cutoff/delay low-pass, infinite impulse response (IIR) filter.
+*
+*  The one-way delay filter has the difference equation: s*y[n] - (s-1)*y[n-1] = x[n]/2 + x[n-1]/2, where increasing the stiffness (s) lowers the cutoff and increases the delay.
+ */
+typedef struct one_way_delay_filter {
+    Integer32  nsec_prev, y;
+    Integer32  s_exp;
+} one_way_delay_filter;
 
 /**
  * \struct PIservo

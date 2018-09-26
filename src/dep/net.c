@@ -97,15 +97,12 @@
 #endif /* ETHER_HDR_LEN */
 
 #ifdef PTPD_PCAP
-#  ifdef HAVE_PCAP_PCAP_H
-#    include <pcap/pcap.h>
-#  else /* !HAVE_PCAP_PCAP_H */
-/* Cases like RHEL5 and others where only pcap.h exists */
-#    ifdef HAVE_PCAP_H
-#      include <pcap.h>
-#    endif /* HAVE_PCAP_H */
-#  endif
 #  define PCAP_TIMEOUT 1 /* expressed in milliseconds */
+#  if defined(HAVE_PCAP_PCAP_H)
+#    include <pcap/pcap.h>
+#  elif defined(HAVE_PCAP_H)
+#    include <pcap.h> /* Cases like RHEL5 and others where only pcap.h exists */
+#  endif
 #endif
 
 #include "constants.h"
@@ -115,7 +112,6 @@
 #include "ptp_datatypes.h"
 #include "dep/net.h"
 #include "arith.h"
-#include "dep/datatypes_dep.h"
 #include "datatypes.h"
 #include "ptpd_logging.h"
 

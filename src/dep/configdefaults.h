@@ -11,10 +11,49 @@
 
 #include "ptp_primitives.h"
 #include "dep/iniparser/dictionary.h"
-#include "dep/datatypes_dep_stub.h"
 #include "datatypes_stub.h"
 
 #define DEFAULT_TEMPLATE_FILE DATADIR"/"PACKAGE_NAME"/templates.conf"
+
+typedef struct{
+
+    UInteger8 minValue;
+    UInteger8 maxValue;
+    UInteger8 defaultValue;
+
+} UInteger8_option;
+
+typedef struct{
+
+    Integer32  minValue;
+    Integer32  maxValue;
+    Integer32  defaultValue;
+
+} Integer32_option;
+
+typedef struct{
+
+    UInteger32  minValue;
+    UInteger32  maxValue;
+    UInteger32  defaultValue;
+
+} UInteger32_option;
+
+typedef struct{
+
+    Integer16  minValue;
+    Integer16  maxValue;
+    Integer16  defaultValue;
+
+} Integer16_option;
+
+typedef struct{
+
+    UInteger16  minValue;
+    UInteger16  maxValue;
+    UInteger16  defaultValue;
+
+} UInteger16_option;
 
 typedef struct {
     char * name;
