@@ -1,7 +1,13 @@
+#pragma once
+#ifndef ARITH_H_
+#define ARITH_H_
+
 /** \name arith.c
  * -Timing management and arithmetic*/
  /**\{*/
 /* arith.c */
+
+#include <sys/time.h>
 
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
@@ -72,3 +78,5 @@ double timeInternalToDouble(const TimeInternal * p);
 TimeInternal doubleToTimeInternal(const double d);
 
 uint32_t fnvHash(void *input, size_t len, int modulo);
+
+#endif /* include guard */

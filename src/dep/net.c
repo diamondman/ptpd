@@ -75,7 +75,18 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
-#include <sys/socket.h> // Required explicitly on FreeBSD (AF_LINK)
+
+#if defined(HAVE_SYS_SOCKET_H)
+// Required by openBSD before net/if.h
+// Required explicitly on FreeBSD (AF_LINK)
+#  include <sys/socket.h>
+#endif
+
+#include <net/if.h>      // For IF_NAMESIZE
+#include <netinet/in.h>  // For INET_ADDRSTRLEN
+#include <netinet/ip.h>  // For struct ip
+#include <netinet/udp.h> // For struct udphdr
+
 #if defined(HAVE_SYS_SOCKIO_H)
 // Solaris defines SIOCGIFHWADDR here.
 #  include <sys/sockio.h>
@@ -131,6 +142,14 @@
 #  include <net-snmp/net-snmp-includes.h>
 #  include <net-snmp/agent/net-snmp-agent-includes.h>
 #endif
+
+#if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
+// Solaris doesn't have ETHER_ADDR_LEN defined in net/ethernet.h
+#  define ETHER_ADDR_LEN ETHERADDRL
+#endif
+
+#define PACKET_BEGIN_UDP (ETHER_HDR_LEN + sizeof(struct ip) + sizeof(struct udphdr))
+#define PACKET_BEGIN_ETHER (ETHER_HDR_LEN)
 
 /**
  * shutdown the IPv4 multicast for specific address

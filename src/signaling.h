@@ -2,7 +2,6 @@
 #ifndef SIGNALING_H_
 #define SIGNALING_H_
 
-#include "constants.h"
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "datatypes_stub.h"

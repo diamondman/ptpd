@@ -27,11 +27,6 @@
 #  include <net/ethernet.h>
 #endif
 
-#if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
-// Solaris doesn't have ETHER_ADDR_LEN defined in net/ethernet.h
-#  define ETHER_ADDR_LEN ETHERADDRL
-#endif
-
 #ifdef PTPD_PCAP
 #  if defined(HAVE_PCAP_PCAP_H)
 #    include <pcap/pcap.h>
@@ -44,6 +39,9 @@
 #include "ptp_datatypes.h"
 #include "dep/ipv4_acl.h" // Only used for opaque type Ipv4AccessList
 #include "datatypes_stub.h"
+
+#define IFACE_NAME_LENGTH         IF_NAMESIZE
+#define NET_ADDRESS_LENGTH        INET_ADDRSTRLEN
 
 /**
  * \brief Struct containing interface information and capabilities

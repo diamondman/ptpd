@@ -54,6 +54,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"

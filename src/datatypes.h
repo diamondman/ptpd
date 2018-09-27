@@ -17,7 +17,6 @@
 #include "ptp_datatypes.h"
 #include "signaling.h"
 #include "ptp_timers.h"
-
 #include "datatypes_stub.h"
 #include "dep/iniparser/dictionary.h"
 #ifdef PTPD_FEATURE_NTP

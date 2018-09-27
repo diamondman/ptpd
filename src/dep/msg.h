@@ -1,3 +1,7 @@
+#pragma once
+#ifndef MSG_H_
+#define MSG_H_
+
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "datatypes_stub.h" // Just for PtpClock
@@ -135,3 +139,5 @@ void unpackTimestamp( Octet* buf, Timestamp *t, PtpClock*);
 void packTimestamp( Timestamp *t, Octet* buf);
 void freeTimestamp( Timestamp *t);
 UInteger16 msgPackManagementResponse(Octet * buf,MsgHeader*,MsgManagement*,PtpClock*);
+
+#endif /* include guard */

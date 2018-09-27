@@ -1,52 +1,25 @@
 
 /* constants_dep.h */
-
 #ifndef CONSTANTS_DEP_H
 #define CONSTANTS_DEP_H
 
 /**
-*\file
-* \brief Plateform-dependent constants definition
-*
-* This header defines all includes and constants which are plateform-dependent
-*
-* ptpdv2 is only implemented for linux, NetBSD and FreeBSD
+ * \file
+ * \brief Non PTP specification constants
+ *
+ * This header defines all the constants not explicitly related to the PTP protocol's spec.
  */
 
-/* platform dependent */
+#include <fcntl.h>
+#include <sys/stat.h> // For File Permissions
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif /* HAVE_CONFIG_H */
+#include "constants.h"
 
 #if !defined(linux) && !defined(__NetBSD__) && !defined(__FreeBSD__) && \
   !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__sun) && !defined(__QNXNTO__)
 #  error PTPD hasn't been ported to this OS - should be possible \
 if it's POSIX compatible, if you succeed, report it to ptpd-devel@sourceforge.net
 #endif
-
-#if defined(HAVE_SYS_SOCKET_H)
-// Required by openBSD before net/if.h
-#  include <sys/socket.h>
-#endif
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/udp.h>
-#include <fcntl.h>
-
-#ifdef HAVE_SYS_ISA_DEFS_H
-#  include <sys/isa_defs.h> // sun related
-#endif /* HAVE_SYS_ISA_DEFS_H */
-
-#ifdef __QNXNTO__
-#  include <sys/neutrino.h>
-#  include <sys/syspage.h>
-#  define BSD_INTERFACE_FUNCTIONS
-#endif /* __QNXNTO __ */
-
-#define IFACE_NAME_LENGTH         IF_NAMESIZE
-#define NET_ADDRESS_LENGTH        INET_ADDRSTRLEN
 
 #define CLOCK_IDENTITY_LENGTH 8
 #define ADJ_FREQ_MAX 500000
@@ -58,8 +31,6 @@ if it's POSIX compatible, if you succeed, report it to ptpd-devel@sourceforge.ne
 #define FLAG_FIELD_LENGTH         2
 
 #define PACKET_SIZE  300
-#define PACKET_BEGIN_UDP (ETHER_HDR_LEN + sizeof(struct ip) + sizeof(struct udphdr))
-#define PACKET_BEGIN_ETHER (ETHER_HDR_LEN)
 
 #define PTP_EVENT_PORT    319
 #define PTP_GENERAL_PORT  320
@@ -164,7 +135,6 @@ enum {
 
 /* bigger screen size constants */
 #define SCREEN_BUFSZ  228
-#define SCREEN_MAXSZ  180
 
 /* default size for string buffers */
 #define BUF_SIZE  1000
