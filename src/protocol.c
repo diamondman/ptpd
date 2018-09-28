@@ -59,6 +59,7 @@
 #endif /* PTPD_DISABLE_SOTIMESTAMPING */
 
 #include <stdint.h>
+#include <stdlib.h> // size_t ssize_t
 #include <sys/types.h>
 #include <string.h>
 #include <math.h>

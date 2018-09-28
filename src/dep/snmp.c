@@ -36,6 +36,7 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h> // For size_t
 
 #include "constants.h"
 #include "ptp_primitives.h"

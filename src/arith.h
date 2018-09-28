@@ -8,6 +8,7 @@
 /* arith.c */
 
 #include <sys/time.h>
+#include <stdlib.h> // For size_t
 
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"

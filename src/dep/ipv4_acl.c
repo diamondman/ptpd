@@ -35,11 +35,18 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif /* HAVE_CONFIG_H */
+
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#if defined(HAVE_ARPA_INET_H)
+#  include <arpa/inet.h> // For htonl
+#endif
 
 #include "ptp_primitives.h"
 #include "ipv4_acl.h"

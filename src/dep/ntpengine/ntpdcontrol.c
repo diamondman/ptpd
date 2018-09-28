@@ -68,6 +68,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>

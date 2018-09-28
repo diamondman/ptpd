@@ -71,6 +71,7 @@
 #include <sys/types.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdlib.h> // size_t and ssize_t
 #include <errno.h>
 #include <netdb.h>
 #include <arpa/inet.h>

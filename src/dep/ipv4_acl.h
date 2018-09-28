@@ -8,6 +8,8 @@
 #ifndef PTPD_IPV4_ACL_H_
 #define PTPD_IPV4_ACL_H_
 
+#include <stdint.h>
+
 enum {
 	ACL_PERMIT_DENY,
 	ACL_DENY_PERMIT
