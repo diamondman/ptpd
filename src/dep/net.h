@@ -27,6 +27,10 @@
 #  include <net/ethernet.h>
 #endif
 
+#if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
+#  define ETHER_ADDR_LEN ETHERADDRL // sun related
+#endif /* ETHER_ADDR_LEN && ETHERADDRL */
+
 #ifdef PTPD_PCAP
 #  if defined(HAVE_PCAP_PCAP_H)
 #    include <pcap/pcap.h>

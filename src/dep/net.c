@@ -50,8 +50,6 @@
  * @date   Tue Jul 20 16:17:49 2010
  *
  * @brief  Functions to interact with the network sockets and NIC driver.
- *
- *
  */
 
 // Configuration: Should the network BIND to the Network Device
@@ -88,6 +86,13 @@
 #include <netinet/ip.h>  // For struct ip
 #include <netinet/udp.h> // For struct udphdr
 
+#ifdef HAVE_SYS_ISA_DEFS_H
+#  include <sys/isa_defs.h> // sun related
+#  if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
+#    define ETHER_ADDR_LEN ETHERADDRL
+#  endif /* ETHER_ADDR_LEN && ETHERADDRL */
+#endif /* HAVE_SYS_ISA_DEFS_H */
+
 #if defined(HAVE_SYS_SOCKIO_H)
 // Solaris defines SIOCGIFHWADDR here.
 #  include <sys/sockio.h>
@@ -99,10 +104,6 @@
 #  include <sys/ioctl.h>
 #  include <net/if_arp.h> // Used by Linux
 #endif
-
-#if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
-#  define ETHER_ADDR_LEN ETHERADDRL
-#endif /* ETHER_ADDR_LEN && ETHERADDRL */
 
 #ifndef ETHER_HDR_LEN
 #  define ETHER_HDR_LEN sizeof (struct ether_header)
@@ -144,10 +145,13 @@
 #  include <net-snmp/agent/net-snmp-agent-includes.h>
 #endif
 
-#if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
-// Solaris doesn't have ETHER_ADDR_LEN defined in net/ethernet.h
-#  define ETHER_ADDR_LEN ETHERADDRL
+#if defined(HAVE_NET_ETHERNET_H)
+#  include <net/ethernet.h>
 #endif
+
+#if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
+#  define ETHER_ADDR_LEN ETHERADDRL // sun related (from net.ethernet.h)
+#endif /* ETHER_ADDR_LEN && ETHERADDRL */
 
 #define PACKET_BEGIN_UDP (ETHER_HDR_LEN + sizeof(struct ip) + sizeof(struct udphdr))
 #define PACKET_BEGIN_ETHER (ETHER_HDR_LEN)
