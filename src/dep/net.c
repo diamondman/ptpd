@@ -97,11 +97,13 @@
 // Solaris defines SIOCGIFHWADDR here.
 #  include <sys/sockio.h>
 #endif
+#if defined(HAVE_SYS_IOCTL_H)
+#  include <sys/ioctl.h>
+#endif
 #if defined(AF_LINK) && !defined(__sun) // BSD thing
 #  include <net/if_dl.h>    // struct sockaddr_dl
 #  include <net/if_types.h> // IFT_* constants
 #else
-#  include <sys/ioctl.h>
 #  include <net/if_arp.h> // Used by Linux
 #endif
 
