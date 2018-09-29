@@ -124,6 +124,7 @@
 
 /** \}*/
 
+// Defined in dep/sys.c, declared here for convenience.
 void logMessage(int priority, const char *format, ...);
 
 

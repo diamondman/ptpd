@@ -1,3 +1,7 @@
+#pragma once
+#ifndef BMC_H_
+#define BMC_H_
+
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "datatypes_stub.h"
@@ -20,3 +24,5 @@ void p1(PtpClock* ptpClock, const RunTimeOpts* rtOpts);
 void s1(MsgHeader*, MsgAnnounce*, PtpClock*, const RunTimeOpts*);
 
 UInteger8 bmc(ForeignMasterRecord*, const RunTimeOpts*, PtpClock*);
+
+#endif /* include guard */

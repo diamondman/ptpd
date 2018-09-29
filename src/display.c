@@ -59,9 +59,9 @@
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
+#include "display.h"
 #include "datatypes.h"
 #include "dep/net.h"
-#include "display.h"
 #include "ptpd_logging.h"
 
 /**\brief Display an Integer64 type*/

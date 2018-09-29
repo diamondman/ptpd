@@ -1,3 +1,7 @@
+#pragma once
+#ifndef DISPLAY_H_
+#define DISPLAY_H_
+
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
@@ -81,3 +85,5 @@ const char* delayMechToString(uint8_t mech);
 
 void displayStatistics(const PtpClock*);
 void displayPtpClock(const PtpClock*);
+
+#endif /* include guard */
