@@ -10,7 +10,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "constants.h"
+#include "constants.h" // For USER_DESCRIPTION_MAX
+#include "dep/constants_dep.h" // For UNICAST_MAX_DESTINATIONS, PACKET_SIZE
 #include "ptp_primitives.h"
 #include "dep/datatypes_dep.h"
 #include "timingdomain.h"
@@ -28,9 +29,7 @@
 #endif /* PTPD_STATISTICS */
 #include "dep/alarm_datatypes.h"
 #include "dep/net.h"
-#include "dep/constants_dep.h"
 #include "dep/servo.h"
-
 
 /**
  * \struct PtpdCounters

@@ -39,7 +39,8 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#include "constants.h"
+#include "constants.h" // For DEFAULT_*, INTERNAL_OSCILLATOR, NO_ADJUST
+#include "dep/constants_dep.h"
 #include "ptp_primitives.h"
 #include "dep/ipv4_acl.h"
 #include "dep/iniparser/dictionary.h"

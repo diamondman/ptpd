@@ -59,7 +59,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "constants.h"
+#include "constants.h" // For USER_DESCRIPTION
 #include "ptp_primitives.h"
 #include "timingdomain.h"
 #include "datatypes.h"

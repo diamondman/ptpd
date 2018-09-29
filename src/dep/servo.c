@@ -58,6 +58,7 @@
 #include <math.h>
 
 #include "constants.h"
+#include "dep/constants_dep.h" // For dT calc mode enum (DT_*), StatFilter window type enum (WINDOW_*)
 #include "ptp_primitives.h"
 #include "ptp_timers.h"
 #include "ptp_datatypes.h"

@@ -2,6 +2,7 @@
 #define SERVO_H_
 
 #include "ptp_primitives.h"
+#include "ptp_datatypes.h"
 #ifdef PTPD_STATISTICS
 #  include "dep/statistics.h"
 #endif /* PTPD_STATISTICS */

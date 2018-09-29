@@ -1,8 +1,8 @@
 #ifndef PTP_DATATYPES_H_
 #define PTP_DATATYPES_H_
 
+#include "dep/constants_dep.h" // For CLOCK_IDENTITY_LENGTH
 #include "ptp_primitives.h"
-#include "dep/constants_dep.h"
 
 /*Struct defined in spec*/
 

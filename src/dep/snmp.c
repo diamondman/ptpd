@@ -39,6 +39,7 @@
 #include <stdlib.h> // For size_t
 
 #include "constants.h"
+#include "dep/constants_dep.h"
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "dep/snmp.h"

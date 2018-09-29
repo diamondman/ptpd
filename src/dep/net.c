@@ -121,8 +121,8 @@
 #endif
 
 #include "constants.h"
-#include "ptp_primitives.h"
 #include "dep/constants_dep.h"
+#include "ptp_primitives.h"
 #include "dep/ipv4_acl.h"
 #include "ptp_datatypes.h"
 #include "dep/net.h"

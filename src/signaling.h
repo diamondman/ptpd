@@ -2,6 +2,8 @@
 #ifndef SIGNALING_H_
 #define SIGNALING_H_
 
+#include "constants.h" // For PTP_MAX_MESSAGE_INDEXED
+#include "dep/constants_dep.h" // For UNICAST_MAX_DESTINATION
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "datatypes_stub.h"

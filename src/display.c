@@ -55,8 +55,8 @@
 #include <stdint.h>
 
 #include "constants.h"
-#include "ptp_primitives.h"
 #include "dep/constants_dep.h"
+#include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "ptp_timers.h"
 #include "datatypes.h"
