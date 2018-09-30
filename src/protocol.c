@@ -739,15 +739,7 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			resetDoubleMovingStatFilter(ptpClock->filterSM);
 		}
 		clearPtpEngineSlaveStats(&ptpClock->slaveStats);
-		ptpClock->servo.driftMean = 0;
-		ptpClock->servo.driftStdDev = 0;
-		ptpClock->servo.isStable = FALSE;
-		ptpClock->servo.stableCount = 0;
-		ptpClock->servo.updateCount = 0;
-		ptpClock->servo.statsCalculated = FALSE;
-		ptpClock->servo.statsUpdated = FALSE;
-		resetDoublePermanentMedian(&ptpClock->servo.driftMedianContainer);
-		resetDoublePermanentStdDev(&ptpClock->servo.driftStats);
+		resetServoStatistics(&ptpClock->servo);
 		timerStart(&ptpClock->timers[STATISTICS_UPDATE_TIMER], rtOpts->statsUpdateInterval);
 #endif /* PTPD_STATISTICS */
 		break;

@@ -1272,4 +1272,17 @@ updatePtpEngineStats (PtpClock* ptpClock, const RunTimeOpts* rtOpts)
 	ptpClock->acceptedUpdates = 0;
 }
 
+void resetServoStatistics(PIservo* servo)
+{
+	servo->driftMean = 0;
+	servo->driftStdDev = 0;
+	servo->isStable = FALSE;
+	servo->stableCount = 0;
+	servo->updateCount = 0;
+	servo->statsCalculated = FALSE;
+	servo->statsUpdated = FALSE;
+	resetDoublePermanentMedian(&servo->driftMedianContainer);
+	resetDoublePermanentStdDev(&servo->driftStats);
+}
+
 #endif /* PTPD_STATISTICS */

@@ -85,6 +85,7 @@ double runPIservo(PIservo* servo, const Integer32 input);
 
 #ifdef PTPD_STATISTICS
 void updatePtpEngineStats (PtpClock* ptpClock, const RunTimeOpts* rtOpts);
+void resetServoStatistics(PIservo*);
 #endif /* PTPD_STATISTICS */
 
 #endif
