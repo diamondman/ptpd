@@ -78,7 +78,7 @@ void initData(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	/* Default data set */
 	ptpClock->defaultDS.twoStepFlag = TWO_STEP_FLAG;
-	struct ether_addr macaddr = netPathGetMacAddress(&ptpClock->netPath);
+	struct ether_addr macaddr = netPathGetMacAddress(ptpClock->netPath);
 
 	/*
 	 * init clockIdentity with MAC address and 0xFF and 0xFE. see

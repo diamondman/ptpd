@@ -600,7 +600,7 @@ static void handleMMClockDescription(MsgManagement* incoming, MsgManagement* out
 		/* physical address */
                 data->physicalAddress.addressLength = PTP_UUID_LENGTH;
                 XMALLOC(data->physicalAddress.addressField, PTP_UUID_LENGTH);
-		struct ether_addr macaddr = netPathGetMacAddress(&ptpClock->netPath);
+		struct ether_addr macaddr = netPathGetMacAddress(ptpClock->netPath);
                 memcpy(data->physicalAddress.addressField,
                         macaddr.octet,
                         PTP_UUID_LENGTH);
@@ -609,7 +609,7 @@ static void handleMMClockDescription(MsgManagement* incoming, MsgManagement* out
                 data->protocolAddress.networkProtocol = 1;
                 XMALLOC(data->protocolAddress.addressField,
                         data->protocolAddress.addressLength);
-		struct in_addr interface_addr = netPathGetInterfaceAddr(&ptpClock->netPath);
+		struct in_addr interface_addr = netPathGetInterfaceAddr(ptpClock->netPath);
 		memcpy(data->protocolAddress.addressField,
 		       &interface_addr.s_addr,
 		       data->protocolAddress.addressLength);
@@ -1846,7 +1846,7 @@ issueManagementRespOrAck(MsgManagement *outgoing, Integer32 dst, const RunTimeOp
 
 
 	if(!netSendGeneral(ptpClock->msgObuf, outgoing->header.messageLength,
-			   &ptpClock->netPath, rtOpts, dst)) {
+			   ptpClock->netPath, rtOpts, dst)) {
 		DBGV("Management response/acknowledge can't be sent -> FAULTY state \n");
 		ptpClock->counters.messageSendErrors++;
 		toState(PTP_FAULTY, rtOpts, ptpClock);
@@ -1870,7 +1870,7 @@ issueManagementErrorStatus(MsgManagement *outgoing, Integer32 dst, const RunTime
 	msgPackManagement( ptpClock->msgObuf, outgoing, ptpClock);
 
 	if(!netSendGeneral(ptpClock->msgObuf, outgoing->header.messageLength,
-			   &ptpClock->netPath, rtOpts, dst)) {
+			   ptpClock->netPath, rtOpts, dst)) {
 		DBGV("Management error status can't be sent -> FAULTY state \n");
 		ptpClock->counters.messageSendErrors++;
 		toState(PTP_FAULTY, rtOpts, ptpClock);

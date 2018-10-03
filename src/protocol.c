@@ -234,8 +234,8 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	    toState(PTP_DISABLED, rtOpts, ptpClock);
 	    WARNING("PTP port starting in DISABLED state. Awaiting config change or management message\n");
 	    /* initialize networking so we can be remotely enabled */
-	    netShutdown(&ptpClock->netPath);
-	    if (!netInit(&ptpClock->netPath, rtOpts, ptpClock)) {
+	    netShutdown(ptpClock->netPath);
+	    if (!netInit(ptpClock->netPath, rtOpts, ptpClock)) {
 		ERROR("Failed to initialize network in disabled state, will not be able to re-enable!\n");
 	    }
 	    /* populate the basics required to receive management messages in DISABLED state */
@@ -580,7 +580,7 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		/* force a IGMP refresh per reset */
 		if (rtOpts->ipMode != IPMODE_UNICAST && rtOpts->do_IGMP_refresh && rtOpts->transport != IEEE_802_3) {
 		    /* if multicast refresh failed, restart network - helps recover after driver reloads and such */
-                    if(!netRefreshIGMP(&ptpClock->netPath, rtOpts, ptpClock)) {
+                    if(!netRefreshIGMP(ptpClock->netPath, rtOpts, ptpClock)) {
                             WARNING("Error while refreshing multicast - restarting transports\n");
                             toState(PTP_FAULTY, rtOpts, ptpClock);
                             break;
@@ -763,7 +763,7 @@ doInit(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		MANUFACTURER_ID_OUI1,
 		MANUFACTURER_ID_OUI2);
 	/* initialize networking */
-	netShutdown(&ptpClock->netPath);
+	netShutdown(ptpClock->netPath);
 
 	if(rtOpts->backupIfaceEnabled &&
 		ptpClock->runningBackupInterface) {
@@ -772,7 +772,7 @@ doInit(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		rtOpts->ifaceName = rtOpts->primaryIfaceName;
 	}
 
-	if (!netInit(&ptpClock->netPath, rtOpts, ptpClock)) {
+	if (!netInit(ptpClock->netPath, rtOpts, ptpClock)) {
 		ERROR("Failed to initialize network\n");
 		toState(PTP_FAULTY, rtOpts, ptpClock);
 		return FALSE;
@@ -888,7 +888,7 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 				if (rtOpts->ipMode != IPMODE_UNICAST && rtOpts->do_IGMP_refresh && rtOpts->transport != IEEE_802_3) {
 				/* if multicast refresh failed, restart network - helps recover after driver reloads and such */
-                		    if(!netRefreshIGMP(&ptpClock->netPath, rtOpts, ptpClock)) {
+				    if(!netRefreshIGMP(ptpClock->netPath, rtOpts, ptpClock)) {
                         		WARNING("Error while refreshing multicast - restarting transports\n");
                         		toState(PTP_FAULTY, rtOpts, ptpClock);
                         		break;
@@ -1134,7 +1134,7 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 				DBGV("Master state periodic IGMP refresh - next in %d seconds...\n",
 				rtOpts->masterRefreshInterval);
 				/* if multicast refresh failed, restart network - helps recover after driver reloads and such */
-                		    if(!netRefreshIGMP(&ptpClock->netPath, rtOpts, ptpClock)) {
+				    if(!netRefreshIGMP(ptpClock->netPath, rtOpts, ptpClock)) {
                         		WARNING("Error while refreshing multicast - restarting transports\n");
                         		toState(PTP_FAULTY, rtOpts, ptpClock);
                         		break;
@@ -1281,17 +1281,17 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
     msgUnpackHeader(ptpClock->msgIbuf, &ptpClock->msgTmpHeader);
 
     /* packet is not from self, and is from a non-zero source address - check ACLs */
-    if(netPathGetLastSourceAddress(&ptpClock->netPath) &&
-       (netPathGetLastSourceAddress(&ptpClock->netPath) != netPathGetInterfaceAddr(&ptpClock->netPath).s_addr)) {
+    if(netPathGetLastSourceAddress(ptpClock->netPath) &&
+       (netPathGetLastSourceAddress(ptpClock->netPath) != netPathGetInterfaceAddr(ptpClock->netPath).s_addr)) {
 #if defined(RUNTIME_DEBUG) || defined (PTPD_DBGV)
 		struct in_addr tmpAddr;
-		tmpAddr.s_addr = netPathGetLastSourceAddress(&ptpClock->netPath);
+		tmpAddr.s_addr = netPathGetLastSourceAddress(ptpClock->netPath);
 #endif /* RUNTIME_DEBUG */
 		if(ptpClock->msgTmpHeader.messageType == MANAGEMENT) {
 			if(rtOpts->managementAclEnabled) {
 			    if (!matchIpv4AccessList(
-				netPathGetManagementACL(&ptpClock->netPath),
-				ntohl(netPathGetLastSourceAddress(&ptpClock->netPath)))) {
+				netPathGetManagementACL(ptpClock->netPath),
+				ntohl(netPathGetLastSourceAddress(ptpClock->netPath)))) {
 					DBG("ACL dropped management message from %s\n", inet_ntoa(tmpAddr));
 					ptpClock->counters.aclManagementMessagesDiscarded++;
 					return;
@@ -1300,8 +1300,8 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 			}
 	        } else if(rtOpts->timingAclEnabled) {
 			if(!matchIpv4AccessList(
-				netPathGetTimingACL(&ptpClock->netPath),
-				ntohl(netPathGetLastSourceAddress(&ptpClock->netPath)))) {
+				netPathGetTimingACL(ptpClock->netPath),
+				ntohl(netPathGetLastSourceAddress(ptpClock->netPath)))) {
 				DBG("ACL dropped timing message from %s\n", inet_ntoa(tmpAddr));
 				ptpClock->counters.aclTimingMessagesDiscarded++;
 				return;
@@ -1344,7 +1344,7 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 		ptpClock->counters.domainMismatchErrors++;
 
 		SET_ALARM(ALRM_DOMAIN_MISMATCH, ((ptpClock->counters.domainMismatchErrors >= DOMAIN_MISMATCH_MIN) &&
-			 netPathGetTotalReceivedPacketsCount(&ptpClock->netPath) == ptpClock->counters.domainMismatchErrors));
+			 netPathGetTotalReceivedPacketsCount(ptpClock->netPath) == ptpClock->counters.domainMismatchErrors));
 		return;
 	}
     } else {
@@ -1406,8 +1406,8 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 	break;
     case SYNC:
 	handleSync(&ptpClock->msgTmpHeader,
-		   length, timeStamp, isFromSelf, netPathGetLastSourceAddress(&ptpClock->netPath),
-		   netPathGetLastDestAddress(&ptpClock->netPath), rtOpts, ptpClock);
+		   length, timeStamp, isFromSelf, netPathGetLastSourceAddress(ptpClock->netPath),
+		   netPathGetLastDestAddress(ptpClock->netPath), rtOpts, ptpClock);
 	break;
     case FOLLOW_UP:
 	handleFollowUp(&ptpClock->msgTmpHeader,
@@ -1415,11 +1415,11 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 	break;
     case DELAY_REQ:
 	handleDelayReq(&ptpClock->msgTmpHeader,
-		       length, timeStamp, netPathGetLastSourceAddress(&ptpClock->netPath), isFromSelf, rtOpts, ptpClock);
+		       length, timeStamp, netPathGetLastSourceAddress(ptpClock->netPath), isFromSelf, rtOpts, ptpClock);
 	break;
     case PDELAY_REQ:
 	handlePdelayReq(&ptpClock->msgTmpHeader,
-			length, timeStamp, netPathGetLastSourceAddress(&ptpClock->netPath), isFromSelf, rtOpts, ptpClock);
+			length, timeStamp, netPathGetLastSourceAddress(ptpClock->netPath), isFromSelf, rtOpts, ptpClock);
 	break;
     case DELAY_RESP:
 	handleDelayResp(&ptpClock->msgTmpHeader,
@@ -1427,8 +1427,8 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 	break;
     case PDELAY_RESP:
 	handlePdelayResp(&ptpClock->msgTmpHeader,
-			 timeStamp, length, isFromSelf, netPathGetLastSourceAddress(&ptpClock->netPath),
-			 netPathGetLastDestAddress(&ptpClock->netPath), rtOpts, ptpClock);
+			 timeStamp, length, isFromSelf, netPathGetLastSourceAddress(ptpClock->netPath),
+			 netPathGetLastDestAddress(ptpClock->netPath), rtOpts, ptpClock);
 	break;
     case PDELAY_RESP_FOLLOW_UP:
 	handlePdelayRespFollowUp(&ptpClock->msgTmpHeader,
@@ -1436,11 +1436,11 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 	break;
     case MANAGEMENT:
 	handleManagement(&ptpClock->msgTmpHeader,
-			 isFromSelf, netPathGetLastSourceAddress(&ptpClock->netPath), rtOpts, ptpClock);
+			 isFromSelf, netPathGetLastSourceAddress(ptpClock->netPath), rtOpts, ptpClock);
 	break;
     case SIGNALING:
        handleSignaling(&ptpClock->msgTmpHeader, isFromSelf,
-		       netPathGetLastSourceAddress(&ptpClock->netPath), rtOpts, ptpClock);
+		       netPathGetLastSourceAddress(ptpClock->netPath), rtOpts, ptpClock);
 	break;
     default:
 	DBG("handle: unrecognized message\n");
@@ -1467,7 +1467,7 @@ handle(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
     FD_ZERO(&readfds);
     if (!ptpClock->message_activity) {
-	ret = netSelect(NULL, &ptpClock->netPath, &readfds);
+	ret = netSelect(NULL, ptpClock->netPath, &readfds);
 	if (ret < 0) {
 	    PERROR("failed to poll sockets");
 	    ptpClock->counters.messageRecvErrors++;
@@ -1482,8 +1482,8 @@ handle(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
     DBG("handle: something\n");
 
-    if (netPathEventSocketIsSet(&ptpClock->netPath, &readfds)) {
-      length = netRecvEvent(ptpClock->msgIbuf, &timeStamp, &ptpClock->netPath, 0, &timeout);
+    if (netPathEventSocketIsSet(ptpClock->netPath, &readfds)) {
+      length = netRecvEvent(ptpClock->msgIbuf, &timeStamp, ptpClock->netPath, 0, &timeout);
         if (timeout) /* timeout, return for now */
             return;
         if (length < 0) {
@@ -1498,8 +1498,8 @@ handle(RunTimeOpts *rtOpts, PtpClock *ptpClock)
             processMessage(rtOpts, ptpClock, &timeStamp, length);
         }
     }
-    if (netPathGeneralSocketIsSet(&ptpClock->netPath, &readfds)) {
-        length = netRecvGeneral(ptpClock->msgIbuf, &ptpClock->netPath, &timeout);
+    if (netPathGeneralSocketIsSet(ptpClock->netPath, &readfds)) {
+        length = netRecvGeneral(ptpClock->msgIbuf, ptpClock->netPath, &timeout);
         if (timeout) /* timeout, return for now */
             return;
         if (length < 0) {
@@ -1666,7 +1666,7 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 			 * the slave will  sit idle if current parent
 			 * is not announcing, but another GM is
 			 */
-			addForeign(ptpClock->msgIbuf,header,ptpClock,localPreference,netPathGetLastSourceAddress(&ptpClock->netPath));
+			addForeign(ptpClock->msgIbuf,header,ptpClock,localPreference,netPathGetLastSourceAddress(ptpClock->netPath));
 			break;
 
 		default:
@@ -1727,7 +1727,7 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 
 			DBG("___ Announce: received Announce from another master, will add to the list, as it might be better\n\n");
 			DBGV("this is to be decided immediatly by bmc())\n\n");
-			addForeign(ptpClock->msgIbuf,header,ptpClock,localPreference,netPathGetLastSourceAddress(&ptpClock->netPath));
+			addForeign(ptpClock->msgIbuf,header,ptpClock,localPreference,netPathGetLastSourceAddress(ptpClock->netPath));
 		}
 		break;
 
@@ -1745,7 +1745,7 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 		}
 		ptpClock->counters.announceMessagesReceived++;
 		DBGV("Announce message from another foreign master\n");
-		addForeign(ptpClock->msgIbuf,header,ptpClock, localPreference,netPathGetLastSourceAddress(&ptpClock->netPath));
+		addForeign(ptpClock->msgIbuf,header,ptpClock, localPreference,netPathGetLastSourceAddress(ptpClock->netPath));
 		ptpClock->record_update = TRUE;    /* run BMC() as soon as possible */
 		break;
 
@@ -2870,7 +2870,7 @@ issueAnnounceSingle(Integer32 dst, UInteger16 *sequenceId, const RunTimeOpts *rt
 	msgPackAnnounce(ptpClock->msgObuf, *sequenceId, &originTimestamp, ptpClock);
 
 	if (!netSendGeneral(ptpClock->msgObuf,ANNOUNCE_LENGTH,
-			    &ptpClock->netPath, rtOpts, dst)) {
+			    ptpClock->netPath, rtOpts, dst)) {
 		    toState(PTP_FAULTY,rtOpts,ptpClock);
 		    ptpClock->counters.messageSendErrors++;
 		    DBGV("Announce message can't be sent -> FAULTY state \n");
@@ -2974,7 +2974,7 @@ issueSyncSingle(Integer32 dst, UInteger16 *sequenceId, const RunTimeOpts *rtOpts
 
 	msgPackSync(ptpClock->msgObuf,*sequenceId,&originTimestamp,ptpClock);
 
-	if (!netSendEvent(ptpClock->msgObuf,SYNC_LENGTH,&ptpClock->netPath,
+	if (!netSendEvent(ptpClock->msgObuf,SYNC_LENGTH,ptpClock->netPath,
 		rtOpts, dst, &internalTime)) {
 		toState(PTP_FAULTY,rtOpts,ptpClock);
 		ptpClock->counters.messageSendErrors++;
@@ -2985,7 +2985,7 @@ issueSyncSingle(Integer32 dst, UInteger16 *sequenceId, const RunTimeOpts *rtOpts
 
 #ifdef SO_TIMESTAMPING
 
-		if(netPathCheckTxTsValid(&ptpClock->netPath)) {
+		if(netPathCheckTxTsValid(ptpClock->netPath)) {
 			if(internalTime.seconds && internalTime.nanoseconds) {
 
 			    if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
@@ -3035,7 +3035,7 @@ issueFollowup(const TimeInternal *tint,const RunTimeOpts *rtOpts,PtpClock *ptpCl
 	msgPackFollowUp(ptpClock->msgObuf,&preciseOriginTimestamp,ptpClock,sequenceId);
 
 	if (!netSendGeneral(ptpClock->msgObuf,FOLLOW_UP_LENGTH,
-			    &ptpClock->netPath, rtOpts, dst)) {
+			    ptpClock->netPath, rtOpts, dst)) {
 		toState(PTP_FAULTY,rtOpts,ptpClock);
 		ptpClock->counters.messageSendErrors++;
 		DBGV("FollowUp message can't be sent -> FAULTY state \n");
@@ -3087,7 +3087,7 @@ issueDelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
         }
 
 	if (!netSendEvent(ptpClock->msgObuf,DELAY_REQ_LENGTH,
-			  &ptpClock->netPath, rtOpts, dst, &internalTime)) {
+			  ptpClock->netPath, rtOpts, dst, &internalTime)) {
 		toState(PTP_FAULTY,rtOpts,ptpClock);
 		ptpClock->counters.messageSendErrors++;
 		DBGV("delayReq message can't be sent -> FAULTY state \n");
@@ -3096,7 +3096,7 @@ issueDelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 
 #ifdef SO_TIMESTAMPING
 
-		if(netPathCheckTxTsValid(&ptpClock->netPath)) {
+		if(netPathCheckTxTsValid(ptpClock->netPath)) {
 			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
 				internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
 			}
@@ -3160,7 +3160,7 @@ issuePdelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 
 	msgPackPdelayReq(ptpClock->msgObuf,&originTimestamp,ptpClock);
 	if (!netSendPeerEvent(ptpClock->msgObuf,PDELAY_REQ_LENGTH,
-			      &ptpClock->netPath, rtOpts, dst, &internalTime)) {
+			      ptpClock->netPath, rtOpts, dst, &internalTime)) {
 		toState(PTP_FAULTY,rtOpts,ptpClock);
 		ptpClock->counters.messageSendErrors++;
 		DBGV("PdelayReq message can't be sent -> FAULTY state \n");
@@ -3169,7 +3169,7 @@ issuePdelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 
 #ifdef SO_TIMESTAMPING
 
-		if(netPathCheckTxTsValid(&ptpClock->netPath)) {
+		if(netPathCheckTxTsValid(ptpClock->netPath)) {
 			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
 				internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
 			}
@@ -3209,7 +3209,7 @@ issuePdelayResp(const TimeInternal *tint,MsgHeader *header, Integer32 sourceAddr
 			  &requestReceiptTimestamp,ptpClock);
 
 	if (!netSendPeerEvent(ptpClock->msgObuf,PDELAY_RESP_LENGTH,
-			      &ptpClock->netPath, rtOpts, dst, &internalTime)) {
+			      ptpClock->netPath, rtOpts, dst, &internalTime)) {
 		toState(PTP_FAULTY,rtOpts,ptpClock);
 		ptpClock->counters.messageSendErrors++;
 		DBGV("PdelayResp message can't be sent -> FAULTY state \n");
@@ -3218,7 +3218,7 @@ issuePdelayResp(const TimeInternal *tint,MsgHeader *header, Integer32 sourceAddr
 
 #ifdef SO_TIMESTAMPING
 
-		if(netPathCheckTxTsValid(&ptpClock->netPath)) {
+		if(netPathCheckTxTsValid(ptpClock->netPath)) {
 			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
 				internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
 			}
@@ -3252,7 +3252,7 @@ issueDelayResp(const TimeInternal *tint,MsgHeader *header,Integer32 sourceAddres
 	}
 
 	if (!netSendGeneral(ptpClock->msgObuf, DELAY_RESP_LENGTH,
-			    &ptpClock->netPath, rtOpts, dst)) {
+			    ptpClock->netPath, rtOpts, dst)) {
 		toState(PTP_FAULTY,rtOpts,ptpClock);
 		ptpClock->counters.messageSendErrors++;
 		DBGV("delayResp message can't be sent -> FAULTY state \n");
@@ -3273,7 +3273,7 @@ issuePdelayRespFollowUp(const TimeInternal *tint, MsgHeader *header, Integer32 d
 				  &responseOriginTimestamp,ptpClock, sequenceId);
 	if (!netSendPeerGeneral(ptpClock->msgObuf,
 				PDELAY_RESP_FOLLOW_UP_LENGTH,
-				&ptpClock->netPath, rtOpts, dst)) {
+				ptpClock->netPath, rtOpts, dst)) {
 		toState(PTP_FAULTY,rtOpts,ptpClock);
 		ptpClock->counters.messageSendErrors++;
 		DBGV("PdelayRespFollowUp message can't be sent -> FAULTY state \n");

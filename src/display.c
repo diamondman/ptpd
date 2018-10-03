@@ -752,9 +752,9 @@ displayOthers(const PtpClock * ptpClock)
 	}
 #endif
 
-	netPath_display(&ptpClock->netPath);
+	netPath_display(ptpClock->netPath);
 	DBGV("mCommunication technology %d \n", ptpClock->port_communication_technology);
-	struct ether_addr macaddr = netPathGetMacAddress(&ptpClock->netPath);
+	struct ether_addr macaddr = netPathGetMacAddress(ptpClock->netPath);
 	clockUUID_display((Octet*)macaddr.octet);
 	DBGV("\n");
 }

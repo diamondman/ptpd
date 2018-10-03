@@ -292,7 +292,7 @@ do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 #ifdef RUNTIME_DEBUG
 	if(rtOpts->transport == UDP_IPV4 && rtOpts->ipMode != IPMODE_UNICAST) {
 		DBG("SIGHUP - running an ipv4 multicast based mode, re-sending IGMP joins\n");
-		netRefreshIGMP(&ptpClock->netPath, rtOpts, ptpClock);
+		netRefreshIGMP(ptpClock->netPath, rtOpts, ptpClock);
 	}
 #endif /* RUNTIME_DEBUG */
 
@@ -374,7 +374,7 @@ restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	if(rtOpts->restartSubsystems & PTPD_RESTART_ACLS) {
 		NOTIFY("Applying access control list configuration\n");
 		/* re-compile ACLs */
-		netInitializeACLs(&ptpClock->netPath, rtOpts);
+		netInitializeACLs(ptpClock->netPath, rtOpts);
 	}
 
 	if(rtOpts->restartSubsystems & PTPD_RESTART_ALARMS) {
@@ -510,12 +510,12 @@ checkSignals(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 		if(rtOpts->timingAclEnabled) {
 			INFO("\n\n");
 			INFO("** Timing message ACL:\n");
-			dumpIpv4AccessList(netPathGetTimingACL(&ptpClock->netPath));
+			dumpIpv4AccessList(netPathGetTimingACL(ptpClock->netPath));
 		}
 		if(rtOpts->managementAclEnabled) {
 			INFO("\n\n");
 			INFO("** Management message ACL:\n");
-			dumpIpv4AccessList(netPathGetManagementACL(&ptpClock->netPath));
+			dumpIpv4AccessList(netPathGetManagementACL(ptpClock->netPath));
 		}
 		if(rtOpts->clearCounters) {
 			clearCounters(ptpClock);
@@ -601,7 +601,8 @@ ptpdShutdown(PtpClock * ptpClock)
 	toState(PTP_DISABLED, &rtOpts, ptpClock);
 	/* process any outstanding events before exit */
 	updateAlarms(ptpClock->alarms, ALRM_MAX);
-	netShutdown(&ptpClock->netPath);
+	netShutdown(ptpClock->netPath);
+	netPathFree(&ptpClock->netPath);
 	free(ptpClock->foreign);
 
 	/* free management and signaling messages, they can have dynamic memory allocated */
@@ -861,6 +862,17 @@ configcheck:
 		}
 	}
 
+	ptpClock->netPath = netPathCreate();
+	if (!ptpClock->netPath) {
+		PERROR("Error: Failed to allocate memory for protocol engine NetPath data");
+		*ret = 2;
+		free(ptpClock);
+		goto fail;
+	} else {
+		DBG("allocated %d bytes for protocol engine NetPath data\n",
+		    (int)sizeof(NetPath));
+	}
+
 	if(rtOpts->statisticsLog.logEnabled)
 		ptpClock->resetStatisticsLog = TRUE;
 
@@ -929,6 +941,7 @@ configcheck:
 	if(!timerSetup(ptpClock->timers)) {
 		PERROR("failed to set up event timers");
 		*ret = 2;
+		netPathFree(&ptpClock->netPath);
 		free(ptpClock);
 		goto fail;
 	}
@@ -986,7 +999,7 @@ configcheck:
 
 #endif
 
-	netPathClearSockets(&ptpClock->netPath);
+	netPathClearSockets(ptpClock->netPath);
 
 	*ret = 0;
 

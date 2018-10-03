@@ -529,7 +529,7 @@ typedef struct PtpClock {
 	AlarmEntry	alarms[ALRM_MAX];
 	int alarmDelay;
 
-	NetPath netPath;
+	NetPath* netPath;
 
 	/*Usefull to init network stuff*/
 	UInteger8 port_communication_technology;

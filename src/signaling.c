@@ -983,7 +983,7 @@ issueSignaling(MsgSignaling *outgoing, Integer32 destination, const RunTimeOpts 
 	msgPackSignaling( ptpClock->msgObuf, outgoing, ptpClock);
 
 	if(!netSendGeneral(ptpClock->msgObuf, outgoing->header.messageLength,
-			   &ptpClock->netPath, rtOpts, destination)) {
+			   ptpClock->netPath, rtOpts, destination)) {
 		DBGV("Signaling message  can't be sent -> FAULTY state \n");
 		ptpClock->counters.messageSendErrors++;
 		toState(PTP_FAULTY, rtOpts, ptpClock);

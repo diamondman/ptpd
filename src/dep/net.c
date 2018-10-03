@@ -159,6 +159,66 @@
 #define PACKET_BEGIN_ETHER (ETHER_HDR_LEN)
 
 /**
+ * \brief Struct containing interface information and capabilities
+ */
+typedef struct InterfaceInfo {
+        struct sockaddr afAddress;
+        unsigned char hwAddress[14];
+        Boolean hasHwAddress;
+        Boolean hasAfAddress;
+        int addressFamily;
+        unsigned int flags;
+	int ifIndex;
+} InterfaceInfo;
+
+/**
+ * \brief Struct describing network transport data
+ */
+typedef struct NetPath {
+	Integer32 eventSock, generalSock;
+	Integer32 multicastAddr, peerMulticastAddr;
+
+	/* Interface address and capability descriptor */
+	InterfaceInfo interfaceInfo;
+
+	/* used by IGMP refresh */
+	struct in_addr interfaceAddr;
+	/* Typically MAC address - outer 6 octers of ClockIdendity */
+	struct ether_addr interfaceID;
+	/* source address of last received packet - used for unicast replies to Delay Requests */
+	Integer32 lastSourceAddr;
+	/* destination address of last received packet - used for unicast FollowUp for multiple slaves*/
+	Integer32 lastDestAddr;
+
+	uint64_t sentPackets;
+	uint64_t receivedPackets;
+
+	uint64_t sentPacketsTotal;
+	uint64_t receivedPacketsTotal;
+
+#ifdef PTPD_PCAP
+	pcap_t *pcapEvent;
+	pcap_t *pcapGeneral;
+	Integer32 pcapEventSock;
+	Integer32 pcapGeneralSock;
+#endif
+	Integer32 headerOffset;
+
+	/* used for tracking the last TTL set */
+	int ttlGeneral;
+	int ttlEvent;
+	Boolean joinedPeer;
+	Boolean joinedGeneral;
+	struct ether_addr etherDest;
+	struct ether_addr peerEtherDest;
+	Boolean txTimestampFailure;
+
+	Ipv4AccessList* timingAcl;
+	Ipv4AccessList* managementAcl;
+
+} NetPath;
+
+/**
  * shutdown the IPv4 multicast for specific address
  *
  * @param netPath
@@ -2483,4 +2543,19 @@ netPath_display(const NetPath* netPath)
 	tmpAddr.s_addr = netPath->peerMulticastAddr;
 	DBGV("peerMulticastAddress : %s \n", inet_ntoa(tmpAddr));
 #endif /* RUNTIME_DEBUG */
+}
+
+void netPathFree(NetPath** netPath)
+{
+	if(*netPath == NULL)
+		return;
+
+	free(*netPath);
+	*netPath = NULL;
+}
+
+NetPath* netPathCreate()
+{
+	NetPath* netPath = (NetPath*)calloc(1, sizeof(NetPath));
+	return netPath;
 }
