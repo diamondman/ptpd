@@ -600,17 +600,19 @@ static void handleMMClockDescription(MsgManagement* incoming, MsgManagement* out
 		/* physical address */
                 data->physicalAddress.addressLength = PTP_UUID_LENGTH;
                 XMALLOC(data->physicalAddress.addressField, PTP_UUID_LENGTH);
+		struct ether_addr macaddr = netPathGetMacAddress(&ptpClock->netPath);
                 memcpy(data->physicalAddress.addressField,
-                        ptpClock->netPath.interfaceID,
+                        macaddr.octet,
                         PTP_UUID_LENGTH);
 		/* protocol address */
                 data->protocolAddress.addressLength = 4;
                 data->protocolAddress.networkProtocol = 1;
                 XMALLOC(data->protocolAddress.addressField,
                         data->protocolAddress.addressLength);
-                memcpy(data->protocolAddress.addressField,
-                        &ptpClock->netPath.interfaceAddr.s_addr,
-                        data->protocolAddress.addressLength);
+		struct in_addr interface_addr = netPathGetInterfaceAddr(&ptpClock->netPath);
+		memcpy(data->protocolAddress.addressField,
+		       &interface_addr.s_addr,
+		       data->protocolAddress.addressLength);
 		/* manufacturerIdentity OUI */
 		data->manufacturerIdentity0 = MANUFACTURER_ID_OUI0;
 		data->manufacturerIdentity1 = MANUFACTURER_ID_OUI1;

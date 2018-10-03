@@ -761,7 +761,7 @@ getTxTimestamp(NetPath* netPath,TimeInternal* timeStamp) {
 		if (FD_ISSET(netPath->eventSock, &tmpSet)) {
 
 			length = netRecvEvent(G_ptpClock->msgIbuf, timeStamp,
-			    netPath, MSG_ERRQUEUE);
+					      netPath, MSG_ERRQUEUE, NULL);
 			if (length > 0) {
 				DBG("getTxTimestamp: Grabbed sent msg via errqueue: %d bytes, at %d.%d\n", length, timeStamp->seconds, timeStamp->nanoseconds);
 				return TRUE;
@@ -776,7 +776,7 @@ getTxTimestamp(NetPath* netPath,TimeInternal* timeStamp) {
 
 	/* we're desperate here, aren't we... */
 	for(i = 0; i < 3; i++) {
-	    length = netRecvEvent(G_ptpClock->msgIbuf, timeStamp, netPath, MSG_ERRQUEUE);
+	    length = netRecvEvent(G_ptpClock->msgIbuf, timeStamp, netPath, MSG_ERRQUEUE, NULL);
 	    if(length > 0) {
 		DBG("getTxTimestamp: SO_TIMESTAMPING - delayed TX timestamp caught\n");
 		return TRUE;
@@ -787,7 +787,7 @@ getTxTimestamp(NetPath* netPath,TimeInternal* timeStamp) {
 	/* try for the last time: sleep and poll the error queue, if nothing, consider SO_TIMESTAMPING inoperable */
 	usleep(LATE_TXTIMESTAMP_US);
 
-	length = netRecvEvent(G_ptpClock->msgIbuf, timeStamp, netPath, MSG_ERRQUEUE);
+	length = netRecvEvent(G_ptpClock->msgIbuf, timeStamp, netPath, MSG_ERRQUEUE, NULL);
 
 	if(length > 0) {
 		DBG("getTxTimestamp: SO_TIMESTAMPING - even more delayed TX timestamp caught\n");
@@ -1121,13 +1121,13 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	/* No HW address, we'll use the protocol address to form interfaceID -> clockID */
 	if( !netPath->interfaceInfo.hasHwAddress && netPath->interfaceInfo.hasAfAddress ) {
 		uint32_t addr = ((struct sockaddr_in*)&(netPath->interfaceInfo.afAddress))->sin_addr.s_addr;
-		memcpy(netPath->interfaceID, &addr, 2);
-		memcpy(netPath->interfaceID + 4, &addr + 2, 2);
+		memcpy(netPath->interfaceID.octet, &addr, 2);
+		memcpy(netPath->interfaceID.octet + 4, &addr + 2, 2);
 	/* Initialise interfaceID with hardware address */
 	} else {
-		    memcpy(&netPath->interfaceID, &netPath->interfaceInfo.hwAddress,
-			    sizeof(netPath->interfaceID) <= sizeof(netPath->interfaceInfo.hwAddress) ?
-				    sizeof(netPath->interfaceID) : sizeof(netPath->interfaceInfo.hwAddress)
+		    memcpy(&netPath->interfaceID.octet, &netPath->interfaceInfo.hwAddress,
+			    sizeof(netPath->interfaceID.octet) <= sizeof(netPath->interfaceInfo.hwAddress) ?
+				    sizeof(netPath->interfaceID.octet) : sizeof(netPath->interfaceInfo.hwAddress)
 			    );
 	}
 
@@ -1446,19 +1446,26 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 #endif
 
 	/* Compile ACLs */
+	netInitializeACLs(netPath, rtOpts);
+
+	return TRUE;
+}
+
+void netInitializeACLs(NetPath* netPath, const RunTimeOpts* rtOpts)
+{
+	/* Compile ACLs */
 	if(rtOpts->timingAclEnabled) {
-    		freeIpv4AccessList(&netPath->timingAcl);
+		freeIpv4AccessList(&netPath->timingAcl);
 		netPath->timingAcl=createIpv4AccessList(rtOpts->timingAclPermitText,
-			rtOpts->timingAclDenyText, rtOpts->timingAclOrder);
+							rtOpts->timingAclDenyText,
+							rtOpts->timingAclOrder);
 	}
 	if(rtOpts->managementAclEnabled) {
 		freeIpv4AccessList(&netPath->managementAcl);
 		netPath->managementAcl=createIpv4AccessList(rtOpts->managementAclPermitText,
-			rtOpts->managementAclDenyText, rtOpts->managementAclOrder);
+							    rtOpts->managementAclDenyText,
+							    rtOpts->managementAclOrder);
 	}
-
-
-	return TRUE;
 }
 
 /*Check if data has been received*/
@@ -1565,7 +1572,7 @@ if (rtOpts.snmpEnabled) {
  */
 
 ssize_t
-netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
+netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags, Boolean* did_timeout)
 {
 	ssize_t ret = 0;
 	struct msghdr msg;
@@ -1602,6 +1609,10 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 #endif
 	Boolean timestampValid = FALSE;
 	netPath->lastDestAddr = 0;
+
+	if (did_timeout)
+		*did_timeout = FALSE;
+
 #ifdef PTPD_PCAP
 	if (netPath->pcapEvent == NULL) { /* Using sockets */
 #endif
@@ -1761,6 +1772,8 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 			if (ret < 0)
 				INFO("netRecvEvent: pcap_next_ex failed %s\n",
 				     pcap_geterr(netPath->pcapEvent));
+			if (did_timeout)
+				*did_timeout = TRUE;
 			return 0;
 		}
 
@@ -1821,7 +1834,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
  */
 
 ssize_t
-netRecvGeneral(Octet * buf, NetPath * netPath)
+netRecvGeneral(Octet * buf, NetPath * netPath, Boolean* did_timeout)
 {
 	ssize_t ret = 0;
 	struct sockaddr_in from_addr;
@@ -1834,6 +1847,9 @@ netRecvGeneral(Octet * buf, NetPath * netPath)
 
 	netPath->lastSourceAddr = 0;
 
+	if (did_timeout)
+		*did_timeout = FALSE;
+
 #ifdef PTPD_PCAP
 	if (netPath->pcapGeneral == NULL) {
 #endif
@@ -1842,16 +1858,11 @@ netRecvGeneral(Octet * buf, NetPath * netPath)
 
 		/* do not report "from self" */
 		if(!netPath->lastSourceAddr || (netPath->lastSourceAddr != netPath->interfaceAddr.s_addr)) {
-		    netPath->receivedPackets++;
+			netPath->receivedPackets++;
 		}
 		netPath->receivedPacketsTotal++;
-		return ret;
 #ifdef PTPD_PCAP
-	}
-#endif
-
-#ifdef PTPD_PCAP
-	else { /* Using PCAP */
+	} else { /* Using PCAP */
 		/* Discard packet on socket */
 		if (netPath->generalSock >= 0)
 			recv(netPath->generalSock, buf, PACKET_SIZE, MSG_DONTWAIT);
@@ -1862,30 +1873,32 @@ netRecvGeneral(Octet * buf, NetPath * netPath)
 			if (ret < 0)
 				DBGV("netRecvGeneral: pcap_next_ex failed %d %s\n",
 				     ret, pcap_geterr(netPath->pcapGeneral));
+			if (did_timeout)
+				*did_timeout = TRUE;
 			return 0;
 		}
 
-	/* Make sure this is IP (could dot1q get here?) */
-	if( ntohs(*(u_short *)(pkt_data + 12)) != ETHERTYPE_IP) {
-		if( ntohs(*(u_short *)(pkt_data + 12)) != PTP_ETHER_TYPE) {
-		DBG("PCAP payload ethertype received not IP or PTP: 0x%04x\n",
-		    ntohs(*(u_short *)(pkt_data + 12)));
-		/* do not count packets if from self */
-		} else if(memcmp(&netPath->interfaceInfo.hwAddress, pkt_data + 6, 6)) {
-		    netPath->receivedPackets++;
+		/* Make sure this is IP (could dot1q get here?) */
+		if( ntohs(*(u_short *)(pkt_data + 12)) != ETHERTYPE_IP) {
+			if( ntohs(*(u_short *)(pkt_data + 12)) != PTP_ETHER_TYPE) {
+				DBG("PCAP payload ethertype received not IP or PTP: 0x%04x\n",
+				    ntohs(*(u_short *)(pkt_data + 12)));
+			/* do not count packets if from self */
+			} else if(memcmp(&netPath->interfaceInfo.hwAddress, pkt_data + 6, 6)) {
+				netPath->receivedPackets++;
+			}
+		} else {
+			/* Retrieve source IP from the payload - 14 eth + 12 IP */
+			netPath->lastSourceAddr = *(Integer32 *)(pkt_data + 26);
+			/* Retrieve destination IP from the payload - 14 eth + 16 IP */
+			netPath->lastDestAddr = *(Integer32 *)(pkt_data + 30);
+			/* do not count packets from self */
+			if(netPath->lastSourceAddr != netPath->interfaceAddr.s_addr) {
+				netPath->receivedPackets++;
+			}
 		}
-	} else {
-	    /* Retrieve source IP from the payload - 14 eth + 12 IP */
-	    netPath->lastSourceAddr = *(Integer32 *)(pkt_data + 26);
-	    /* Retrieve destination IP from the payload - 14 eth + 16 IP */
-	    netPath->lastDestAddr = *(Integer32 *)(pkt_data + 30);
-	    /* do not count packets from self */
-	    if(netPath->lastSourceAddr != netPath->interfaceAddr.s_addr) {
-		    netPath->receivedPackets++;
-	    }
-	}
 
-	netPath->receivedPacketsTotal++;
+		netPath->receivedPacketsTotal++;
 
 		/* XXX Total cheat */
 		memcpy(buf, pkt_data + netPath->headerOffset,
@@ -1950,7 +1963,7 @@ netSendEvent(Octet * buf, UInteger16 length, NetPath * netPath,
 	if ((netPath->pcapGeneral != NULL) && (rtOpts->transport == IEEE_802_3 )) {
 		ret = netSendPcapEther(buf, length,
 			&netPath->etherDest,
-			(struct ether_addr *)netPath->interfaceID,
+			(struct ether_addr *)netPath->interfaceID.octet,
 			netPath->pcapGeneral);
 		if (ret <= 0)
 			DBG("Error sending ether multicast event message\n");
@@ -2082,7 +2095,7 @@ netSendGeneral(Octet * buf, UInteger16 length, NetPath * netPath,
 	if ((netPath->pcapGeneral != NULL) && (rtOpts->transport == IEEE_802_3)) {
 		ret = netSendPcapEther(buf, length,
 			&netPath->etherDest,
-			(struct ether_addr *)netPath->interfaceID,
+			(struct ether_addr *)netPath->interfaceID.octet,
 			netPath->pcapGeneral);
 
 		if (ret <= 0)
@@ -2152,7 +2165,7 @@ netSendPeerGeneral(Octet * buf, UInteger16 length, NetPath * netPath, const RunT
 	if ((netPath->pcapGeneral != NULL) && (rtOpts->transport == IEEE_802_3)) {
 		ret = netSendPcapEther(buf, length,
 			&netPath->peerEtherDest,
-			(struct ether_addr *)netPath->interfaceID,
+			(struct ether_addr *)netPath->interfaceID.octet,
 			netPath->pcapGeneral);
 
 		if (ret <= 0)
@@ -2216,7 +2229,7 @@ netSendPeerEvent(Octet * buf, UInteger16 length, NetPath * netPath, const RunTim
 	if ((netPath->pcapGeneral != NULL) && (rtOpts->transport == IEEE_802_3)) {
 		ret = netSendPcapEther(buf, length,
 			&netPath->peerEtherDest,
-			(struct ether_addr *)netPath->interfaceID,
+			(struct ether_addr *)netPath->interfaceID.octet,
 			netPath->pcapGeneral);
 
 		if (ret <= 0)
@@ -2348,4 +2361,126 @@ netRefreshIGMP(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpCloc
 	}
 
 	return TRUE;
+}
+
+struct ether_addr netPathGetMacAddress(const NetPath* netPath)
+{
+	return netPath->interfaceID;
+}
+
+struct in_addr netPathGetInterfaceAddr(const NetPath* netPath)
+{
+	return netPath->interfaceAddr;
+}
+
+int netPathGetInterfaceIndex(const NetPath* netPath)
+{
+	return netPath->interfaceInfo.ifIndex;
+}
+Integer32 netPathGetLastSourceAddress(const NetPath* netPath)
+{
+	return netPath->lastSourceAddr;
+}
+
+Integer32 netPathGetLastDestAddress(const NetPath* netPath)
+{
+	return netPath->lastDestAddr;
+}
+
+Ipv4AccessList* netPathGetManagementACL(const NetPath* netPath)
+{
+	return netPath->managementAcl;
+}
+
+Ipv4AccessList* netPathGetTimingACL(const NetPath* netPath)
+{
+	return netPath->timingAcl;
+}
+
+Boolean netPathCheckTxTsValid(const NetPath* netPath)
+{
+#ifdef PTPD_PCAP
+	if(netPath->pcapEvent != NULL)
+		return FALSE;
+#endif /* PTPD_PCAP */
+	return !netPath->txTimestampFailure;
+}
+
+uint64_t netPathGetSentPacketCount(const NetPath* netPath)
+{
+	return netPath->sentPackets;
+}
+
+void netPathResetSentPacketCount(NetPath* netPath)
+{
+	netPath->sentPackets = 0;
+}
+
+uint64_t netPathGetReceivedPacketCount(const NetPath* netPath)
+{
+	return netPath->receivedPackets;
+}
+
+void netPathResetReceivedPacketCount(NetPath* netPath)
+{
+	netPath->receivedPackets = 0;
+}
+
+void netPathIncReceivedPacketCount(NetPath* netPath)
+{
+	netPath->receivedPackets++;
+}
+
+uint64_t netPathGetTotalSentPacketCount(const NetPath* netPath)
+{
+	return netPath->sentPacketsTotal;
+}
+
+uint64_t netPathGetTotalReceivedPacketsCount(const NetPath* netPath)
+{
+	return netPath->receivedPacketsTotal;
+}
+
+void netPathClearSockets(NetPath* netPath)
+{
+#ifdef PTPD_PCAP
+	netPath->pcapEventSock = -1;
+	netPath->pcapGeneralSock = -1;
+#endif /* PTPD_PCAP */
+
+	netPath->generalSock = -1;
+	netPath->eventSock = -1;
+}
+
+Boolean netPathEventSocketIsSet(const NetPath* netPath, fd_set* fds)
+{
+#ifdef PTPD_PCAP
+	if(netPath->pcapEvent != NULL)
+		return netPath->pcapEventSock >=0 && FD_ISSET(netPath->pcapEventSock, fds);
+#endif
+	return FD_ISSET(netPath->eventSock, fds);
+}
+
+Boolean netPathGeneralSocketIsSet(const NetPath* netPath, fd_set* fds)
+{
+#ifdef PTPD_PCAP
+	if(netPath->pcapGeneral != NULL)
+		return netPath->pcapGeneralSock >=0 && FD_ISSET(netPath->pcapGeneralSock, fds);
+#endif
+	return FD_ISSET(netPath->generalSock, fds);
+}
+
+/**\brief Display Network info*/
+void
+netPath_display(const NetPath* netPath)
+{
+#ifdef RUNTIME_DEBUG
+	struct in_addr tmpAddr;
+	DBGV("eventSock : %d \n", netPath->eventSock);
+	DBGV("generalSock : %d \n", netPath->generalSock);
+	tmpAddr.s_addr = netPath->multicastAddr;
+	DBGV("multicastAdress : %s \n", inet_ntoa(tmpAddr));
+	tmpAddr.s_addr = netPath->peerMulticastAddr;
+	DBGV("peerMulticastAddress : %s \n", inet_ntoa(tmpAddr));
+#endif /* RUNTIME_DEBUG */
 }

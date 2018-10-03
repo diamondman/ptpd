@@ -78,6 +78,7 @@ void initData(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	/* Default data set */
 	ptpClock->defaultDS.twoStepFlag = TWO_STEP_FLAG;
+	struct ether_addr macaddr = netPathGetMacAddress(&ptpClock->netPath);
 
 	/*
 	 * init clockIdentity with MAC address and 0xFF and 0xFE. see
@@ -89,7 +90,7 @@ void initData(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		else if (i==4) ptpClock->defaultDS.clockIdentity[i]=0xFE;
 		else
 		{
-		  ptpClock->defaultDS.clockIdentity[i]=ptpClock->netPath.interfaceID[j];
+		  ptpClock->defaultDS.clockIdentity[i] = macaddr.octet[j];
 		  j++;
 		}
 	}
@@ -177,8 +178,7 @@ void initData(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	 *  Initialize random number generator using same method as ptpv1:
 	 *  seed is now initialized from the last bytes of our mac addres (collected in net.c:findIface())
 	 */
-	srand((ptpClock->netPath.interfaceID[PTP_UUID_LENGTH - 1] << 8) +
-	    ptpClock->netPath.interfaceID[PTP_UUID_LENGTH - 2]);
+	srand((macaddr.octet[PTP_UUID_LENGTH - 1] << 8) + macaddr.octet[PTP_UUID_LENGTH - 2]);
 
 	/*Init other stuff*/
 	ptpClock->number_foreign_records = 0;

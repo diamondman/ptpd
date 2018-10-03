@@ -73,7 +73,7 @@ typedef struct NetPath {
 	/* used by IGMP refresh */
 	struct in_addr interfaceAddr;
 	/* Typically MAC address - outer 6 octers of ClockIdendity */
-	Octet interfaceID[ETHER_ADDR_LEN];
+	struct ether_addr interfaceID;
 	/* source address of last received packet - used for unicast replies to Delay Requests */
 	Integer32 lastSourceAddr;
 	/* destination address of last received packet - used for unicast FollowUp for multiple slaves*/
@@ -111,13 +111,38 @@ Boolean netShutdown(NetPath*);
 Boolean testInterface(char* ifaceName, const RunTimeOpts* rtOpts);
 Boolean hostLookup(const char* hostname, Integer32* addr);
 Boolean netInit(NetPath*,RunTimeOpts*,PtpClock*);
+void netInitializeACLs(NetPath*, const RunTimeOpts*);
 int netSelect(TimeInternal*,NetPath*,fd_set*);
-ssize_t netRecvEvent(Octet*,TimeInternal*,NetPath*,int);
-ssize_t netRecvGeneral(Octet*,NetPath*);
+ssize_t netRecvEvent(Octet*,TimeInternal*,NetPath*,int,Boolean*);
+ssize_t netRecvGeneral(Octet*,NetPath*,Boolean*);
 ssize_t netSendEvent(Octet*,UInteger16,NetPath*,const RunTimeOpts*,Integer32,TimeInternal*);
 ssize_t netSendGeneral(Octet*,UInteger16,NetPath*,const RunTimeOpts*,Integer32 );
 ssize_t netSendPeerGeneral(Octet*,UInteger16,NetPath*,const RunTimeOpts*, Integer32);
 ssize_t netSendPeerEvent(Octet*,UInteger16,NetPath*,const RunTimeOpts*,Integer32,TimeInternal*);
 Boolean netRefreshIGMP(NetPath *, const RunTimeOpts *, PtpClock *);
+
+struct ether_addr netPathGetMacAddress(const NetPath*);
+struct in_addr netPathGetInterfaceAddr(const NetPath*);
+int netPathGetInterfaceIndex(const NetPath*);
+Integer32 netPathGetLastSourceAddress(const NetPath*);
+Integer32 netPathGetLastDestAddress(const NetPath*);
+Ipv4AccessList* netPathGetManagementACL(const NetPath*);
+Ipv4AccessList* netPathGetTimingACL(const NetPath*);
+Boolean netPathCheckTxTsValid(const NetPath*);
+
+uint64_t netPathGetSentPacketCount(const NetPath*);
+void netPathResetSentPacketCount(NetPath*);
+
+uint64_t netPathGetReceivedPacketCount(const NetPath*);
+void netPathResetReceivedPacketCount(NetPath*);
+void netPathIncReceivedPacketCount(NetPath*);
+
+uint64_t netPathGetTotalSentPacketCount(const NetPath*);
+uint64_t netPathGetTotalReceivedPacketsCount(const NetPath*);
+
+void netPathClearSockets(NetPath*);
+
+Boolean netPathEventSocketIsSet(const NetPath*, fd_set*);
+Boolean netPathGeneralSocketIsSet(const NetPath*, fd_set*);
 
 #endif

@@ -121,21 +121,6 @@ clockUUID_display(const Octet * sourceUuid)
 	);
 }
 
-/**\brief Display Network info*/
-void
-netPath_display(const NetPath * net)
-{
-#ifdef RUNTIME_DEBUG
-		struct in_addr tmpAddr;
-	DBGV("eventSock : %d \n", net->eventSock);
-	DBGV("generalSock : %d \n", net->generalSock);
-	tmpAddr.s_addr = net->multicastAddr;
-	DBGV("multicastAdress : %s \n", inet_ntoa(tmpAddr));
-	tmpAddr.s_addr = net->peerMulticastAddr;
-	DBGV("peerMulticastAddress : %s \n", inet_ntoa(tmpAddr));
-#endif /* RUNTIME_DEBUG */
-}
-
 /**\brief Display a IntervalTimer Structure*/
 void
 intervalTimer_display(const IntervalTimer * ptimer)
@@ -769,7 +754,8 @@ displayOthers(const PtpClock * ptpClock)
 
 	netPath_display(&ptpClock->netPath);
 	DBGV("mCommunication technology %d \n", ptpClock->port_communication_technology);
-	clockUUID_display(ptpClock->netPath.interfaceID);
+	struct ether_addr macaddr = netPathGetMacAddress(&ptpClock->netPath);
+	clockUUID_display((Octet*)macaddr.octet);
 	DBGV("\n");
 }
 

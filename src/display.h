@@ -14,6 +14,7 @@ void timeInternal_display(const TimeInternal*);
 void timestamp_display(const Timestamp* timestamp);
 void clockIdentity_display(const ClockIdentity);
 void clockUUID_display(const Octet*);
+// netPath_display defined in net.c. Kept here to group with other display functions.
 void netPath_display(const NetPath*);
 void intervalTimer_display(const IntervalTimer*);
 void timeInterval_display(const TimeInterval*);

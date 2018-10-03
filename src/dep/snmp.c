@@ -678,7 +678,7 @@ snmpClockPortTable(SNMP_SIGNATURE)
 	case PTPBASE_CLOCK_PORT_CURRENT_PEER_ADDRESS:
 		if(snmpRtOpts->transport != UDP_IPV4)
 		    return SNMP_IPADDR(0);
-		return(SNMP_IPADDR(snmpPtpClock->netPath.interfaceAddr.s_addr));
+		return(SNMP_IPADDR(netPathGetInterfaceAddr(&snmpPtpClock->netPath).s_addr));
 	case PTPBASE_CLOCK_PORT_NUM_ASSOCIATED_PORTS:
 		if(snmpPtpClock->portDS.portState == PTP_MASTER && snmpRtOpts->unicastNegotiation) {
 			return SNMP_INTEGER(snmpPtpClock->slaveCount);
@@ -732,7 +732,7 @@ snmpClockPortTable(SNMP_SIGNATURE)
 		return SNMP_INTEGER((snmpPtpClock->portDS.portState == PTP_MASTER)?
 				    SNMP_PTP_PORT_MASTER:SNMP_PTP_PORT_SLAVE);
 	case PTPBASE_CLOCK_PORT_RUNNING_INTERFACE_INDEX:
-		return SNMP_INTEGER(snmpPtpClock->netPath.interfaceInfo.ifIndex);
+		return SNMP_INTEGER(netPathGetInterfaceIndex(&snmpPtpClock->netPath));
 	case PTPBASE_CLOCK_PORT_RUNNING_IPVERSION:
 		/* IPv4 only */
 		return SNMP_INTEGER(4);
@@ -747,10 +747,9 @@ snmpClockPortTable(SNMP_SIGNATURE)
 			return SNMP_INTEGER(SNMP_PTP_TX_MULTICAST_MIX);
 		return SNMP_INTEGER(SNMP_PTP_TX_MULTICAST);
 	case PTPBASE_CLOCK_PORT_RUNNING_PACKETS_RECEIVED:
-
-		return SNMP_COUNTER64(snmpPtpClock->netPath.receivedPacketsTotal);
+		return SNMP_COUNTER64(netPathGetTotalReceivedPacketsCount(&snmpPtpClock->netPath));
 	case PTPBASE_CLOCK_PORT_RUNNING_PACKETS_SENT:
-		return SNMP_COUNTER64(snmpPtpClock->netPath.sentPacketsTotal);
+		return SNMP_COUNTER64(netPathGetTotalSentPacketCount(&snmpPtpClock->netPath));
 	}
 
 
@@ -917,9 +916,9 @@ snmpPtpPortMessageCountersTable(SNMP_SIGNATURE)
 	    *write_method = snmpWriteClearCounters;
 	    return SNMP_FALSE;
 	case PTPBASE_PORT_MESSAGE_COUNTERS_TOTAL_SENT:
-	    return SNMP_INTEGER(snmpPtpClock->netPath.sentPacketsTotal);
+	    return SNMP_INTEGER(netPathGetTotalSentPacketCount(&snmpPtpClock->netPath));
 	case PTPBASE_PORT_MESSAGE_COUNTERS_TOTAL_RECEIVED:
-	    return SNMP_INTEGER(snmpPtpClock->netPath.receivedPacketsTotal);
+	    return SNMP_INTEGER(netPathGetTotalReceivedPacketsCount(&snmpPtpClock->netPath));
 	case PTPBASE_PORT_MESSAGE_COUNTERS_ANNOUNCE_SENT:
 	    return SNMP_INTEGER(snmpPtpClock->counters.announceMessagesSent);
 	case PTPBASE_PORT_MESSAGE_COUNTERS_ANNOUNCE_RECEIVED:

@@ -374,16 +374,7 @@ restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	if(rtOpts->restartSubsystems & PTPD_RESTART_ACLS) {
 		NOTIFY("Applying access control list configuration\n");
 		/* re-compile ACLs */
-		freeIpv4AccessList(&ptpClock->netPath.timingAcl);
-		freeIpv4AccessList(&ptpClock->netPath.managementAcl);
-		if(rtOpts->timingAclEnabled) {
-			ptpClock->netPath.timingAcl=createIpv4AccessList(rtOpts->timingAclPermitText,
-							rtOpts->timingAclDenyText, rtOpts->timingAclOrder);
-		}
-		if(rtOpts->managementAclEnabled) {
-			ptpClock->netPath.managementAcl=createIpv4AccessList(rtOpts->managementAclPermitText,
-			        rtOpts->managementAclDenyText, rtOpts->managementAclOrder);
-		}
+		netInitializeACLs(&ptpClock->netPath, rtOpts);
 	}
 
 	if(rtOpts->restartSubsystems & PTPD_RESTART_ALARMS) {
@@ -519,12 +510,12 @@ checkSignals(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 		if(rtOpts->timingAclEnabled) {
 			INFO("\n\n");
 			INFO("** Timing message ACL:\n");
-			dumpIpv4AccessList(ptpClock->netPath.timingAcl);
+			dumpIpv4AccessList(netPathGetTimingACL(&ptpClock->netPath));
 		}
 		if(rtOpts->managementAclEnabled) {
 			INFO("\n\n");
 			INFO("** Management message ACL:\n");
-			dumpIpv4AccessList(ptpClock->netPath.managementAcl);
+			dumpIpv4AccessList(netPathGetManagementACL(&ptpClock->netPath));
 		}
 		if(rtOpts->clearCounters) {
 			clearCounters(ptpClock);
@@ -995,13 +986,7 @@ configcheck:
 
 #endif
 
-#ifdef PTPD_PCAP
-	ptpClock->netPath.pcapEventSock = -1;
-	ptpClock->netPath.pcapGeneralSock = -1;
-#endif /* PTPD_PCAP */
-
-	ptpClock->netPath.generalSock = -1;
-	ptpClock->netPath.eventSock = -1;
+	netPathClearSockets(&ptpClock->netPath);
 
 	*ret = 0;
 

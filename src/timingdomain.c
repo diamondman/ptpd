@@ -303,11 +303,11 @@ ptpServiceUpdate (TimingService* service)
 	RunTimeOpts *rtOpts = (RunTimeOpts*)service->config;
 	PtpClock *ptpClock  = (PtpClock*)service->controller;
 
-	ptpClock->counters.messageSendRate = ptpClock->netPath.sentPackets / service->updateInterval;
-	ptpClock->counters.messageReceiveRate = ptpClock->netPath.receivedPackets / service->updateInterval;
+	ptpClock->counters.messageSendRate = netPathGetSentPacketCount(&ptpClock->netPath) / service->updateInterval;
+	ptpClock->counters.messageReceiveRate = netPathGetReceivedPacketCount(&ptpClock->netPath) / service->updateInterval;
 
-	ptpClock->netPath.sentPackets = 0;
-	ptpClock->netPath.receivedPackets = 0;
+	netPathResetSentPacketCount(&ptpClock->netPath);
+	netPathResetReceivedPacketCount(&ptpClock->netPath);
 
 	if(service->reloadRequested && strcmp(rtOpts->leapFile,"")) {
 		memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));

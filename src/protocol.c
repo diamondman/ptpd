@@ -1281,17 +1281,17 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
     msgUnpackHeader(ptpClock->msgIbuf, &ptpClock->msgTmpHeader);
 
     /* packet is not from self, and is from a non-zero source address - check ACLs */
-    if(ptpClock->netPath.lastSourceAddr &&
-	(ptpClock->netPath.lastSourceAddr != ptpClock->netPath.interfaceAddr.s_addr)) {
+    if(netPathGetLastSourceAddress(&ptpClock->netPath) &&
+       (netPathGetLastSourceAddress(&ptpClock->netPath) != netPathGetInterfaceAddr(&ptpClock->netPath).s_addr)) {
 #if defined(RUNTIME_DEBUG) || defined (PTPD_DBGV)
 		struct in_addr tmpAddr;
-		tmpAddr.s_addr = ptpClock->netPath.lastSourceAddr;
+		tmpAddr.s_addr = netPathGetLastSourceAddress(&ptpClock->netPath);
 #endif /* RUNTIME_DEBUG */
 		if(ptpClock->msgTmpHeader.messageType == MANAGEMENT) {
 			if(rtOpts->managementAclEnabled) {
 			    if (!matchIpv4AccessList(
-				ptpClock->netPath.managementAcl,
-				ntohl(ptpClock->netPath.lastSourceAddr))) {
+				netPathGetManagementACL(&ptpClock->netPath),
+				ntohl(netPathGetLastSourceAddress(&ptpClock->netPath)))) {
 					DBG("ACL dropped management message from %s\n", inet_ntoa(tmpAddr));
 					ptpClock->counters.aclManagementMessagesDiscarded++;
 					return;
@@ -1299,8 +1299,9 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 					DBG("ACL Accepted management message from %s\n", inet_ntoa(tmpAddr));
 			}
 	        } else if(rtOpts->timingAclEnabled) {
-			if(!matchIpv4AccessList(ptpClock->netPath.timingAcl,
-			    ntohl(ptpClock->netPath.lastSourceAddr))) {
+			if(!matchIpv4AccessList(
+				netPathGetTimingACL(&ptpClock->netPath),
+				ntohl(netPathGetLastSourceAddress(&ptpClock->netPath)))) {
 				DBG("ACL dropped timing message from %s\n", inet_ntoa(tmpAddr));
 				ptpClock->counters.aclTimingMessagesDiscarded++;
 				return;
@@ -1343,7 +1344,7 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 		ptpClock->counters.domainMismatchErrors++;
 
 		SET_ALARM(ALRM_DOMAIN_MISMATCH, ((ptpClock->counters.domainMismatchErrors >= DOMAIN_MISMATCH_MIN) &&
-		    ptpClock->netPath.receivedPacketsTotal == ptpClock->counters.domainMismatchErrors));
+			 netPathGetTotalReceivedPacketsCount(&ptpClock->netPath) == ptpClock->counters.domainMismatchErrors));
 		return;
 	}
     } else {
@@ -1405,7 +1406,8 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 	break;
     case SYNC:
 	handleSync(&ptpClock->msgTmpHeader,
-	       length, timeStamp, isFromSelf, ptpClock->netPath.lastSourceAddr, ptpClock->netPath.lastDestAddr, rtOpts, ptpClock);
+		   length, timeStamp, isFromSelf, netPathGetLastSourceAddress(&ptpClock->netPath),
+		   netPathGetLastDestAddress(&ptpClock->netPath), rtOpts, ptpClock);
 	break;
     case FOLLOW_UP:
 	handleFollowUp(&ptpClock->msgTmpHeader,
@@ -1413,11 +1415,11 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 	break;
     case DELAY_REQ:
 	handleDelayReq(&ptpClock->msgTmpHeader,
-	           length, timeStamp, ptpClock->netPath.lastSourceAddr, isFromSelf, rtOpts, ptpClock);
+		       length, timeStamp, netPathGetLastSourceAddress(&ptpClock->netPath), isFromSelf, rtOpts, ptpClock);
 	break;
     case PDELAY_REQ:
 	handlePdelayReq(&ptpClock->msgTmpHeader,
-		length, timeStamp, ptpClock->netPath.lastSourceAddr, isFromSelf, rtOpts, ptpClock);
+			length, timeStamp, netPathGetLastSourceAddress(&ptpClock->netPath), isFromSelf, rtOpts, ptpClock);
 	break;
     case DELAY_RESP:
 	handleDelayResp(&ptpClock->msgTmpHeader,
@@ -1425,7 +1427,8 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 	break;
     case PDELAY_RESP:
 	handlePdelayResp(&ptpClock->msgTmpHeader,
-		 timeStamp, length, isFromSelf, ptpClock->netPath.lastSourceAddr, ptpClock->netPath.lastDestAddr, rtOpts, ptpClock);
+			 timeStamp, length, isFromSelf, netPathGetLastSourceAddress(&ptpClock->netPath),
+			 netPathGetLastDestAddress(&ptpClock->netPath), rtOpts, ptpClock);
 	break;
     case PDELAY_RESP_FOLLOW_UP:
 	handlePdelayRespFollowUp(&ptpClock->msgTmpHeader,
@@ -1433,11 +1436,11 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 	break;
     case MANAGEMENT:
 	handleManagement(&ptpClock->msgTmpHeader,
-		 isFromSelf, ptpClock->netPath.lastSourceAddr, rtOpts, ptpClock);
+			 isFromSelf, netPathGetLastSourceAddress(&ptpClock->netPath), rtOpts, ptpClock);
 	break;
     case SIGNALING:
        handleSignaling(&ptpClock->msgTmpHeader, isFromSelf,
-                ptpClock->netPath.lastSourceAddr, rtOpts, ptpClock);
+		       netPathGetLastSourceAddress(&ptpClock->netPath), rtOpts, ptpClock);
 	break;
     default:
 	DBG("handle: unrecognized message\n");
@@ -1457,6 +1460,7 @@ handle(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {
     int ret;
     ssize_t length = -1;
+    Boolean timeout = FALSE;
 
     TimeInternal timeStamp = { 0, 0 };
     fd_set readfds;
@@ -1478,73 +1482,34 @@ handle(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
     DBG("handle: something\n");
 
-#ifdef PTPD_PCAP
-    if (rtOpts->pcap == TRUE) {
-	if (ptpClock->netPath.pcapEventSock >=0 && FD_ISSET(ptpClock->netPath.pcapEventSock, &readfds)) {
-	    length = netRecvEvent(ptpClock->msgIbuf, &timeStamp,
-		          &ptpClock->netPath,0);
-	    if (length == 0){ /* timeout, return for now */
-		return;
-		}
-
-
-	    if (length < 0) {
-		PERROR("failed to receive event on pcap");
-		toState(PTP_FAULTY, rtOpts, ptpClock);
-		ptpClock->counters.messageRecvErrors++;
-
-		return;
-	    }
-	    if(ptpClock->leapSecondInProgress) {
-		DBG("Leap second in progress - will not process event message\n");
-	    } else {
-
-		processMessage(rtOpts, ptpClock, &timeStamp, length);
-	    }
-	}
-	if (ptpClock->netPath.pcapGeneralSock >=0 && FD_ISSET(ptpClock->netPath.pcapGeneralSock, &readfds)) {
-	    length = netRecvGeneral(ptpClock->msgIbuf, &ptpClock->netPath);
-	    if (length == 0) /* timeout, return for now */
-		return;
-	    if (length < 0) {
-		PERROR("failed to receive general on pcap");
-		toState(PTP_FAULTY, rtOpts, ptpClock);
-		ptpClock->counters.messageRecvErrors++;
-		return;
-	    }
-	    processMessage(rtOpts, ptpClock, &timeStamp, length);
-	}
-    } else {
-#endif
-	if (FD_ISSET(ptpClock->netPath.eventSock, &readfds)) {
-	    length = netRecvEvent(ptpClock->msgIbuf, &timeStamp,
-		          &ptpClock->netPath, 0);
-	    if (length < 0) {
-		PERROR("failed to receive on the event socket");
-		toState(PTP_FAULTY, rtOpts, ptpClock);
-		ptpClock->counters.messageRecvErrors++;
-		return;
-	    }
-	    if(ptpClock->leapSecondInProgress) {
-		DBG("Leap second in progress - will not process event message\n");
-	    } else {
-		processMessage(rtOpts, ptpClock, &timeStamp, length);
-	    }
-	}
-
-	if (FD_ISSET(ptpClock->netPath.generalSock, &readfds)) {
-	    length = netRecvGeneral(ptpClock->msgIbuf, &ptpClock->netPath);
-	    if (length < 0) {
-		PERROR("failed to receive on the general socket");
-		toState(PTP_FAULTY, rtOpts, ptpClock);
-		ptpClock->counters.messageRecvErrors++;
-		return;
-	    }
-	    processMessage(rtOpts, ptpClock, &timeStamp, length);
-	}
-#ifdef PTPD_PCAP
+    if (netPathEventSocketIsSet(&ptpClock->netPath, &readfds)) {
+      length = netRecvEvent(ptpClock->msgIbuf, &timeStamp, &ptpClock->netPath, 0, &timeout);
+        if (timeout) /* timeout, return for now */
+            return;
+        if (length < 0) {
+            PERROR("failed to receive on the event socket");
+            toState(PTP_FAULTY, rtOpts, ptpClock);
+            ptpClock->counters.messageRecvErrors++;
+            return;
+        }
+        if (ptpClock->leapSecondInProgress) {
+            DBG("Leap second in progress - will not process event message\n");
+        } else {
+            processMessage(rtOpts, ptpClock, &timeStamp, length);
+        }
     }
-#endif
+    if (netPathGeneralSocketIsSet(&ptpClock->netPath, &readfds)) {
+        length = netRecvGeneral(ptpClock->msgIbuf, &ptpClock->netPath, &timeout);
+        if (timeout) /* timeout, return for now */
+            return;
+        if (length < 0) {
+            PERROR("failed to receive on the general socket");
+            toState(PTP_FAULTY, rtOpts, ptpClock);
+            ptpClock->counters.messageRecvErrors++;
+            return;
+        }
+        processMessage(rtOpts, ptpClock, &timeStamp, length);
+    }
 }
 
 /*spec 9.5.3*/
@@ -1701,7 +1666,7 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 			 * the slave will  sit idle if current parent
 			 * is not announcing, but another GM is
 			 */
-			addForeign(ptpClock->msgIbuf,header,ptpClock,localPreference,ptpClock->netPath.lastSourceAddr);
+			addForeign(ptpClock->msgIbuf,header,ptpClock,localPreference,netPathGetLastSourceAddress(&ptpClock->netPath));
 			break;
 
 		default:
@@ -1762,7 +1727,7 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 
 			DBG("___ Announce: received Announce from another master, will add to the list, as it might be better\n\n");
 			DBGV("this is to be decided immediatly by bmc())\n\n");
-			addForeign(ptpClock->msgIbuf,header,ptpClock,localPreference,ptpClock->netPath.lastSourceAddr);
+			addForeign(ptpClock->msgIbuf,header,ptpClock,localPreference,netPathGetLastSourceAddress(&ptpClock->netPath));
 		}
 		break;
 
@@ -1780,7 +1745,7 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 		}
 		ptpClock->counters.announceMessagesReceived++;
 		DBGV("Announce message from another foreign master\n");
-		addForeign(ptpClock->msgIbuf,header,ptpClock, localPreference,ptpClock->netPath.lastSourceAddr);
+		addForeign(ptpClock->msgIbuf,header,ptpClock, localPreference,netPathGetLastSourceAddress(&ptpClock->netPath));
 		ptpClock->record_update = TRUE;    /* run BMC() as soon as possible */
 		break;
 
@@ -3020,11 +2985,7 @@ issueSyncSingle(Integer32 dst, UInteger16 *sequenceId, const RunTimeOpts *rtOpts
 
 #ifdef SO_TIMESTAMPING
 
-#  ifdef PTPD_PCAP
-		if((ptpClock->netPath.pcapEvent == NULL) && !ptpClock->netPath.txTimestampFailure) {
-#  else
-		if(!ptpClock->netPath.txTimestampFailure) {
-#  endif /* PTPD_PCAP */
+		if(netPathCheckTxTsValid(&ptpClock->netPath)) {
 			if(internalTime.seconds && internalTime.nanoseconds) {
 
 			    if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
@@ -3135,11 +3096,7 @@ issueDelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 
 #ifdef SO_TIMESTAMPING
 
-#  ifdef PTPD_PCAP
-		if((ptpClock->netPath.pcapEvent == NULL) && !ptpClock->netPath.txTimestampFailure) {
-#  else
-		if(!ptpClock->netPath.txTimestampFailure) {
-#  endif /* PTPD_PCAP */
+		if(netPathCheckTxTsValid(&ptpClock->netPath)) {
 			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
 				internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
 			}
@@ -3212,11 +3169,7 @@ issuePdelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 
 #ifdef SO_TIMESTAMPING
 
-#  ifdef PTPD_PCAP
-		if((ptpClock->netPath.pcapEvent == NULL) && !ptpClock->netPath.txTimestampFailure) {
-#  else
-		if(!ptpClock->netPath.txTimestampFailure) {
-#  endif /* PTPD_PCAP */
+		if(netPathCheckTxTsValid(&ptpClock->netPath)) {
 			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
 				internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
 			}
@@ -3265,11 +3218,7 @@ issuePdelayResp(const TimeInternal *tint,MsgHeader *header, Integer32 sourceAddr
 
 #ifdef SO_TIMESTAMPING
 
-#  ifdef PTPD_PCAP
-		if((ptpClock->netPath.pcapEvent == NULL) && !ptpClock->netPath.txTimestampFailure) {
-#  else
-		if(!ptpClock->netPath.txTimestampFailure) {
-#  endif /* PTPD_PCAP */
+		if(netPathCheckTxTsValid(&ptpClock->netPath)) {
 			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
 				internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
 			}
