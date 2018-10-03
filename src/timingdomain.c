@@ -19,7 +19,9 @@
 #include "ptp_datatypes.h"
 #include "arith.h"
 #include "timingdomain.h"
-#include "dep/ntpengine/ntpdcontrol.h"
+#if defined(PTPD_FEATURE_NTP)
+#  include "dep/ntpengine/ntpdcontrol.h"
+#endif
 #include "datatypes.h"
 #include "dep/sys.h" // Only for parseLeapFile, getTime, updateXtmp
 #include "ptpd_logging.h"
