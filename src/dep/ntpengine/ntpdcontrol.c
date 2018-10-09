@@ -78,10 +78,63 @@
 #include "dep/net.h" // Only for hostLookup
 #include "ptpd_logging.h"
 #include "dep/ntpengine/ntpdcontrol.h"
+#include "dep/daemonconfig.h"
+#include "datatypes.h"
 
 #define NTP_PORT 123
 
 char *ntpdc_pktdata;
+
+void
+ntpSetup (RunTimeOpts *rtOpts, PtpClock *ptpClock)
+{
+	TimingService *ts = &ptpClock->ntpControl.timingService;
+
+	if (rtOpts->ntpOptions.enableEngine) {
+		timingDomain.services[1] = ts;
+		strncpy(ts->id, "NTP0", TIMINGSERVICE_MAX_DESC);
+		ts->dataSet.priority1 = 0;
+		ts->dataSet.type = TIMINGSERVICE_NTP;
+		ts->config = &rtOpts->ntpOptions;
+		ts->controller = &ptpClock->ntpControl;
+		/* for now, NTP is considered always active, so will never go idle */
+		ts->timeout = 60;
+		ts->updateInterval = rtOpts->ntpOptions.checkInterval;
+		timingDomain.serviceCount = 2;
+	} else {
+		timingDomain.serviceCount = 1;
+		timingDomain.services[1] = NULL;
+		if(timingDomain.best == ts || timingDomain.current == ts || timingDomain.preferred == ts) {
+			timingDomain.best = timingDomain.current = timingDomain.preferred = NULL;
+		}
+	}
+}
+
+void ntpReset(RunTimeOpts* rtOpts, PtpClock* ptpClock)
+{
+	if(rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE && timingDomain.serviceCount > 1) {
+		ptpClock->ntpControl.timingService.shutdown(&ptpClock->ntpControl.timingService);
+	}
+
+	if((rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE) ||
+	   (rtOpts->restartSubsystems & PTPD_RESTART_NTPCONFIG)) {
+		ntpSetup(rtOpts, ptpClock);
+	}
+	if((rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE) && rtOpts->ntpOptions.enableEngine) {
+		timingServiceSetup(&ptpClock->ntpControl.timingService);
+		ptpClock->ntpControl.timingService.init(&ptpClock->ntpControl.timingService);
+	}
+
+	//TODO: Check that disabling this with NTP doesn't break stuff.
+	ptpClock->timingService.dataSet.priority1 = rtOpts->preferNTP;
+
+	timingDomain.services[0]->holdTime = rtOpts->ntpOptions.failoverTimeout;
+
+	if(timingDomain.services[0]->holdTimeLeft >
+	   timingDomain.services[0]->holdTime) {
+		timingDomain.services[0]->holdTimeLeft = rtOpts->ntpOptions.failoverTimeout;
+	}
+}
 
 Boolean
 ntpInit(NTPoptions* options, NTPcontrol* control)

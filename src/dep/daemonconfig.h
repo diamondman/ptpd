@@ -80,6 +80,13 @@ dictionary* parseConfig (int, void*, dictionary*, RunTimeOpts*);
 Boolean compareConfig(dictionary* source, dictionary* target);
 int checkSubsystemRestart(dictionary* newConfig, dictionary* oldConfig, RunTimeOpts *rtOpts);
 void setConfig(dictionary *dict, const char* key, const char *value);
+void applyConfig(dictionary*, RunTimeOpts*, PtpClock*);
 Boolean runTimeOptsInit(int, char**, Integer16*, RunTimeOpts*);
+
+void enable_runtime_debug(void );
+void disable_runtime_debug(void );
+
+#define D_ON      do { enable_runtime_debug();  } while (0);
+#define D_OFF     do { disable_runtime_debug(); } while (0);
 
 #endif /*PTPD_DAEMONCONFIG_H_*/

@@ -142,7 +142,9 @@
 #include "dep/servo.h" // For adjFreq_wrapper
 #include "datatypes.h"
 #include "dep/sys.h" // For getTime, getTimexFlags
+#include "dep/daemonconfig.h"
 #include "dep/alarms.h"
+#include "protocol.h"
 #include "display.h"
 #include "ptpd_logging.h"
 
@@ -172,6 +174,9 @@ static TimerIntData tData;
 static Boolean tDataUpdated = FALSE;
 
 #endif /* __QNXNTO__ */
+
+/* Pointer to the current lock file */
+static FILE* G_lockFilePointer;
 
 /*
  returns a static char * for the representation of time, for debug purposes
@@ -1908,6 +1913,55 @@ end:
     return ret;
 }
 
+int
+writeLockFile(RunTimeOpts* rtOpts)
+{
+	int lockPid = 0;
+
+	DBGV("Checking lock file: %s\n", rtOpts->lockFile);
+
+	if ( (G_lockFilePointer=fopen(rtOpts->lockFile, "w+")) == NULL) {
+		PERROR("Could not open lock file %s for writing", rtOpts->lockFile);
+		return(0);
+	}
+	if (lockFile(fileno(G_lockFilePointer)) < 0) {
+		if ( checkLockStatus(fileno(G_lockFilePointer),
+				     DEFAULT_LOCKMODE, &lockPid) == 0) {
+			ERROR("Another "PTPD_PROGNAME" instance is running: %s locked by PID %d\n",
+			      rtOpts->lockFile, lockPid);
+		} else {
+			PERROR("Could not acquire lock on %s:", rtOpts->lockFile);
+		}
+		goto failure;
+	}
+	if(ftruncate(fileno(G_lockFilePointer), 0) == -1) {
+		PERROR("Could not truncate %s: %s",
+			rtOpts->lockFile, strerror(errno));
+		goto failure;
+	}
+	if ( fprintf(G_lockFilePointer, "%ld\n", (long)getpid()) == -1) {
+		PERROR("Could not write to lock file %s: %s",
+			rtOpts->lockFile, strerror(errno));
+		goto failure;
+	}
+	INFO("Successfully acquired lock on %s\n", rtOpts->lockFile);
+	fflush(G_lockFilePointer);
+	return(1);
+	failure:
+	fclose(G_lockFilePointer);
+	return(0);
+}
+
+void clearLockFile(RunTimeOpts* rtOpts)
+{
+	/* properly clean lockfile (eventough new deaemons can acquire the lock after we die) */
+	if(!rtOpts->ignore_daemon_lock && G_lockFilePointer != NULL) {
+		fclose(G_lockFilePointer);
+		G_lockFilePointer = NULL;
+	}
+	unlink(rtOpts->lockFile);
+}
+
 
 /* Whole block of adjtimex() functions starts here - only for systems with sys/timex.h */
 
@@ -2709,4 +2763,278 @@ int setCpuAffinity(int cpu)
 #endif /* linux && HAVE_SCHED_H */
 
     return -1;
+}
+
+ /*
+ * Synchronous signal processing:
+ * original idea: http://www.openbsd.org/cgi-bin/cvsweb/src/usr.sbin/ntpd/ntpd.c?rev=1.68;content-type=text%2Fplain
+ */
+volatile sig_atomic_t	 sigint_received  = 0;
+volatile sig_atomic_t	 sigterm_received = 0;
+volatile sig_atomic_t	 sighup_received  = 0;
+volatile sig_atomic_t	 sigusr1_received = 0;
+volatile sig_atomic_t	 sigusr2_received = 0;
+
+/*
+ * Function to catch signals asynchronously.
+ * Assuming that the daemon periodically calls checkSignals(), then all operations are safely done synchrously at a later opportunity.
+ *
+ * Please do NOT call any functions inside this handler - especially DBG() and its friends, or any glibc.
+ */
+static void catchSignals(int sig)
+{
+	switch (sig) {
+	case SIGINT:
+		sigint_received = 1;
+		break;
+	case SIGTERM:
+		sigterm_received = 1;
+		break;
+	case SIGHUP:
+		sighup_received = 1;
+		break;
+	case SIGUSR1:
+		sigusr1_received = 1;
+		break;
+	case SIGUSR2:
+		sigusr2_received = 1;
+		break;
+	default:
+		/*
+		 * TODO: should all other signals be catched, and handled as SIGINT?
+		 *
+		 * Reason: currently, all other signals are just uncatched, and the OS kills us.
+		 * The difference is that we could then close the open files properly.
+		 */
+		break;
+	}
+}
+
+/*
+ * exit the program cleanly
+ */
+static void
+do_signal_close(PtpClock * ptpClock)
+{
+	timingDomain.shutdown(&timingDomain);
+
+	NOTIFY("Shutdown on close signal\n");
+	exit(0);
+}
+
+
+/**
+ * Signal handler for HUP which tells us to swap the log file
+ * and reload configuration file if specified
+ *
+ * @param sig
+ */
+static void
+do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
+{
+	NOTIFY("SIGHUP received\n");
+
+#ifdef RUNTIME_DEBUG
+	if(rtOpts->transport == UDP_IPV4 && rtOpts->ipMode != IPMODE_UNICAST) {
+		DBG("SIGHUP - running an ipv4 multicast based mode, re-sending IGMP joins\n");
+		netRefreshIGMP(ptpClock->netPath, rtOpts, ptpClock);
+	}
+#endif /* RUNTIME_DEBUG */
+
+
+	/* if we don't have a config file specified, we're done - just reopen log files*/
+	if(strlen(rtOpts->configFile) !=  0) {
+
+		dictionary* tmpConfig = dictionary_new(0);
+
+		/* Try reloading the config file */
+		NOTIFY("Reloading configuration file: %s\n",rtOpts->configFile);
+
+		if(!loadConfigFile(&tmpConfig, rtOpts)) {
+
+			dictionary_del(&tmpConfig);
+
+		} else {
+			dictionary_merge(rtOpts->cliConfig, tmpConfig, 1, 1, "from command line");
+			applyConfig(tmpConfig, rtOpts, ptpClock);
+			dictionary_del(&tmpConfig);
+
+		}
+
+	}
+
+	/* tell the service it can perform any HUP-triggered actions */
+	ptpClock->timingService.reloadRequested = TRUE;
+
+	if(rtOpts->recordLog.logEnabled ||
+	    rtOpts->eventLog.logEnabled ||
+	    (rtOpts->statisticsLog.logEnabled))
+		INFO("Reopening log files\n");
+
+	restartLogging(rtOpts);
+
+	if(rtOpts->statisticsLog.logEnabled)
+		ptpClock->resetStatisticsLog = TRUE;
+}
+
+/*
+ * Synchronous signal processing:
+ * This function should be called regularly from the main loop
+ */
+void
+checkSignals(RunTimeOpts * rtOpts, PtpClock * ptpClock)
+{
+	/*
+	 * note:
+	 * alarm signals are handled in a similar way in dep/timer.c
+	 */
+
+	if(sigint_received || sigterm_received){
+		do_signal_close(ptpClock);
+	}
+
+	if(sighup_received){
+		do_signal_sighup(rtOpts, ptpClock);
+		sighup_received=0;
+	}
+
+	if(sigusr1_received){
+		if(ptpClock->portDS.portState == PTP_SLAVE){
+			WARNING("SIGUSR1 received, stepping clock to current known OFM\n");
+			stepClock(rtOpts, ptpClock);
+			//ptpClock->clockControl.stepRequired = TRUE;
+		} else {
+			ERROR("SIGUSR1 received - will not step clock, not in PTP_SLAVE state\n");
+		}
+		sigusr1_received = 0;
+	}
+
+	if(sigusr2_received){
+
+/* testing only: testing step detection */
+#if 0
+		{
+		ptpClock->addOffset ^= 1;
+		INFO("a: %d\n", ptpClock->addOffset);
+		sigusr2_received = 0;
+		return;
+		}
+#endif
+		displayCounters(ptpClock);
+		displayAlarms(ptpClock->alarms, ALRM_MAX);
+		if(rtOpts->timingAclEnabled) {
+			INFO("\n\n");
+			INFO("** Timing message ACL:\n");
+			dumpIpv4AccessList(netPathGetTimingACL(ptpClock->netPath));
+		}
+		if(rtOpts->managementAclEnabled) {
+			INFO("\n\n");
+			INFO("** Management message ACL:\n");
+			dumpIpv4AccessList(netPathGetManagementACL(ptpClock->netPath));
+		}
+		if(rtOpts->clearCounters) {
+			clearCounters(ptpClock);
+			NOTIFY("PTP engine counters cleared\n");
+		}
+#ifdef PTPD_STATISTICS
+		if(rtOpts->oFilterSMConfig.enabled) {
+			ptpClock->oFilterSM.display(&ptpClock->oFilterSM);
+		}
+		if(rtOpts->oFilterMSConfig.enabled) {
+			ptpClock->oFilterMS.display(&ptpClock->oFilterMS);
+		}
+#endif /* PTPD_STATISTICS */
+		sigusr2_received = 0;
+	}
+}
+
+Boolean
+sysPrePtpClockInit(RunTimeOpts* rtOpts, Integer16* ret)
+{
+	TimeInternal tmpTime;
+
+	/*
+	 * Set the default mode for all newly created files - previously
+	 * this was not the case for log files. This adds consistency
+	 * and allows to use FILE* vs. fds everywhere
+	 */
+	umask(~DEFAULT_FILE_PERMS);
+
+	/* get some entropy in... */
+	getTime(&tmpTime);
+	srand(tmpTime.seconds ^ tmpTime.nanoseconds);
+
+	/*
+	 * we try to catch as many error conditions as possible, but before we call daemon().
+	 * the exception is the lock file, as we get a new pid when we call daemon(),
+	 * so this is checked twice: once to read, second to read/write
+	 */
+	if(geteuid() != 0)
+	{
+		printf("Error: "PTPD_PROGNAME" daemon can only be run as root\n");
+		*ret = 1;
+		return FALSE;
+	}
+
+	/* DAEMON */
+	if(!rtOpts->nonDaemon){
+		/*
+		 * fork to daemon - nochdir non-zero to preserve the working directory:
+		 * allows relative paths to be used for log files, config files etc.
+		 * Always redirect stdout/err to /dev/null
+		 */
+		if (daemon(1,0) == -1) {
+			PERROR("Failed to start as daemon");
+			*ret = 3;
+			return FALSE;
+		}
+		INFO("  Info:    Now running as a daemon\n");
+		/*
+		 * Wait for the parent process to terminate, but not forever.
+		 * On some systems this happened after we tried re-acquiring
+		 * the lock, so the lock would fail. Hence, we wait.
+		 */
+		for (int i = 0; i < 1000000; i++) {
+			/* Once we've been reaped by init, parent PID will be 1 */
+			if(getppid() == 1)
+				break;
+			usleep(1);
+		}
+	}
+
+	/* First lock check, just to be user-friendly to the operator */
+	if(!rtOpts->ignore_daemon_lock) {
+		if(!writeLockFile(rtOpts)){
+			/* check and create Lock */
+			ERROR("Error: file lock failed (use -L or global:ignore_lock to ignore lock file)\n");
+			*ret = 3;
+			return FALSE;
+		}
+		/* check for potential conflicts when automatic lock files are used */
+		if(!checkOtherLocks(rtOpts)) {
+			*ret = 3;
+			return FALSE;
+		}
+	}
+
+#if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined(__QNXNTO__)
+	/* Try binding to a single CPU core if configured to do so */
+	if(rtOpts->cpuNumber > -1) {
+		if(setCpuAffinity(rtOpts->cpuNumber) < 0) {
+			ERROR("Could not bind to CPU core %d\n", rtOpts->cpuNumber);
+		} else {
+			INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", rtOpts->cpuNumber);
+		}
+	}
+#endif
+
+	/* establish signal handlers */
+	signal(SIGINT,  catchSignals);
+	signal(SIGTERM, catchSignals);
+	signal(SIGHUP,  catchSignals);
+	signal(SIGUSR1, catchSignals);
+	signal(SIGUSR2, catchSignals);
+
+	*ret = 0;
+	return TRUE;
 }

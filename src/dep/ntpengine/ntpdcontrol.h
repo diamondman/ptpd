@@ -21,6 +21,7 @@
 #include "ptp_primitives.h"
 #include "timingdomain.h"
 #include "dep/ntpengine/ntp_isc_md5.h"
+#include "datatypes_stub.h"
 
 typedef struct {
 	Boolean enableEngine;
@@ -48,6 +49,8 @@ typedef struct {
 	struct TimingService timingService;
 } NTPcontrol;
 
+void ntpSetup(RunTimeOpts*, PtpClock*);
+void ntpReset(RunTimeOpts*, PtpClock*);
 Boolean ntpInit(NTPoptions* options, NTPcontrol* control);
 Boolean ntpShutdown(NTPoptions* options, NTPcontrol* control);
 int ntpdControlFlags(NTPoptions* options, NTPcontrol* control, int req, int flags);

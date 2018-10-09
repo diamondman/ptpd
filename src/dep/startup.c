@@ -65,32 +65,29 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <signal.h>
 
 #include "constants.h"
 #include "dep/constants_dep.h"
-#include "dep/ipv4_acl.h"
 #include "ptp_primitives.h"
 #include "timingdomain.h"
+#include "ptp_datatypes.h"
+#include "ptp_timers.h"
+#include "dep/daemonconfig.h"
 #if defined(PTPD_FEATURE_NTP)
 #  include "dep/ntpengine/ntpdcontrol.h"
 #endif
-#include "ptp_datatypes.h"
-#include "ptp_timers.h"
-#include "datatypes.h"
 #include "dep/sys.h" // Used for lots of stuff
 #ifdef PTPD_SNMP
 #  include "dep/snmp.h"
 #endif
+#include "datatypes.h"
 #include "dep/net.h"
 #include "dep/startup.h"
 #include "dep/servo.h"
-#include "dep/msg.h"
+#include "dep/msg.h" // For freeManagementTLV, freeSignalingTLV
 #include "dep/alarms.h"
 #include "protocol.h"
 #include "display.h"
-#include "dep/daemonconfig.h"
-#include "dep/configdefaults.h"
 #include "ptpd_logging.h"
 
 /*
@@ -112,227 +109,6 @@
   s sudo ./ptpd2 -t -g -b eth0
   ps -ef | grep ptpd2
 */
-
-/*
- * Synchronous signal processing:
- * original idea: http://www.openbsd.org/cgi-bin/cvsweb/src/usr.sbin/ntpd/ntpd.c?rev=1.68;content-type=text%2Fplain
- */
-volatile sig_atomic_t	 sigint_received  = 0;
-volatile sig_atomic_t	 sigterm_received = 0;
-volatile sig_atomic_t	 sighup_received  = 0;
-volatile sig_atomic_t	 sigusr1_received = 0;
-volatile sig_atomic_t	 sigusr2_received = 0;
-
-/* Pointer to the current lock file */
-FILE* G_lockFilePointer;
-
-/*
- * Function to catch signals asynchronously.
- * Assuming that the daemon periodically calls checkSignals(), then all operations are safely done synchrously at a later opportunity.
- *
- * Please do NOT call any functions inside this handler - especially DBG() and its friends, or any glibc.
- */
-static void catchSignals(int sig)
-{
-	switch (sig) {
-	case SIGINT:
-		sigint_received = 1;
-		break;
-	case SIGTERM:
-		sigterm_received = 1;
-		break;
-	case SIGHUP:
-		sighup_received = 1;
-		break;
-	case SIGUSR1:
-		sigusr1_received = 1;
-		break;
-	case SIGUSR2:
-		sigusr2_received = 1;
-		break;
-	default:
-		/*
-		 * TODO: should all other signals be catched, and handled as SIGINT?
-		 *
-		 * Reason: currently, all other signals are just uncatched, and the OS kills us.
-		 * The difference is that we could then close the open files properly.
-		 */
-		break;
-	}
-}
-
-/*
- * exit the program cleanly
- */
-static void
-do_signal_close(PtpClock * ptpClock)
-{
-	timingDomain.shutdown(&timingDomain);
-
-	NOTIFY("Shutdown on close signal\n");
-	exit(0);
-}
-
-void
-applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock)
-{
-	Boolean reloadSuccessful = TRUE;
-
-
-	/* Load default config to fill in the blanks in the config file */
-	RunTimeOpts tmpOpts;
-	loadDefaultSettings(&tmpOpts);
-
-	/* Check the new configuration for errors, fill in the blanks from defaults */
-	if( ( rtOpts->candidateConfig = parseConfig(CFGOP_PARSE, NULL, baseConfig, &tmpOpts)) == NULL ) {
-		WARNING("Configuration has errors, reload aborted\n");
-		return;
-	}
-
-	/* Check for changes between old and new configuration */
-	if(compareConfig(rtOpts->candidateConfig,rtOpts->currentConfig)) {
-		INFO("Configuration unchanged\n");
-		goto cleanup;
-	}
-
-	/*
-	 * Mark which subsystems have to be restarted. Most of this will be picked up by doState()
-	 * If there are errors past config correctness (such as non-existent NIC,
-	 * or lock file clashes if automatic lock files used - abort the mission
-	 */
-
-	rtOpts->restartSubsystems =
-	    checkSubsystemRestart(rtOpts->candidateConfig, rtOpts->currentConfig, rtOpts);
-
-	/* If we're told to re-check lock files, do it: tmpOpts already has what rtOpts should */
-	if( (rtOpts->restartSubsystems & PTPD_CHECK_LOCKS) &&
-	    tmpOpts.autoLockFile && !checkOtherLocks(&tmpOpts)) {
-		reloadSuccessful = FALSE;
-	}
-
-	/* If the network configuration has changed, check if the interface is OK */
-	if(rtOpts->restartSubsystems & PTPD_RESTART_NETWORK) {
-		INFO("Network configuration changed - checking interface(s)\n");
-		if(!testInterface(tmpOpts.primaryIfaceName, &tmpOpts)) {
-			reloadSuccessful = FALSE;
-			ERROR("Error: Cannot use %s interface\n",tmpOpts.primaryIfaceName);
-		}
-		if(rtOpts->backupIfaceEnabled && !testInterface(tmpOpts.backupIfaceName, &tmpOpts)) {
-			rtOpts->restartSubsystems = -1;
-			ERROR("Error: Cannot use %s interface as backup\n",tmpOpts.backupIfaceName);
-		}
-	}
-#if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined(__QNXNTO__)
-	/* Changing the CPU affinity mask */
-	if(rtOpts->restartSubsystems & PTPD_CHANGE_CPUAFFINITY) {
-		NOTIFY("Applying CPU binding configuration: changing selected CPU core\n");
-
-		if(setCpuAffinity(tmpOpts.cpuNumber) < 0) {
-			if(tmpOpts.cpuNumber == -1) {
-				ERROR("Could not unbind from CPU core %d\n", rtOpts->cpuNumber);
-			} else {
-				ERROR("Could bind to CPU core %d\n", tmpOpts.cpuNumber);
-			}
-			reloadSuccessful = FALSE;
-		} else {
-			if(tmpOpts.cpuNumber > -1)
-				INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", tmpOpts.cpuNumber);
-			else
-				INFO("Successfully unbound "PTPD_PROGNAME" from cpu core CPU core %d\n", rtOpts->cpuNumber);
-		}
-	}
-#endif
-
-	if(!reloadSuccessful) {
-		ERROR("New configuration cannot be applied - aborting reload\n");
-		rtOpts->restartSubsystems = 0;
-		goto cleanup;
-	}
-
-
-		/**
-		 * Commit changes to rtOpts and currentConfig
-		 * (this should never fail as the config has already been checked if we're here)
-		 * However if this DOES fail, some default has been specified out of range -
-		 * this is the only situation where parse will succeed but commit not:
-		 * disable quiet mode to show what went wrong, then die.
-		 */
-		if (rtOpts->currentConfig) {
-			dictionary_del(&rtOpts->currentConfig);
-		}
-		if ( (rtOpts->currentConfig = parseConfig(CFGOP_PARSE_QUIET, NULL, rtOpts->candidateConfig,rtOpts)) == NULL) {
-			CRITICAL("************ "PTPD_PROGNAME": parseConfig returned NULL during config commit"
-				 "  - this is a BUG - report the following: \n");
-
-			if ((rtOpts->currentConfig = parseConfig(CFGOP_PARSE, NULL, rtOpts->candidateConfig,rtOpts)) == NULL)
-				CRITICAL("*****************" PTPD_PROGNAME" shutting down **********************\n");
-			/*
-			 * Could be assert(), but this should be done any time this happens regardless of
-			 * compile options. Anyhow, if we're here, the daemon will no doubt segfault soon anyway
-			 */
-			abort();
-		}
-
-	/* clean up */
-	cleanup:
-
-		dictionary_del(&rtOpts->candidateConfig);
-}
-
-
-/**
- * Signal handler for HUP which tells us to swap the log file
- * and reload configuration file if specified
- *
- * @param sig
- */
-static void
-do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
-{
-	NOTIFY("SIGHUP received\n");
-
-#ifdef RUNTIME_DEBUG
-	if(rtOpts->transport == UDP_IPV4 && rtOpts->ipMode != IPMODE_UNICAST) {
-		DBG("SIGHUP - running an ipv4 multicast based mode, re-sending IGMP joins\n");
-		netRefreshIGMP(ptpClock->netPath, rtOpts, ptpClock);
-	}
-#endif /* RUNTIME_DEBUG */
-
-
-	/* if we don't have a config file specified, we're done - just reopen log files*/
-	if(strlen(rtOpts->configFile) !=  0) {
-
-		dictionary* tmpConfig = dictionary_new(0);
-
-		/* Try reloading the config file */
-		NOTIFY("Reloading configuration file: %s\n",rtOpts->configFile);
-
-		if(!loadConfigFile(&tmpConfig, rtOpts)) {
-
-			dictionary_del(&tmpConfig);
-
-		} else {
-			dictionary_merge(rtOpts->cliConfig, tmpConfig, 1, 1, "from command line");
-			applyConfig(tmpConfig, rtOpts, ptpClock);
-			dictionary_del(&tmpConfig);
-
-		}
-
-	}
-
-	/* tell the service it can perform any HUP-triggered actions */
-	ptpClock->timingService.reloadRequested = TRUE;
-
-	if(rtOpts->recordLog.logEnabled ||
-	    rtOpts->eventLog.logEnabled ||
-	    (rtOpts->statisticsLog.logEnabled))
-		INFO("Reopening log files\n");
-
-	restartLogging(rtOpts);
-
-	if(rtOpts->statisticsLog.logEnabled)
-		ptpClock->resetStatisticsLog = TRUE;
-}
 
 void
 restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock)
@@ -418,28 +194,7 @@ restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	ptpClock->timingService.reloadRequested = TRUE;
 
 #ifdef PTPD_FEATURE_NTP
-	if(rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE && timingDomain.serviceCount > 1) {
-		ptpClock->ntpControl.timingService.shutdown(&ptpClock->ntpControl.timingService);
-	}
-
-	if((rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE) ||
-	   (rtOpts->restartSubsystems & PTPD_RESTART_NTPCONFIG)) {
-		ntpSetup(rtOpts, ptpClock);
-	}
-	if((rtOpts->restartSubsystems & PTPD_RESTART_NTPENGINE) && rtOpts->ntpOptions.enableEngine) {
-		timingServiceSetup(&ptpClock->ntpControl.timingService);
-		ptpClock->ntpControl.timingService.init(&ptpClock->ntpControl.timingService);
-	}
-
-	//TODO: Check that disabling this with NTP doesn't break stuff.
-	ptpClock->timingService.dataSet.priority1 = rtOpts->preferNTP;
-
-	timingDomain.services[0]->holdTime = rtOpts->ntpOptions.failoverTimeout;
-
-	if(timingDomain.services[0]->holdTimeLeft >
-	   timingDomain.services[0]->holdTime) {
-		timingDomain.services[0]->holdTimeLeft = rtOpts->ntpOptions.failoverTimeout;
-	}
+	ntpReset(rtOpts, ptpClock);
 #else
 	// When ntp is disabled, set priority to 0 (the value of preferNTP).
 	ptpClock->timingService.dataSet.priority1 = 0;
@@ -461,134 +216,6 @@ restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	if(rtOpts->restartSubsystems != -1)
 		rtOpts->restartSubsystems = 0;
-}
-
-
-/*
- * Synchronous signal processing:
- * This function should be called regularly from the main loop
- */
-void
-checkSignals(RunTimeOpts * rtOpts, PtpClock * ptpClock)
-{
-	/*
-	 * note:
-	 * alarm signals are handled in a similar way in dep/timer.c
-	 */
-
-	if(sigint_received || sigterm_received){
-		do_signal_close(ptpClock);
-	}
-
-	if(sighup_received){
-		do_signal_sighup(rtOpts, ptpClock);
-		sighup_received=0;
-	}
-
-	if(sigusr1_received){
-		if(ptpClock->portDS.portState == PTP_SLAVE){
-			WARNING("SIGUSR1 received, stepping clock to current known OFM\n");
-			stepClock(rtOpts, ptpClock);
-			//ptpClock->clockControl.stepRequired = TRUE;
-		} else {
-			ERROR("SIGUSR1 received - will not step clock, not in PTP_SLAVE state\n");
-		}
-		sigusr1_received = 0;
-	}
-
-	if(sigusr2_received){
-
-/* testing only: testing step detection */
-#if 0
-		{
-		ptpClock->addOffset ^= 1;
-		INFO("a: %d\n", ptpClock->addOffset);
-		sigusr2_received = 0;
-		return;
-		}
-#endif
-		displayCounters(ptpClock);
-		displayAlarms(ptpClock->alarms, ALRM_MAX);
-		if(rtOpts->timingAclEnabled) {
-			INFO("\n\n");
-			INFO("** Timing message ACL:\n");
-			dumpIpv4AccessList(netPathGetTimingACL(ptpClock->netPath));
-		}
-		if(rtOpts->managementAclEnabled) {
-			INFO("\n\n");
-			INFO("** Management message ACL:\n");
-			dumpIpv4AccessList(netPathGetManagementACL(ptpClock->netPath));
-		}
-		if(rtOpts->clearCounters) {
-			clearCounters(ptpClock);
-			NOTIFY("PTP engine counters cleared\n");
-		}
-#ifdef PTPD_STATISTICS
-		if(rtOpts->oFilterSMConfig.enabled) {
-			ptpClock->oFilterSM.display(&ptpClock->oFilterSM);
-		}
-		if(rtOpts->oFilterMSConfig.enabled) {
-			ptpClock->oFilterMS.display(&ptpClock->oFilterMS);
-		}
-#endif /* PTPD_STATISTICS */
-		sigusr2_received = 0;
-	}
-}
-
-#ifdef RUNTIME_DEBUG
-/* These functions are useful to temporarily enable Debug around parts of code, similar to bash's "set -x" */
-void enable_runtime_debug(void )
-{
-	extern RunTimeOpts rtOpts;
-
-	rtOpts.debug_level = max(LOG_DEBUGV, rtOpts.debug_level);
-}
-
-void disable_runtime_debug(void )
-{
-	extern RunTimeOpts rtOpts;
-
-	rtOpts.debug_level = LOG_INFO;
-}
-#endif
-
-static int
-writeLockFile(RunTimeOpts * rtOpts)
-{
-	int lockPid = 0;
-
-	DBGV("Checking lock file: %s\n", rtOpts->lockFile);
-
-	if ( (G_lockFilePointer=fopen(rtOpts->lockFile, "w+")) == NULL) {
-		PERROR("Could not open lock file %s for writing", rtOpts->lockFile);
-		return(0);
-	}
-	if (lockFile(fileno(G_lockFilePointer)) < 0) {
-		if ( checkLockStatus(fileno(G_lockFilePointer),
-				     DEFAULT_LOCKMODE, &lockPid) == 0) {
-			ERROR("Another "PTPD_PROGNAME" instance is running: %s locked by PID %d\n",
-			      rtOpts->lockFile, lockPid);
-		} else {
-			PERROR("Could not acquire lock on %s:", rtOpts->lockFile);
-		}
-		goto failure;
-	}
-	if(ftruncate(fileno(G_lockFilePointer), 0) == -1) {
-		PERROR("Could not truncate %s: %s",
-			rtOpts->lockFile, strerror(errno));
-		goto failure;
-	}
-	if ( fprintf(G_lockFilePointer, "%ld\n", (long)getpid()) == -1) {
-		PERROR("Could not write to lock file %s: %s",
-			rtOpts->lockFile, strerror(errno));
-		goto failure;
-	}
-	INFO("Successfully acquired lock on %s\n", rtOpts->lockFile);
-	fflush(G_lockFilePointer);
-	return(1);
-	failure:
-	fclose(G_lockFilePointer);
-	return(0);
 }
 
 void
@@ -642,19 +269,11 @@ ptpdShutdown(PtpClock * ptpClock)
 	timerShutdown(ptpClock->timers);
 
 	free(ptpClock);
-	ptpClock = NULL;
 
 	extern PtpClock* G_ptpClock;
 	G_ptpClock = NULL;
 
-
-
-	/* properly clean lockfile (eventough new deaemons can acquire the lock after we die) */
-	if(!rtOpts.ignore_daemon_lock && G_lockFilePointer != NULL) {
-		fclose(G_lockFilePointer);
-		G_lockFilePointer = NULL;
-	}
-	unlink(rtOpts.lockFile);
+	clearLockFile(&rtOpts);
 
 	if(rtOpts.statusLog.logEnabled) {
 		/* close and remove the status file */
@@ -776,120 +395,5 @@ ptpClockCreate(RunTimeOpts* rtOpts, Integer16* ret) {
 	return NULL;
 }
 
-Boolean
-sysPrePtpClockInit(RunTimeOpts* rtOpts, Integer16* ret)
-{
-	TimeInternal tmpTime;
-
-	/*
-	 * Set the default mode for all newly created files - previously
-	 * this was not the case for log files. This adds consistency
-	 * and allows to use FILE* vs. fds everywhere
-	 */
-	umask(~DEFAULT_FILE_PERMS);
-
-	/* get some entropy in... */
-	getTime(&tmpTime);
-	srand(tmpTime.seconds ^ tmpTime.nanoseconds);
-
-	/*
-	 * we try to catch as many error conditions as possible, but before we call daemon().
-	 * the exception is the lock file, as we get a new pid when we call daemon(),
-	 * so this is checked twice: once to read, second to read/write
-	 */
-	if(geteuid() != 0)
-	{
-		printf("Error: "PTPD_PROGNAME" daemon can only be run as root\n");
-		*ret = 1;
-		return FALSE;
-	}
-
-	/* DAEMON */
-	if(!rtOpts->nonDaemon){
-		/*
-		 * fork to daemon - nochdir non-zero to preserve the working directory:
-		 * allows relative paths to be used for log files, config files etc.
-		 * Always redirect stdout/err to /dev/null
-		 */
-		if (daemon(1,0) == -1) {
-			PERROR("Failed to start as daemon");
-			*ret = 3;
-			return FALSE;
-		}
-		INFO("  Info:    Now running as a daemon\n");
-		/*
-		 * Wait for the parent process to terminate, but not forever.
-		 * On some systems this happened after we tried re-acquiring
-		 * the lock, so the lock would fail. Hence, we wait.
-		 */
-		for (int i = 0; i < 1000000; i++) {
-			/* Once we've been reaped by init, parent PID will be 1 */
-			if(getppid() == 1)
-				break;
-			usleep(1);
-		}
-	}
-
-	/* First lock check, just to be user-friendly to the operator */
-	if(!rtOpts->ignore_daemon_lock) {
-		if(!writeLockFile(rtOpts)){
-			/* check and create Lock */
-			ERROR("Error: file lock failed (use -L or global:ignore_lock to ignore lock file)\n");
-			*ret = 3;
-			return FALSE;
-		}
-		/* check for potential conflicts when automatic lock files are used */
-		if(!checkOtherLocks(rtOpts)) {
-			*ret = 3;
-			return FALSE;
-		}
-	}
-
-#if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined(__QNXNTO__)
-	/* Try binding to a single CPU core if configured to do so */
-	if(rtOpts->cpuNumber > -1) {
-		if(setCpuAffinity(rtOpts->cpuNumber) < 0) {
-			ERROR("Could not bind to CPU core %d\n", rtOpts->cpuNumber);
-		} else {
-			INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", rtOpts->cpuNumber);
-		}
-	}
-#endif
-
-	/* establish signal handlers */
-	signal(SIGINT,  catchSignals);
-	signal(SIGTERM, catchSignals);
-	signal(SIGHUP,  catchSignals);
-	signal(SIGUSR1, catchSignals);
-	signal(SIGUSR2, catchSignals);
-
-	*ret = 0;
-	return TRUE;
-}
-
 #ifdef PTPD_FEATURE_NTP
-void
-ntpSetup (RunTimeOpts *rtOpts, PtpClock *ptpClock)
-{
-	TimingService *ts = &ptpClock->ntpControl.timingService;
-
-	if (rtOpts->ntpOptions.enableEngine) {
-		timingDomain.services[1] = ts;
-		strncpy(ts->id, "NTP0", TIMINGSERVICE_MAX_DESC);
-		ts->dataSet.priority1 = 0;
-		ts->dataSet.type = TIMINGSERVICE_NTP;
-		ts->config = &rtOpts->ntpOptions;
-		ts->controller = &ptpClock->ntpControl;
-		/* for now, NTP is considered always active, so will never go idle */
-		ts->timeout = 60;
-		ts->updateInterval = rtOpts->ntpOptions.checkInterval;
-		timingDomain.serviceCount = 2;
-	} else {
-		timingDomain.serviceCount = 1;
-		timingDomain.services[1] = NULL;
-		if(timingDomain.best == ts || timingDomain.current == ts || timingDomain.preferred == ts) {
-			timingDomain.best = timingDomain.current = timingDomain.preferred = NULL;
-		}
-	}
-}
 #endif

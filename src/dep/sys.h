@@ -40,6 +40,12 @@ int lockFile(int fd);
 int checkLockStatus(int fd, short lockType, int *lockPid);
 int checkFileLockable(const char *fileName, int *lockPid);
 Boolean checkOtherLocks(RunTimeOpts *rtOpts);
+int writeLockFile(RunTimeOpts*);
+void clearLockFile(RunTimeOpts*);
+
+void checkSignals(RunTimeOpts * rtOpts, PtpClock * ptpClock);
+Boolean sysPrePtpClockInit(RunTimeOpts*, Integer16* ret);
+
 Boolean adjFreq(double);
 double getAdjFreq(void);
 

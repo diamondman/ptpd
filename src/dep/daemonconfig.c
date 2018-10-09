@@ -56,6 +56,7 @@
 #include "dep/iniparser/dictionary.h"
 #include "dep/iniparser/iniparser.h"
 #include "datatypes.h"
+#include "dep/sys.h"
 #include "display.h"
 #include "dep/configdefaults.h"
 #include "dep/daemonconfig.h"
@@ -3228,6 +3229,112 @@ static void dump_command_line_parameters(int argc, char **argv)
 	INFO("Starting %s daemon with parameters:      %s\n", PTPD_PROGNAME, sbuf);
 }
 
+void
+applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock)
+{
+	Boolean reloadSuccessful = TRUE;
+
+
+	/* Load default config to fill in the blanks in the config file */
+	RunTimeOpts tmpOpts;
+	loadDefaultSettings(&tmpOpts);
+
+	/* Check the new configuration for errors, fill in the blanks from defaults */
+	if( ( rtOpts->candidateConfig = parseConfig(CFGOP_PARSE, NULL, baseConfig, &tmpOpts)) == NULL ) {
+		WARNING("Configuration has errors, reload aborted\n");
+		return;
+	}
+
+	/* Check for changes between old and new configuration */
+	if(compareConfig(rtOpts->candidateConfig,rtOpts->currentConfig)) {
+		INFO("Configuration unchanged\n");
+		goto cleanup;
+	}
+
+	/*
+	 * Mark which subsystems have to be restarted. Most of this will be picked up by doState()
+	 * If there are errors past config correctness (such as non-existent NIC,
+	 * or lock file clashes if automatic lock files used - abort the mission
+	 */
+
+	rtOpts->restartSubsystems =
+	    checkSubsystemRestart(rtOpts->candidateConfig, rtOpts->currentConfig, rtOpts);
+
+	/* If we're told to re-check lock files, do it: tmpOpts already has what rtOpts should */
+	if( (rtOpts->restartSubsystems & PTPD_CHECK_LOCKS) &&
+	    tmpOpts.autoLockFile && !checkOtherLocks(&tmpOpts)) {
+		reloadSuccessful = FALSE;
+	}
+
+	/* If the network configuration has changed, check if the interface is OK */
+	if(rtOpts->restartSubsystems & PTPD_RESTART_NETWORK) {
+		INFO("Network configuration changed - checking interface(s)\n");
+		if(!testInterface(tmpOpts.primaryIfaceName, &tmpOpts)) {
+			reloadSuccessful = FALSE;
+			ERROR("Error: Cannot use %s interface\n",tmpOpts.primaryIfaceName);
+		}
+		if(rtOpts->backupIfaceEnabled && !testInterface(tmpOpts.backupIfaceName, &tmpOpts)) {
+			rtOpts->restartSubsystems = -1;
+			ERROR("Error: Cannot use %s interface as backup\n",tmpOpts.backupIfaceName);
+		}
+	}
+#if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined(__QNXNTO__)
+	/* Changing the CPU affinity mask */
+	if(rtOpts->restartSubsystems & PTPD_CHANGE_CPUAFFINITY) {
+		NOTIFY("Applying CPU binding configuration: changing selected CPU core\n");
+
+		if(setCpuAffinity(tmpOpts.cpuNumber) < 0) {
+			if(tmpOpts.cpuNumber == -1) {
+				ERROR("Could not unbind from CPU core %d\n", rtOpts->cpuNumber);
+			} else {
+				ERROR("Could bind to CPU core %d\n", tmpOpts.cpuNumber);
+			}
+			reloadSuccessful = FALSE;
+		} else {
+			if(tmpOpts.cpuNumber > -1)
+				INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", tmpOpts.cpuNumber);
+			else
+				INFO("Successfully unbound "PTPD_PROGNAME" from cpu core CPU core %d\n", rtOpts->cpuNumber);
+		}
+	}
+#endif
+
+	if(!reloadSuccessful) {
+		ERROR("New configuration cannot be applied - aborting reload\n");
+		rtOpts->restartSubsystems = 0;
+		goto cleanup;
+	}
+
+
+		/**
+		 * Commit changes to rtOpts and currentConfig
+		 * (this should never fail as the config has already been checked if we're here)
+		 * However if this DOES fail, some default has been specified out of range -
+		 * this is the only situation where parse will succeed but commit not:
+		 * disable quiet mode to show what went wrong, then die.
+		 */
+		if (rtOpts->currentConfig) {
+			dictionary_del(&rtOpts->currentConfig);
+		}
+		if ( (rtOpts->currentConfig = parseConfig(CFGOP_PARSE_QUIET, NULL, rtOpts->candidateConfig,rtOpts)) == NULL) {
+			CRITICAL("************ "PTPD_PROGNAME": parseConfig returned NULL during config commit"
+				 "  - this is a BUG - report the following: \n");
+
+			if ((rtOpts->currentConfig = parseConfig(CFGOP_PARSE, NULL, rtOpts->candidateConfig,rtOpts)) == NULL)
+				CRITICAL("*****************" PTPD_PROGNAME" shutting down **********************\n");
+			/*
+			 * Could be assert(), but this should be done any time this happens regardless of
+			 * compile options. Anyhow, if we're here, the daemon will no doubt segfault soon anyway
+			 */
+			abort();
+		}
+
+	/* clean up */
+	cleanup:
+
+		dictionary_del(&rtOpts->candidateConfig);
+}
+
 Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOpts)
 {
 	*ret = 0;
@@ -3349,3 +3456,20 @@ Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOp
 	dictionary_del(&rtOpts->currentConfig);
 	return 0;
 }
+
+#ifdef RUNTIME_DEBUG
+/* These functions are useful to temporarily enable Debug around parts of code, similar to bash's "set -x" */
+void enable_runtime_debug(void )
+{
+	extern RunTimeOpts rtOpts;
+
+	rtOpts.debug_level = max(LOG_DEBUGV, rtOpts.debug_level);
+}
+
+void disable_runtime_debug(void )
+{
+	extern RunTimeOpts rtOpts;
+
+	rtOpts.debug_level = LOG_INFO;
+}
+#endif
