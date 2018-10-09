@@ -523,7 +523,7 @@ feedDoubleMovingStdDev(DoubleMovingStdDev* container, double sample)
 	return container->stdDev;
 }
 
-IntMovingStatFilter* createIntMovingStatFilter(StatFilterOptions *config, const char* id)
+IntMovingStatFilter* createIntMovingStatFilter(const StatFilterOptions *config, const char* id)
 {
 	IntMovingStatFilter* container;
 
@@ -676,7 +676,7 @@ feedIntMovingStatFilter(IntMovingStatFilter* container, int32_t sample)
 	return TRUE;
 }
 
-DoubleMovingStatFilter* createDoubleMovingStatFilter(StatFilterOptions *config, const char* id)
+DoubleMovingStatFilter* createDoubleMovingStatFilter(const StatFilterOptions *config, const char* id)
 {
 	DoubleMovingStatFilter* container;
 

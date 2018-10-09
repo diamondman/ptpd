@@ -13,8 +13,9 @@ void checkSignals(RunTimeOpts * rtOpts, PtpClock * ptpClock);
 void enable_runtime_debug(void );
 void disable_runtime_debug(void );
 
-void ptpdShutdown(PtpClock * ptpClock);
-PtpClock * ptpdStartup(int,char**,Integer16*,RunTimeOpts*);
+void ptpdShutdown(PtpClock*);
+PtpClock * ptpClockCreate(RunTimeOpts*, Integer16* ret);
+Boolean sysPrePtpClockInit(RunTimeOpts*, Integer16* ret);
 
 #ifdef PTPD_FEATURE_NTP
 void ntpSetup(RunTimeOpts *rtOpts, PtpClock *ptpClock);

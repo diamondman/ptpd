@@ -668,32 +668,118 @@ ptpdShutdown(PtpClock * ptpClock)
 	stopLogging(&rtOpts);
 }
 
-static void dump_command_line_parameters(int argc, char **argv)
-{
-	int i = 0;
-	char sbuf[1000];
-	char *st = sbuf;
-	int len = 0;
-
-	*st = '\0';
-	for(i=0; i < argc; i++){
-		if(strcmp(argv[i],"") == 0)
-			continue;
-		len += snprintf(sbuf + len,
-				sizeof(sbuf) - len,
-				"%s ", argv[i]);
+PtpClock *
+ptpClockCreate(RunTimeOpts* rtOpts, Integer16* ret) {
+	PtpClock* ptpClock;
+	/* Allocate memory after we're done with other checks but before going into daemon */
+	ptpClock = (PtpClock *) calloc(1, sizeof(PtpClock));
+	if (!ptpClock) {
+		PERROR("Error: Failed to allocate memory for protocol engine data");
+		*ret = 2;
+		goto fail;
 	}
-	INFO("Starting %s daemon with parameters:      %s\n", PTPD_PROGNAME, sbuf);
+	DBG("allocated %d bytes for protocol engine data\n", (int)sizeof(PtpClock));
+
+	ptpClock->foreign = (ForeignMasterRecord *)
+		calloc(rtOpts->max_foreign_records, sizeof(ForeignMasterRecord));
+	if (!ptpClock->foreign) {
+		PERROR("failed to allocate memory for foreign master data");
+		*ret = 2;
+	        goto fail;
+	}
+	DBG("allocated %d bytes for foreign master data\n",
+	    (int)(rtOpts->max_foreign_records * sizeof(ForeignMasterRecord)));
+
+	if (!(ptpClock->netPath = netPathCreate())) {
+		PERROR("Error: Failed to allocate memory for protocol engine NetPath data");
+		*ret = 2;
+		goto fail;
+	}
+	DBG("allocated %d bytes for protocol engine NetPath data\n", (int)sizeof(NetPath));
+
+	ptpClock->resetStatisticsLog = TRUE;
+
+	/* Init to 0 net buffer */
+	memset(ptpClock->msgIbuf, 0, PACKET_SIZE);
+	memset(ptpClock->msgObuf, 0, PACKET_SIZE);
+
+	/* Init outgoing management message */
+	ptpClock->outgoingManageTmp.tlv = NULL;
+
+	ptpClock->rtOpts = rtOpts;
+
+#ifdef PTPD_STATISTICS
+	outlierFilterSetup(&ptpClock->oFilterMS);
+	outlierFilterSetup(&ptpClock->oFilterSM);
+
+	ptpClock->oFilterMS.init(&ptpClock->oFilterMS, &rtOpts->oFilterMSConfig, "delayMS");
+	ptpClock->oFilterSM.init(&ptpClock->oFilterSM, &rtOpts->oFilterSMConfig, "delaySM");
+
+
+	if(rtOpts->filterMSOpts.enabled) {
+		ptpClock->filterMS = createDoubleMovingStatFilter(&rtOpts->filterMSOpts, "delayMS");
+	}
+
+	if(rtOpts->filterSMOpts.enabled) {
+		ptpClock->filterSM = createDoubleMovingStatFilter(&rtOpts->filterSMOpts, "delaySM");
+	}
+
+#endif
+
+	/* set up timers */
+	if(!timerSetup(ptpClock->timers)) {
+		PERROR("failed to set up event timers");
+		*ret = 2;
+		goto fail;
+	}
+
+	/* init alarms */
+	initAlarms(ptpClock->alarms, ALRM_MAX, (void*)ptpClock);
+	configureAlarms(ptpClock->alarms, ALRM_MAX, (void*)ptpClock);
+	ptpClock->alarmDelay = rtOpts->alarmInitialDelay;
+	/* we're delaying alarm processing - disable alarms for now */
+	if(ptpClock->alarmDelay) {
+		enableAlarms(ptpClock->alarms, ALRM_MAX, FALSE);
+	}
+
+	netPathClearSockets(ptpClock->netPath);
+
+#if defined PTPD_SNMP
+	/* Start SNMP subsystem */
+	if (rtOpts->snmpEnabled)
+		snmpInit(rtOpts, ptpClock);
+#endif
+
+	return ptpClock;
+
+ fail:
+	if(ptpClock) {
+		if(ptpClock->foreign)
+			free(ptpClock->foreign);
+
+		if(ptpClock->netPath)
+			netPathFree(&ptpClock->netPath);
+
+#ifdef PTPD_STATISTICS
+		if(ptpClock->oFilterMS.shutdown != NULL)
+			ptpClock->oFilterMS.shutdown(&ptpClock->oFilterMS);
+		if(ptpClock->oFilterSM.shutdown != NULL)
+			ptpClock->oFilterSM.shutdown(&ptpClock->oFilterSM);
+
+		if(ptpClock->filterMS)
+			freeDoubleMovingStatFilter(&ptpClock->filterMS);
+		if(ptpClock->filterSM)
+			freeDoubleMovingStatFilter(&ptpClock->filterSM);
+#endif
+		free(ptpClock);
+	}
+	return NULL;
 }
 
-
-
-PtpClock *
-ptpdStartup(int argc, char **argv, Integer16 * ret, RunTimeOpts * rtOpts)
+Boolean
+sysPrePtpClockInit(RunTimeOpts* rtOpts, Integer16* ret)
 {
-	PtpClock * ptpClock;
 	TimeInternal tmpTime;
-	int i = 0;
 
 	/*
 	 * Set the default mode for all newly created files - previously
@@ -706,41 +792,6 @@ ptpdStartup(int argc, char **argv, Integer16 * ret, RunTimeOpts * rtOpts)
 	getTime(&tmpTime);
 	srand(tmpTime.seconds ^ tmpTime.nanoseconds);
 
-	/**
-	 * If a required setting, such as interface name, or a setting
-	 * requiring a range check is to be set via getopts_long,
-	 * the respective currentConfig dictionary entry should be set,
-	 * instead of just setting the rtOpts field.
-	 *
-	 * Config parameter evaluation priority order:
-	 * 	1. Any dictionary keys set in the getopt_long loop
-	 * 	2. CLI long section:key type options
-	 * 	3. Any built-in config templates
-	 *	4. Any templates loaded from template file
-	 * 	5. Config file (parsed last), merged with 2. and 3 - will be overwritten by CLI options
-	 * 	6. Defaults and any rtOpts fields set in the getopt_long loop
-	**/
-
-	/**
-	 * Load defaults. Any options set here and further inside loadCommandLineOptions()
-	 * by setting rtOpts fields, will be considered the defaults
-	 * for config file and section:key long options.
-	 */
-	loadDefaultSettings(rtOpts);
-	/* initialise the config dictionary */
-	rtOpts->candidateConfig = dictionary_new(0);
-	rtOpts->cliConfig = dictionary_new(0);
-
-	/* parse all long section:key options and clean up argv for getopt */
-	loadCommandLineKeys(rtOpts->cliConfig,argc,argv);
-	/* parse the normal short and long options, exit on error */
-	if (!loadCommandLineOptions(rtOpts, rtOpts->cliConfig, argc, argv, ret)) {
-		goto fail;
-	}
-
-	/* Display startup info and argv if not called with -? or -H */
-		NOTIFY("%s version %s starting\n",USER_DESCRIPTION, USER_VERSION);
-		dump_command_line_parameters(argc, argv);
 	/*
 	 * we try to catch as many error conditions as possible, but before we call daemon().
 	 * the exception is the lock file, as we get a new pid when we call daemon(),
@@ -750,149 +801,10 @@ ptpdStartup(int argc, char **argv, Integer16 * ret, RunTimeOpts * rtOpts)
 	{
 		printf("Error: "PTPD_PROGNAME" daemon can only be run as root\n");
 		*ret = 1;
-		goto fail;
+		return FALSE;
 	}
 
-	/* Have we got a config file? */
-	if(strlen(rtOpts->configFile) > 0) {
-		/* config file settings overwrite all others, except for empty strings */
-		INFO("Loading configuration file: %s\n",rtOpts->configFile);
-		if(loadConfigFile(&rtOpts->candidateConfig, rtOpts)) {
-			dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
-		} else {
-			*ret = 1;
-			dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
-			goto configcheck;
-		}
-	} else {
-		dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
-	}
-	/**
-	 * This is where the final checking  of the candidate settings container happens.
-	 * A dictionary is returned with only the known options, explicitly set to defaults
-	 * if not present. NULL is returned on any config error - parameters missing, out of range,
-	 * etc. The getopt loop in loadCommandLineOptions() only sets keys verified here.
-	 */
-	if( ( rtOpts->currentConfig = parseConfig(CFGOP_PARSE, NULL, rtOpts->candidateConfig,rtOpts)) == NULL ) {
-		*ret = 1;
-		dictionary_del(&rtOpts->candidateConfig);
-		goto configcheck;
-	}
-
-	/* we've been told to print the lock file and exit cleanly */
-	if(rtOpts->printLockFile) {
-		printf("%s\n", rtOpts->lockFile);
-		*ret = 0;
-		goto fail;
-	}
-
-	/* we don't need the candidate config any more */
-	dictionary_del(&rtOpts->candidateConfig);
-
-	/* Check network before going into background */
-	if(!testInterface(rtOpts->primaryIfaceName, rtOpts)) {
-		ERROR("Error: Cannot use %s interface\n",rtOpts->primaryIfaceName);
-		*ret = 1;
-		goto configcheck;
-	}
-	if(rtOpts->backupIfaceEnabled && !testInterface(rtOpts->backupIfaceName, rtOpts)) {
-		ERROR("Error: Cannot use %s interface as backup\n",rtOpts->backupIfaceName);
-		*ret = 1;
-		goto configcheck;
-	}
-
-
-configcheck:
-	/*
-	 * We've been told to check config only - clean exit before checking locks
-	 */
-	if(rtOpts->checkConfigOnly) {
-		if(*ret != 0) {
-			printf("Configuration has errors\n");
-			*ret = 1;
-		} else
-			printf("Configuration OK\n");
-		goto fail;
-	}
-
-	/* Previous errors - exit */
-	if(*ret !=0)
-		goto fail;
-
-	/* First lock check, just to be user-friendly to the operator */
-	if(!rtOpts->ignore_daemon_lock) {
-		if(!writeLockFile(rtOpts)){
-			/* check and create Lock */
-			ERROR("Error: file lock failed (use -L or global:ignore_lock to ignore lock file)\n");
-			*ret = 3;
-			goto fail;
-		}
-		/* check for potential conflicts when automatic lock files are used */
-		if(!checkOtherLocks(rtOpts)) {
-			*ret = 3;
-			goto fail;
-		}
-	}
-
-	/* Manage log files: stats, log, status and quality file */
-	restartLogging(rtOpts);
-
-	/* Allocate memory after we're done with other checks but before going into daemon */
-	ptpClock = (PtpClock *) calloc(1, sizeof(PtpClock));
-	if (!ptpClock) {
-		PERROR("Error: Failed to allocate memory for protocol engine data");
-		*ret = 2;
-		goto fail;
-	} else {
-		DBG("allocated %d bytes for protocol engine data\n",
-		    (int)sizeof(PtpClock));
-
-
-		ptpClock->foreign = (ForeignMasterRecord *)
-			calloc(rtOpts->max_foreign_records,
-			       sizeof(ForeignMasterRecord));
-		if (!ptpClock->foreign) {
-			PERROR("failed to allocate memory for foreign "
-			       "master data");
-			*ret = 2;
-			free(ptpClock);
-			goto fail;
-		} else {
-			DBG("allocated %d bytes for foreign master data\n",
-			    (int)(rtOpts->max_foreign_records *
-				  sizeof(ForeignMasterRecord)));
-		}
-	}
-
-	ptpClock->netPath = netPathCreate();
-	if (!ptpClock->netPath) {
-		PERROR("Error: Failed to allocate memory for protocol engine NetPath data");
-		*ret = 2;
-		free(ptpClock);
-		goto fail;
-	} else {
-		DBG("allocated %d bytes for protocol engine NetPath data\n",
-		    (int)sizeof(NetPath));
-	}
-
-	if(rtOpts->statisticsLog.logEnabled)
-		ptpClock->resetStatisticsLog = TRUE;
-
-	/* Init to 0 net buffer */
-	memset(ptpClock->msgIbuf, 0, PACKET_SIZE);
-	memset(ptpClock->msgObuf, 0, PACKET_SIZE);
-
-	/* Init outgoing management message */
-	ptpClock->outgoingManageTmp.tlv = NULL;
-
-
-	/*  DAEMON */
-#ifdef PTPD_NO_DAEMON
-	if(!rtOpts->nonDaemon){
-		rtOpts->nonDaemon=TRUE;
-	}
-#endif
-
+	/* DAEMON */
 	if(!rtOpts->nonDaemon){
 		/*
 		 * fork to daemon - nochdir non-zero to preserve the working directory:
@@ -902,7 +814,7 @@ configcheck:
 		if (daemon(1,0) == -1) {
 			PERROR("Failed to start as daemon");
 			*ret = 3;
-			goto fail;
+			return FALSE;
 		}
 		INFO("  Info:    Now running as a daemon\n");
 		/*
@@ -910,7 +822,7 @@ configcheck:
 		 * On some systems this happened after we tried re-acquiring
 		 * the lock, so the lock would fail. Hence, we wait.
 		 */
-		for (i = 0; i < 1000000; i++) {
+		for (int i = 0; i < 1000000; i++) {
 			/* Once we've been reaped by init, parent PID will be 1 */
 			if(getppid() == 1)
 				break;
@@ -918,13 +830,18 @@ configcheck:
 		}
 	}
 
-	/* Second lock check, to replace the contents with our own new PID and re-acquire the advisory lock */
-	if(!rtOpts->nonDaemon && !rtOpts->ignore_daemon_lock){
-		/* check and create Lock */
+	/* First lock check, just to be user-friendly to the operator */
+	if(!rtOpts->ignore_daemon_lock) {
 		if(!writeLockFile(rtOpts)){
+			/* check and create Lock */
 			ERROR("Error: file lock failed (use -L or global:ignore_lock to ignore lock file)\n");
 			*ret = 3;
-			goto fail;
+			return FALSE;
+		}
+		/* check for potential conflicts when automatic lock files are used */
+		if(!checkOtherLocks(rtOpts)) {
+			*ret = 3;
+			return FALSE;
 		}
 	}
 
@@ -939,79 +856,15 @@ configcheck:
 	}
 #endif
 
-	/* set up timers */
-	if(!timerSetup(ptpClock->timers)) {
-		PERROR("failed to set up event timers");
-		*ret = 2;
-		netPathFree(&ptpClock->netPath);
-		free(ptpClock);
-		goto fail;
-	}
-
-	ptpClock->rtOpts = rtOpts;
-
-	/* init alarms */
-	initAlarms(ptpClock->alarms, ALRM_MAX, (void*)ptpClock);
-	configureAlarms(ptpClock->alarms, ALRM_MAX, (void*)ptpClock);
-	ptpClock->alarmDelay = rtOpts->alarmInitialDelay;
-	/* we're delaying alarm processing - disable alarms for now */
-	if(ptpClock->alarmDelay) {
-		enableAlarms(ptpClock->alarms, ALRM_MAX, FALSE);
-	}
-
-
 	/* establish signal handlers */
 	signal(SIGINT,  catchSignals);
 	signal(SIGTERM, catchSignals);
 	signal(SIGHUP,  catchSignals);
-
 	signal(SIGUSR1, catchSignals);
 	signal(SIGUSR2, catchSignals);
 
-#if defined PTPD_SNMP
-	/* Start SNMP subsystem */
-	if (rtOpts->snmpEnabled)
-		snmpInit(rtOpts, ptpClock);
-#endif
-
-
-
-	NOTICE(USER_DESCRIPTION" started successfully on %s using \"%s\" preset (PID %d)\n",
-			    rtOpts->ifaceName,
-			    (getPtpPreset(rtOpts->selectedPreset,rtOpts)).presetName,
-			    getpid());
-	ptpClock->resetStatisticsLog = TRUE;
-
-#ifdef PTPD_STATISTICS
-
-	outlierFilterSetup(&ptpClock->oFilterMS);
-	outlierFilterSetup(&ptpClock->oFilterSM);
-
-	ptpClock->oFilterMS.init(&ptpClock->oFilterMS,&rtOpts->oFilterMSConfig, "delayMS");
-	ptpClock->oFilterSM.init(&ptpClock->oFilterSM,&rtOpts->oFilterSMConfig, "delaySM");
-
-
-	if(rtOpts->filterMSOpts.enabled) {
-		ptpClock->filterMS = createDoubleMovingStatFilter(&rtOpts->filterMSOpts,"delayMS");
-	}
-
-	if(rtOpts->filterSMOpts.enabled) {
-		ptpClock->filterSM = createDoubleMovingStatFilter(&rtOpts->filterSMOpts, "delaySM");
-	}
-
-#endif
-
-	netPathClearSockets(ptpClock->netPath);
-
 	*ret = 0;
-
-	return ptpClock;
-
-fail:
-	dictionary_del(&rtOpts->cliConfig);
-	dictionary_del(&rtOpts->candidateConfig);
-	dictionary_del(&rtOpts->currentConfig);
-	return 0;
+	return TRUE;
 }
 
 #ifdef PTPD_FEATURE_NTP

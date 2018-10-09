@@ -3209,3 +3209,143 @@ int checkSubsystemRestart(dictionary* newConfig, dictionary* oldConfig, RunTimeO
 
 	return restartFlags;
 }
+
+static void dump_command_line_parameters(int argc, char **argv)
+{
+	int i = 0;
+	char sbuf[1000];
+	char *st = sbuf;
+	int len = 0;
+
+	*st = '\0';
+	for(i=0; i < argc; i++){
+		if(strcmp(argv[i],"") == 0)
+			continue;
+		len += snprintf(sbuf + len,
+				sizeof(sbuf) - len,
+				"%s ", argv[i]);
+	}
+	INFO("Starting %s daemon with parameters:      %s\n", PTPD_PROGNAME, sbuf);
+}
+
+Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOpts)
+{
+	*ret = 0;
+
+	/**
+	 * If a required setting, such as interface name, or a setting
+	 * requiring a range check is to be set via getopts_long,
+	 * the respective currentConfig dictionary entry should be set,
+	 * instead of just setting the rtOpts field.
+	 *
+	 * Config parameter evaluation priority order:
+	 * 	1. Any dictionary keys set in the getopt_long loop
+	 * 	2. CLI long section:key type options
+	 * 	3. Any built-in config templates
+	 *	4. Any templates loaded from template file
+	 * 	5. Config file (parsed last), merged with 2. and 3 - will be overwritten by CLI options
+	 * 	6. Defaults and any rtOpts fields set in the getopt_long loop
+	**/
+
+	/**
+	 * Load defaults. Any options set here and further inside loadCommandLineOptions()
+	 * by setting rtOpts fields, will be considered the defaults
+	 * for config file and section:key long options.
+	 */
+	loadDefaultSettings(rtOpts);
+	/* initialise the config dictionary */
+	rtOpts->candidateConfig = dictionary_new(0);
+	rtOpts->cliConfig = dictionary_new(0);
+
+	/* parse all long section:key options and clean up argv for getopt */
+	loadCommandLineKeys(rtOpts->cliConfig,argc,argv);
+	/* parse the normal short and long options, exit on error */
+	if (!loadCommandLineOptions(rtOpts, rtOpts->cliConfig, argc, argv, ret)) {
+		goto fail;
+	}
+
+	/* Display startup info and argv if not called with -? or -H */
+		NOTIFY("%s version %s starting\n",USER_DESCRIPTION, USER_VERSION);
+		dump_command_line_parameters(argc, argv);
+
+	/* Have we got a config file? */
+	if(strlen(rtOpts->configFile) > 0) {
+		/* config file settings overwrite all others, except for empty strings */
+		INFO("Loading configuration file: %s\n",rtOpts->configFile);
+		if(loadConfigFile(&rtOpts->candidateConfig, rtOpts)) {
+			dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
+		} else {
+			*ret = 1;
+			dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
+			goto configcheck;
+		}
+	} else {
+		dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
+	}
+	/**
+	 * This is where the final checking  of the candidate settings container happens.
+	 * A dictionary is returned with only the known options, explicitly set to defaults
+	 * if not present. NULL is returned on any config error - parameters missing, out of range,
+	 * etc. The getopt loop in loadCommandLineOptions() only sets keys verified here.
+	 */
+	if( ( rtOpts->currentConfig = parseConfig(CFGOP_PARSE, NULL, rtOpts->candidateConfig,rtOpts)) == NULL ) {
+		*ret = 1;
+		dictionary_del(&rtOpts->candidateConfig);
+		goto configcheck;
+	}
+
+	/* we've been told to print the lock file and exit cleanly */
+	if(rtOpts->printLockFile) {
+		printf("%s\n", rtOpts->lockFile);
+		*ret = 0;
+		goto fail;
+	}
+
+	/* we don't need the candidate config any more */
+	dictionary_del(&rtOpts->candidateConfig);
+
+	/* Check network before going into background */
+	if(!testInterface(rtOpts->primaryIfaceName, rtOpts)) {
+		ERROR("Error: Cannot use %s interface\n",rtOpts->primaryIfaceName);
+		*ret = 1;
+		goto configcheck;
+	}
+	if(rtOpts->backupIfaceEnabled && !testInterface(rtOpts->backupIfaceName, rtOpts)) {
+		ERROR("Error: Cannot use %s interface as backup\n",rtOpts->backupIfaceName);
+		*ret = 1;
+		goto configcheck;
+	}
+
+
+ configcheck:
+	/*
+	 * We've been told to check config only - clean exit before checking locks
+	 */
+	if(rtOpts->checkConfigOnly) {
+		if(*ret != 0) {
+			printf("Configuration has errors\n");
+			*ret = 1;
+		} else
+			printf("Configuration OK\n");
+		goto fail;
+	}
+
+	/* Previous errors - exit */
+	if(*ret !=0)
+		goto fail;
+
+	/*  DAEMON */
+#ifdef PTPD_NO_DAEMON
+	if(!rtOpts->nonDaemon){
+		rtOpts->nonDaemon=TRUE;
+	}
+#endif
+
+	return TRUE;
+
+ fail:
+	dictionary_del(&rtOpts->cliConfig);
+	dictionary_del(&rtOpts->candidateConfig);
+	dictionary_del(&rtOpts->currentConfig);
+	return 0;
+}

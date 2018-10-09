@@ -63,7 +63,10 @@
 #include "ptp_primitives.h"
 #include "timingdomain.h"
 #include "datatypes.h"
-#include "dep/startup.h" // For ptpdStartup, ntpSetup
+#include "dep/configdefaults.h"
+#include "dep/startup.h" // For ptpdStartup, ntpSetu
+#include "dep/daemonconfig.h"
+#include "dep/sys.h"
 #include "protocol.h"
 #include "ptpd_logging.h"
 
@@ -97,11 +100,22 @@ main(int argc, char **argv)
 	timingDomain.electionLeft = 10;
 
 	/* Initialize run time options with command line arguments */
-	if (!(ptpClock = ptpdStartup(argc, argv, &ret, &rtOpts))) {
+	if (!runTimeOptsInit(argc, argv, &ret, &rtOpts) ||
+	    !sysPrePtpClockInit(&rtOpts, &ret) ||
+	    !(ptpClock = ptpClockCreate(&rtOpts, &ret))
+	    ) {
 		if (ret != 0 && !rtOpts.checkConfigOnly)
 			ERROR(USER_DESCRIPTION" startup failed\n");
 		return ret;
 	}
+
+	/* Manage log files: stats, log, status and quality file */
+	restartLogging(&rtOpts);
+
+	NOTICE(USER_DESCRIPTION" started successfully on %s using \"%s\" preset (PID %d)\n",
+			    rtOpts.ifaceName,
+			    (getPtpPreset(rtOpts.selectedPreset, &rtOpts)).presetName,
+			    getpid());
 
 	timingDomain.electionDelay = rtOpts.electionDelay;
 

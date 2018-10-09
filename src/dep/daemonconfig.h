@@ -80,5 +80,6 @@ dictionary* parseConfig (int, void*, dictionary*, RunTimeOpts*);
 Boolean compareConfig(dictionary* source, dictionary* target);
 int checkSubsystemRestart(dictionary* newConfig, dictionary* oldConfig, RunTimeOpts *rtOpts);
 void setConfig(dictionary *dict, const char* key, const char *value);
+Boolean runTimeOptsInit(int, char**, Integer16*, RunTimeOpts*);
 
 #endif /*PTPD_DAEMONCONFIG_H_*/

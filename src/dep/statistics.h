@@ -176,12 +176,12 @@ void freeDoubleMovingStdDev(DoubleMovingStdDev** container);
 void resetDoubleMovingStdDev(DoubleMovingStdDev* container);
 double feedDoubleMovingStdDev(DoubleMovingStdDev* container, double sample);
 
-IntMovingStatFilter* createIntMovingStatFilter(StatFilterOptions* config, const char* id);
+IntMovingStatFilter* createIntMovingStatFilter(const StatFilterOptions* config, const char* id);
 void freeIntMovingStatFilter(IntMovingStatFilter** container);
 void resetIntMovingStatFilter(IntMovingStatFilter* container);
 Boolean feedIntMovingStatFilter(IntMovingStatFilter* container, int32_t sample);
 
-DoubleMovingStatFilter* createDoubleMovingStatFilter(StatFilterOptions* config, const char* id);
+DoubleMovingStatFilter* createDoubleMovingStatFilter(const StatFilterOptions* config, const char* id);
 void freeDoubleMovingStatFilter(DoubleMovingStatFilter** container);
 void resetDoubleMovingStatFilter(DoubleMovingStatFilter* container);
 Boolean feedDoubleMovingStatFilter(DoubleMovingStatFilter* container, double sample);

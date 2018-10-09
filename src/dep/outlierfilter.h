@@ -108,7 +108,7 @@ struct OutlierFilter {
 
     /* 'methods' */
 
-    int (*init)		(OutlierFilter *filter, OutlierFilterConfig *config, const char *id);
+    int (*init)		(OutlierFilter *filter, const OutlierFilterConfig *config, const char *id);
     int (*shutdown)	(OutlierFilter *filter);
     int (*reset)	(OutlierFilter *filter);
     Boolean (*filter)	(OutlierFilter *filter, double sample);

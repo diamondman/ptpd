@@ -50,7 +50,7 @@
 
 #define LOCAL_PREFIX "OutlierFilter"
 
-static int outlierFilterInit(OutlierFilter *filter, OutlierFilterConfig *config, const char* id);
+static int outlierFilterInit(OutlierFilter *filter, const OutlierFilterConfig *config, const char* id);
 static int outlierFilterReset(OutlierFilter *filter);
 static int outlierFilterShutdown(OutlierFilter *filter);
 static int outlierFilterTune(OutlierFilter *filter);
@@ -80,7 +80,7 @@ outlierFilterSetup(OutlierFilter *filter)
 }
 
 static int
-outlierFilterInit(OutlierFilter *filter, OutlierFilterConfig *config, const char* id)
+outlierFilterInit(OutlierFilter *filter, const OutlierFilterConfig *config, const char* id)
 {
 	filter->config = *config;
 

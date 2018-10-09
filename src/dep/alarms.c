@@ -56,7 +56,7 @@ static void dispatchEvent(AlarmEntry *alarm);
 static void dispatchAlarm(AlarmEntry *alarm);
 
 /* capture data from an alarm event */
-static void capturePtpEventData(PtpEventData *data, PtpClock *ptpClock, RunTimeOpts *rtOpts);
+static void capturePtpEventData(PtpEventData *data, PtpClock *ptpClock, const RunTimeOpts *rtOpts);
 
 static void getAlarmMessage(char *out, int count, AlarmEntry *alarm);
 
@@ -286,7 +286,7 @@ setAlarmCondition(AlarmEntry *alarm, Boolean condition, PtpClock *ptpClock)
 }
 
 static void
-capturePtpEventData(PtpEventData *eventData, PtpClock *ptpClock, RunTimeOpts *rtOpts)
+capturePtpEventData(PtpEventData *eventData, PtpClock *ptpClock, const RunTimeOpts *rtOpts)
 {
     eventData->defaultDS = ptpClock->defaultDS;
     eventData->currentDS = ptpClock->currentDS;

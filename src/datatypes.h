@@ -644,7 +644,7 @@ typedef struct PtpClock {
 	Boolean addOffset;
 #endif
 
-	RunTimeOpts *rtOpts;
+	const RunTimeOpts *rtOpts;
 
 } PtpClock;
 
