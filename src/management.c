@@ -73,8 +73,8 @@
 
 static void handleMMNullManagement(MsgManagement*, MsgManagement*, PtpClock*);
 static void handleMMClockDescription(MsgManagement*, MsgManagement*, RunTimeOpts*, PtpClock*);
-static void handleMMSlaveOnly(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMUserDescription(MsgManagement*, MsgManagement*, PtpClock*);
+static void handleMMSlaveOnly(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMUserDescription(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
 static void handleMMSaveInNonVolatileStorage(MsgManagement*, MsgManagement*, PtpClock*);
 static void handleMMResetNonVolatileStorage(MsgManagement*, MsgManagement*, PtpClock*);
 static void handleMMInitialize(MsgManagement*, MsgManagement*, PtpClock*);
@@ -83,24 +83,24 @@ static void handleMMCurrentDataSet(MsgManagement*, MsgManagement*, PtpClock*);
 static void handleMMParentDataSet(MsgManagement*, MsgManagement*, PtpClock*);
 static void handleMMTimePropertiesDataSet(MsgManagement*, MsgManagement*, PtpClock*);
 static void handleMMPortDataSet(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMPriority1(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMPriority2(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMDomain(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMLogAnnounceInterval(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMAnnounceReceiptTimeout(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMLogSyncInterval(MsgManagement*, MsgManagement*, PtpClock*);
+static void handleMMPriority1(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMPriority2(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMDomain(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMLogAnnounceInterval(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMAnnounceReceiptTimeout(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMLogSyncInterval(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
 static void handleMMVersionNumber(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMEnablePort(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMDisablePort(MsgManagement*, MsgManagement*, PtpClock*);
+static void handleMMEnablePort(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMDisablePort(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
 static void handleMMTime(MsgManagement*, MsgManagement*, PtpClock*, const RunTimeOpts*);
-static void handleMMClockAccuracy(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMUtcProperties(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMTraceabilityProperties(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMTimescaleProperties(MsgManagement*, MsgManagement*, PtpClock*);
+static void handleMMClockAccuracy(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMUtcProperties(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMTraceabilityProperties(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMTimescaleProperties(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
 
-static void handleMMUnicastNegotiationEnable(MsgManagement*, MsgManagement*, PtpClock*, RunTimeOpts*);
-static void handleMMDelayMechanism(MsgManagement*, MsgManagement*, PtpClock*);
-static void handleMMLogMinPdelayReqInterval(MsgManagement*, MsgManagement*, PtpClock*);
+static void handleMMUnicastNegotiationEnable(MsgManagement*, MsgManagement*, PtpClock*, RunTimeOpts*, dictionary*);
+static void handleMMDelayMechanism(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
+static void handleMMLogMinPdelayReqInterval(MsgManagement*, MsgManagement*, PtpClock*, dictionary*);
 static void handleMMErrorStatus(MsgManagement*);
 static void handleErrorManagementMessage(MsgManagement *incoming, MsgManagement *outgoing,
                                 PtpClock *ptpClock, Enumeration16 mgmtId,
@@ -131,6 +131,7 @@ handleManagement(MsgHeader *header,
 	int tlvFound = 0;
 
 	MsgManagement *mgmtMsg = &ptpClock->msgTmp.manage;
+	dictionary* managementConfig = NULL;
 
 	/*
 	 * If request was unicast, reply to source, always, even if we ourselves are running multicast.
@@ -203,8 +204,8 @@ handleManagement(MsgHeader *header,
 
 	/* if this is a SET, there is potential for applying new config */
 	if (mgmtMsg->actionField & (SET | COMMAND)) {
-	    ptpClock->managementConfig = dictionary_new(0);
-	    dictionary_merge(rtOpts->currentConfig, ptpClock->managementConfig, 1, 0, NULL);
+	    managementConfig = dictionary_new(0);
+	    dictionary_merge(rtOpts->currentConfig, managementConfig, 1, 0, NULL);
 	}
 
 	switch(mgmtMsg->tlv->managementId)
@@ -229,7 +230,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-		handleMMUserDescription(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+		handleMMUserDescription(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
 		break;
 	case MM_SAVE_IN_NON_VOLATILE_STORAGE:
 		DBGV("handleManagement: Save In Non-Volatile Storage\n");
@@ -300,7 +301,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMPriority1(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMPriority1(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_PRIORITY2:
                 DBGV("handleManagement: Priority2\n");
@@ -309,7 +310,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMPriority2(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMPriority2(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_DOMAIN:
                 DBGV("handleManagement: Domain\n");
@@ -318,7 +319,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMDomain(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMDomain(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
 	case MM_SLAVE_ONLY:
 		DBGV("handleManagement: Slave Only\n");
@@ -327,7 +328,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-		handleMMSlaveOnly(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+		handleMMSlaveOnly(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
 		break;
         case MM_LOG_ANNOUNCE_INTERVAL:
                 DBGV("handleManagement: Log Announce Interval\n");
@@ -336,7 +337,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMLogAnnounceInterval(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMLogAnnounceInterval(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_ANNOUNCE_RECEIPT_TIMEOUT:
                 DBGV("handleManagement: Announce Receipt Timeout\n");
@@ -345,7 +346,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMAnnounceReceiptTimeout(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMAnnounceReceiptTimeout(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_LOG_SYNC_INTERVAL:
                 DBGV("handleManagement: Log Sync Interval\n");
@@ -354,7 +355,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMLogSyncInterval(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMLogSyncInterval(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_VERSION_NUMBER:
                 DBGV("handleManagement: Version Number\n");
@@ -367,11 +368,11 @@ handleManagement(MsgHeader *header,
                 break;
         case MM_ENABLE_PORT:
                 DBGV("handleManagement: Enable Port\n");
-                handleMMEnablePort(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMEnablePort(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_DISABLE_PORT:
                 DBGV("handleManagement: Disable Port\n");
-                handleMMDisablePort(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMDisablePort(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_TIME:
                 DBGV("handleManagement: Time\n");
@@ -389,7 +390,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMClockAccuracy(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMClockAccuracy(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_UTC_PROPERTIES:
                 DBGV("handleManagement: Utc Properties\n");
@@ -398,7 +399,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMUtcProperties(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMUtcProperties(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_TRACEABILITY_PROPERTIES:
                 DBGV("handleManagement: Traceability Properties\n");
@@ -407,7 +408,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMTraceabilityProperties(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMTraceabilityProperties(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_TIMESCALE_PROPERTIES:
                 DBGV("handleManagement: Timescale Properties\n");
@@ -416,7 +417,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMTimescaleProperties(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMTimescaleProperties(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_UNICAST_NEGOTIATION_ENABLE:
                 DBGV("handleManagement: Unicast Negotiation Enable\n");
@@ -425,7 +426,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMUnicastNegotiationEnable(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, rtOpts);
+                handleMMUnicastNegotiationEnable(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, rtOpts, managementConfig);
                 break;
         case MM_DELAY_MECHANISM:
                 DBGV("handleManagement: Delay Mechanism\n");
@@ -434,7 +435,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMDelayMechanism(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMDelayMechanism(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
         case MM_LOG_MIN_PDELAY_REQ_INTERVAL:
                 DBGV("handleManagement: Log Min Pdelay Req Interval\n");
@@ -443,7 +444,7 @@ handleManagement(MsgHeader *header,
 			ptpClock->counters.messageFormatErrors++;
 			goto end;
 		}
-                handleMMLogMinPdelayReqInterval(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock);
+                handleMMLogMinPdelayReqInterval(mgmtMsg, &ptpClock->outgoingManageTmp, ptpClock, managementConfig);
                 break;
 	case MM_FAULT_LOG:
 	case MM_FAULT_LOG_RESET:
@@ -498,10 +499,10 @@ handleManagement(MsgHeader *header,
 
 	}
 
-	if(ptpClock->managementConfig != NULL) {
+	if(managementConfig != NULL) {
 	    NOTICE("SET / COMMAND management message received - looking for configuration changes\n");
-	    applyConfig(ptpClock->managementConfig, rtOpts);
-	    dictionary_del(&ptpClock->managementConfig);
+	    applyConfig(managementConfig, rtOpts);
+	    dictionary_del(&managementConfig);
 	}
 
     	if(!tlvFound) {
@@ -667,7 +668,7 @@ static void handleMMClockDescription(MsgManagement* incoming, MsgManagement* out
 }
 
 /**\brief Handle incoming SLAVE_ONLY management message type*/
-static void handleMMSlaveOnly(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMSlaveOnly(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received SLAVE_ONLY management message \n");
 
@@ -684,7 +685,7 @@ static void handleMMSlaveOnly(MsgManagement* incoming, MsgManagement* outgoing, 
 		/* SET actions */
 		ptpClock->defaultDS.slaveOnly = data->so;
 		ptpClock->record_update = TRUE;
-		setConfig(ptpClock->managementConfig, "ptpengine:slave_only", ptpClock->defaultDS.slaveOnly ? "Y" : "N");
+		setConfig(managementConfig, "ptpengine:slave_only", ptpClock->defaultDS.slaveOnly ? "Y" : "N");
 		/* intentionally fall through to GET case */
 	case GET:
 		DBGV(" GET action \n");
@@ -705,7 +706,8 @@ static void handleMMSlaveOnly(MsgManagement* incoming, MsgManagement* outgoing, 
 }
 
 /**\brief Handle incoming USER_DESCRIPTION management message type*/
-static void handleMMUserDescription(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMUserDescription(MsgManagement* incoming, MsgManagement* outgoing,
+				    PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received USER_DESCRIPTION message\n");
 
@@ -727,7 +729,7 @@ static void handleMMUserDescription(MsgManagement* incoming, MsgManagement* outg
 			/* add null-terminator to make use of C string function strlen later */
 			ptpClock->userDescription[userDescriptionLength] = '\0';
 			tmpsnprintf(ud, data->userDescription.lengthField+1, "%s", (char*)data->userDescription.textField);
-			setConfig(ptpClock->managementConfig, "ptpengine:port_description", ud);
+			setConfig(managementConfig, "ptpengine:port_description", ud);
 		} else {
 			WARNING("management user description exceeds specification length \n");
 		}
@@ -1080,7 +1082,7 @@ static void handleMMPortDataSet(MsgManagement* incoming, MsgManagement* outgoing
 }
 
 /**\brief Handle incoming PRIORITY1 management message type*/
-static void handleMMPriority1(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMPriority1(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received PRIORITY1 message\n");
 
@@ -1097,7 +1099,7 @@ static void handleMMPriority1(MsgManagement* incoming, MsgManagement* outgoing, 
 		/* SET actions */
 		ptpClock->defaultDS.priority1 = data->priority1;
 		tmpsnprintf(tmpStr, 4, "%d", data->priority1);
-		setConfig(ptpClock->managementConfig, "ptpengine:priority1", tmpStr);
+		setConfig(managementConfig, "ptpengine:priority1", tmpStr);
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
 	case GET:
@@ -1123,7 +1125,7 @@ static void handleMMPriority1(MsgManagement* incoming, MsgManagement* outgoing, 
 }
 
 /**\brief Handle incoming PRIORITY2 management message type*/
-static void handleMMPriority2(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMPriority2(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received PRIORITY2 message\n");
 
@@ -1140,7 +1142,7 @@ static void handleMMPriority2(MsgManagement* incoming, MsgManagement* outgoing, 
 		/* SET actions */
 		ptpClock->defaultDS.priority2 = data->priority2;
 		tmpsnprintf(tmpStr, 4, "%d", data->priority2);
-		setConfig(ptpClock->managementConfig, "ptpengine:priority2", tmpStr);
+		setConfig(managementConfig, "ptpengine:priority2", tmpStr);
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
 	case GET:
@@ -1166,7 +1168,7 @@ static void handleMMPriority2(MsgManagement* incoming, MsgManagement* outgoing, 
 }
 
 /**\brief Handle incoming DOMAIN management message type*/
-static void handleMMDomain(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMDomain(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received DOMAIN message\n");
 
@@ -1183,7 +1185,7 @@ static void handleMMDomain(MsgManagement* incoming, MsgManagement* outgoing, Ptp
 		/* SET actions */
 		ptpClock->defaultDS.domainNumber = data->domainNumber;
 		tmpsnprintf(tmpStr, 4, "%d", data->domainNumber);
-		setConfig(ptpClock->managementConfig, "ptpengine:domain", tmpStr);
+		setConfig(managementConfig, "ptpengine:domain", tmpStr);
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
 	case GET:
@@ -1209,7 +1211,8 @@ static void handleMMDomain(MsgManagement* incoming, MsgManagement* outgoing, Ptp
 }
 
 /**\brief Handle incoming LOG_ANNOUNCE_INTERVAL management message type*/
-static void handleMMLogAnnounceInterval(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMLogAnnounceInterval(MsgManagement* incoming, MsgManagement* outgoing,
+					PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received LOG_ANNOUNCE_INTERVAL message\n");
 
@@ -1226,7 +1229,7 @@ static void handleMMLogAnnounceInterval(MsgManagement* incoming, MsgManagement* 
 		/* SET actions */
 		ptpClock->portDS.logAnnounceInterval = data->logAnnounceInterval;
 		tmpsnprintf(tmpStr, 4, "%d", data->logAnnounceInterval);
-		setConfig(ptpClock->managementConfig, "ptpengine:log_announce_interval", tmpStr);
+		setConfig(managementConfig, "ptpengine:log_announce_interval", tmpStr);
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
 	case GET:
@@ -1252,7 +1255,8 @@ static void handleMMLogAnnounceInterval(MsgManagement* incoming, MsgManagement* 
 }
 
 /**\brief Handle incoming ANNOUNCE_RECEIPT_TIMEOUT management message type*/
-static void handleMMAnnounceReceiptTimeout(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMAnnounceReceiptTimeout(MsgManagement* incoming, MsgManagement* outgoing,
+					   PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received ANNOUNCE_RECEIPT_TIMEOUT message\n");
 
@@ -1269,7 +1273,7 @@ static void handleMMAnnounceReceiptTimeout(MsgManagement* incoming, MsgManagemen
 		/* SET actions */
 		ptpClock->portDS.announceReceiptTimeout = data->announceReceiptTimeout;
 		tmpsnprintf(tmpStr, 4, "%d", data->announceReceiptTimeout);
-		setConfig(ptpClock->managementConfig, "ptpengine:announce_receipt_timeout", tmpStr);
+		setConfig(managementConfig, "ptpengine:announce_receipt_timeout", tmpStr);
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
 	case GET:
@@ -1295,7 +1299,8 @@ static void handleMMAnnounceReceiptTimeout(MsgManagement* incoming, MsgManagemen
 }
 
 /**\brief Handle incoming LOG_SYNC_INTERVAL management message type*/
-static void handleMMLogSyncInterval(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMLogSyncInterval(MsgManagement* incoming, MsgManagement* outgoing,
+				    PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received LOG_SYNC_INTERVAL message\n");
 
@@ -1312,7 +1317,7 @@ static void handleMMLogSyncInterval(MsgManagement* incoming, MsgManagement* outg
 		/* SET actions */
 		ptpClock->portDS.logSyncInterval = data->logSyncInterval;
 		tmpsnprintf(tmpStr, 4, "%d", data->logSyncInterval);
-		setConfig(ptpClock->managementConfig, "ptpengine:log_sync_interval", tmpStr);
+		setConfig(managementConfig, "ptpengine:log_sync_interval", tmpStr);
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
 	case GET:
@@ -1375,7 +1380,7 @@ static void handleMMVersionNumber(MsgManagement* incoming, MsgManagement* outgoi
 }
 
 /**\brief Handle incoming ENABLE_PORT management message type*/
-static void handleMMEnablePort(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMEnablePort(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received ENABLE_PORT message\n");
 
@@ -1389,7 +1394,7 @@ static void handleMMEnablePort(MsgManagement* incoming, MsgManagement* outgoing,
 		DBGV(" COMMAND action\n");
 		outgoing->actionField = ACKNOWLEDGE;
 		ptpClock->disabled = FALSE;
-		setConfig(ptpClock->managementConfig, "ptpengine:disabled", "N");
+		setConfig(managementConfig, "ptpengine:disabled", "N");
 		break;
 	case ACKNOWLEDGE:
 		DBGV(" ACKNOWLEDGE action\n");
@@ -1404,7 +1409,8 @@ static void handleMMEnablePort(MsgManagement* incoming, MsgManagement* outgoing,
 }
 
 /**\brief Handle incoming DISABLE_PORT management message type*/
-static void handleMMDisablePort(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMDisablePort(MsgManagement* incoming, MsgManagement* outgoing,
+				PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received DISABLE_PORT message\n");
 
@@ -1419,7 +1425,7 @@ static void handleMMDisablePort(MsgManagement* incoming, MsgManagement* outgoing
 		outgoing->actionField = ACKNOWLEDGE;
 		/* the state machine needs to know that we are not yet disabled but want to be */
 		/* ptpClock->disabled = TRUE; */
-		setConfig(ptpClock->managementConfig, "ptpengine:disabled", "Y");
+		setConfig(managementConfig, "ptpengine:disabled", "Y");
 		break;
 	case ACKNOWLEDGE:
 		DBGV(" ACKNOWLEDGE action\n");
@@ -1478,7 +1484,8 @@ static void handleMMTime(MsgManagement* incoming, MsgManagement* outgoing, PtpCl
 }
 
 /**\brief Handle incoming CLOCK_ACCURACY management message type*/
-static void handleMMClockAccuracy(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMClockAccuracy(MsgManagement* incoming, MsgManagement* outgoing,
+				  PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received CLOCK_ACCURACY message\n");
 
@@ -1496,7 +1503,7 @@ static void handleMMClockAccuracy(MsgManagement* incoming, MsgManagement* outgoi
 		ptpClock->defaultDS.clockQuality.clockAccuracy = data->clockAccuracy;
 		const char * acc = accToString(data->clockAccuracy);
 		if(acc != NULL) {
-		    setConfig(ptpClock->managementConfig, "ptpengine:clock_accuracy", acc);
+		    setConfig(managementConfig, "ptpengine:clock_accuracy", acc);
 		}
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
@@ -1523,7 +1530,8 @@ static void handleMMClockAccuracy(MsgManagement* incoming, MsgManagement* outgoi
 }
 
 /**\brief Handle incoming UTC_PROPERTIES management message type*/
-static void handleMMUtcProperties(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMUtcProperties(MsgManagement* incoming, MsgManagement* outgoing,
+				  PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received UTC_PROPERTIES message\n");
 
@@ -1545,8 +1553,8 @@ static void handleMMUtcProperties(MsgManagement* incoming, MsgManagement* outgoi
 		ptpClock->timePropertiesDS.leap61 = IS_SET(data->utcv_li59_li61, LI61);
 		tmpsnprintf(tmpStr, 20, "%d", data->currentUtcOffset);
 		/* todo: setting leap flags can be handy when we remotely controll PTPd GMs */
-		setConfig(ptpClock->managementConfig, "ptpengine:utc_offset", tmpStr);
-		setConfig(ptpClock->managementConfig, "ptpengine:utc_offset_valid", IS_SET(data->utcv_li59_li61, UTCV) ? "Y" : "N");
+		setConfig(managementConfig, "ptpengine:utc_offset", tmpStr);
+		setConfig(managementConfig, "ptpengine:utc_offset_valid", IS_SET(data->utcv_li59_li61, UTCV) ? "Y" : "N");
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
 	case GET:
@@ -1576,7 +1584,8 @@ static void handleMMUtcProperties(MsgManagement* incoming, MsgManagement* outgoi
 }
 
 /**\brief Handle incoming TRACEABILITY_PROPERTIES management message type*/
-static void handleMMTraceabilityProperties(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMTraceabilityProperties(MsgManagement* incoming, MsgManagement* outgoing,
+					   PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received TRACEABILITY_PROPERTIES message\n");
 
@@ -1593,8 +1602,8 @@ static void handleMMTraceabilityProperties(MsgManagement* incoming, MsgManagemen
 		/* SET actions */
 		ptpClock->timePropertiesDS.frequencyTraceable = IS_SET(data->ftra_ttra, FTRA);
 		ptpClock->timePropertiesDS.timeTraceable = IS_SET(data->ftra_ttra, TTRA);
-		setConfig(ptpClock->managementConfig, "ptpengine:frequency_traceable", IS_SET(data->ftra_ttra, FTRA) ? "Y" : "N");
-		setConfig(ptpClock->managementConfig, "ptpengine:time_traceable", IS_SET(data->ftra_ttra, TTRA) ? "Y" : "N");
+		setConfig(managementConfig, "ptpengine:frequency_traceable", IS_SET(data->ftra_ttra, FTRA) ? "Y" : "N");
+		setConfig(managementConfig, "ptpengine:time_traceable", IS_SET(data->ftra_ttra, TTRA) ? "Y" : "N");
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
 	case GET:
@@ -1622,7 +1631,8 @@ static void handleMMTraceabilityProperties(MsgManagement* incoming, MsgManagemen
 }
 
 /**\brief Handle incoming TIMESCALE_PROPERTIES management message type*/
-static void handleMMTimescaleProperties(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMTimescaleProperties(MsgManagement* incoming, MsgManagement* outgoing,
+					PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received TIMESCALE_PROPERTIES message\n");
 
@@ -1637,8 +1647,8 @@ static void handleMMTimescaleProperties(MsgManagement* incoming, MsgManagement* 
 		DBGV(" SET action\n");
 		data = (MMTimescaleProperties*)incoming->tlv->dataField;
 		/* SET actions */
-		setConfig(ptpClock->managementConfig, "ptpengine:ptp_timesource", getTimeSourceName(data->timeSource));
-		setConfig(ptpClock->managementConfig, "ptpengine:ptp_timescale", data->ptp ? "PTP" : "ARB");
+		setConfig(managementConfig, "ptpengine:ptp_timesource", getTimeSourceName(data->timeSource));
+		setConfig(managementConfig, "ptpengine:ptp_timescale", data->ptp ? "PTP" : "ARB");
 		/* intentionally fall through to GET case */
 	case GET:
 		DBGV(" GET action\n");
@@ -1663,7 +1673,8 @@ static void handleMMTimescaleProperties(MsgManagement* incoming, MsgManagement* 
 }
 
 /**\brief Handle incoming UNICAST_NEGOTIATION_ENABLE management message type*/
-static void handleMMUnicastNegotiationEnable(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock, RunTimeOpts *rtOpts)
+static void handleMMUnicastNegotiationEnable(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock,
+					     RunTimeOpts *rtOpts, dictionary* managementConfig)
 {
 	DBGV("received UNICAST_NEGOTIATION_ENABLE message\n");
 
@@ -1678,7 +1689,7 @@ static void handleMMUnicastNegotiationEnable(MsgManagement* incoming, MsgManagem
 		DBGV(" SET action\n");
 		data = (MMUnicastNegotiationEnable*)incoming->tlv->dataField;
 		/* SET actions */
-		setConfig(ptpClock->managementConfig, "ptpengine:unicast_negotiation", data->en ? "Y" : "N");
+		setConfig(managementConfig, "ptpengine:unicast_negotiation", data->en ? "Y" : "N");
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
 	case GET:
@@ -1704,7 +1715,8 @@ static void handleMMUnicastNegotiationEnable(MsgManagement* incoming, MsgManagem
 }
 
 /**\brief Handle incoming DELAY_MECHANISM management message type*/
-static void handleMMDelayMechanism(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMDelayMechanism(MsgManagement* incoming, MsgManagement* outgoing,
+				   PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received DELAY_MECHANISM message\n");
 
@@ -1722,7 +1734,7 @@ static void handleMMDelayMechanism(MsgManagement* incoming, MsgManagement* outgo
 		ptpClock->portDS.delayMechanism = data->delayMechanism;
 		const char * mech = delayMechToString(data->delayMechanism);
 		if(mech != NULL) {
-		    setConfig(ptpClock->managementConfig, "ptpengine:delay_mechanism", mech);
+		    setConfig(managementConfig, "ptpengine:delay_mechanism", mech);
 		}
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
@@ -1749,7 +1761,8 @@ static void handleMMDelayMechanism(MsgManagement* incoming, MsgManagement* outgo
 }
 
 /**\brief Handle incoming LOG_MIN_PDELAY_REQ_INTERVAL management message type*/
-static void handleMMLogMinPdelayReqInterval(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* ptpClock)
+static void handleMMLogMinPdelayReqInterval(MsgManagement* incoming, MsgManagement* outgoing,
+					    PtpClock* ptpClock, dictionary* managementConfig)
 {
 	DBGV("received LOG_MIN_PDELAY_REQ_INTERVAL message\n");
 
@@ -1766,7 +1779,7 @@ static void handleMMLogMinPdelayReqInterval(MsgManagement* incoming, MsgManageme
 		/* SET actions */
 		ptpClock->portDS.logMinPdelayReqInterval = data->logMinPdelayReqInterval;
 		tmpsnprintf(tmpStr, 4, "%d", data->logMinPdelayReqInterval);
-		setConfig(ptpClock->managementConfig, "ptpengine:log_peer_delayreq_interval", tmpStr);
+		setConfig(managementConfig, "ptpengine:log_peer_delayreq_interval", tmpStr);
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
 	case GET:

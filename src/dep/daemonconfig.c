@@ -3258,6 +3258,7 @@ void
 applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts)
 {
 	Boolean reloadSuccessful = TRUE;
+	dictionary* candidateConfig;
 
 
 	/* Load default config to fill in the blanks in the config file */
@@ -3265,13 +3266,13 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts)
 	loadDefaultSettings(&tmpOpts);
 
 	/* Check the new configuration for errors, fill in the blanks from defaults */
-	if( ( rtOpts->candidateConfig = parseConfig(CFGOP_PARSE, NULL, baseConfig, &tmpOpts)) == NULL ) {
+	if( ( candidateConfig = parseConfig(CFGOP_PARSE, NULL, baseConfig, &tmpOpts)) == NULL ) {
 		WARNING("Configuration has errors, reload aborted\n");
 		return;
 	}
 
 	/* Check for changes between old and new configuration */
-	if(compareConfig(rtOpts->candidateConfig,rtOpts->currentConfig)) {
+	if(compareConfig(candidateConfig,rtOpts->currentConfig)) {
 		INFO("Configuration unchanged\n");
 		goto cleanup;
 	}
@@ -3283,7 +3284,7 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts)
 	 */
 
 	rtOpts->restartSubsystems =
-	    checkSubsystemRestart(rtOpts->candidateConfig, rtOpts->currentConfig, rtOpts);
+	    checkSubsystemRestart(candidateConfig, rtOpts->currentConfig, rtOpts);
 
 	/* If we're told to re-check lock files, do it: tmpOpts already has what rtOpts should */
 	if( (rtOpts->restartSubsystems & PTPD_CHECK_LOCKS) &&
@@ -3341,11 +3342,11 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts)
 		if (rtOpts->currentConfig) {
 			dictionary_del(&rtOpts->currentConfig);
 		}
-		if ( (rtOpts->currentConfig = parseConfig(CFGOP_PARSE_QUIET, NULL, rtOpts->candidateConfig,rtOpts)) == NULL) {
+		if ( (rtOpts->currentConfig = parseConfig(CFGOP_PARSE_QUIET, NULL, candidateConfig, rtOpts)) == NULL) {
 			CRITICAL("************ "PTPD_PROGNAME": parseConfig returned NULL during config commit"
 				 "  - this is a BUG - report the following: \n");
 
-			if ((rtOpts->currentConfig = parseConfig(CFGOP_PARSE, NULL, rtOpts->candidateConfig,rtOpts)) == NULL)
+			if ((rtOpts->currentConfig = parseConfig(CFGOP_PARSE, NULL, candidateConfig, rtOpts)) == NULL)
 				CRITICAL("*****************" PTPD_PROGNAME" shutting down **********************\n");
 			/*
 			 * Could be assert(), but this should be done any time this happens regardless of
@@ -3357,7 +3358,7 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts)
 	/* clean up */
 	cleanup:
 
-		dictionary_del(&rtOpts->candidateConfig);
+		dictionary_del(&candidateConfig);
 }
 
 Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOpts)
@@ -3386,7 +3387,7 @@ Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOp
 	 */
 	loadDefaultSettings(rtOpts);
 	/* initialise the config dictionary */
-	rtOpts->candidateConfig = dictionary_new(0);
+	dictionary* candidateConfig = dictionary_new(0);
 	rtOpts->cliConfig = dictionary_new(0);
 
 	/* parse all long section:key options and clean up argv for getopt */
@@ -3404,15 +3405,15 @@ Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOp
 	if(strlen(configFile) > 0) {
 		/* config file settings overwrite all others, except for empty strings */
 		INFO("Loading configuration file: %s\n",configFile);
-		if(loadConfigFile(&rtOpts->candidateConfig, rtOpts)) {
-			dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
+		if(loadConfigFile(&candidateConfig, rtOpts)) {
+			dictionary_merge(rtOpts->cliConfig, candidateConfig, 1, 1, "from command line");
 		} else {
 			*ret = 1;
-			dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
+			dictionary_merge(rtOpts->cliConfig, candidateConfig, 1, 1, "from command line");
 			goto configcheck;
 		}
 	} else {
-		dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
+		dictionary_merge(rtOpts->cliConfig, candidateConfig, 1, 1, "from command line");
 	}
 	/**
 	 * This is where the final checking  of the candidate settings container happens.
@@ -3420,9 +3421,9 @@ Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOp
 	 * if not present. NULL is returned on any config error - parameters missing, out of range,
 	 * etc. The getopt loop in loadCommandLineOptions() only sets keys verified here.
 	 */
-	if( ( rtOpts->currentConfig = parseConfig(CFGOP_PARSE, NULL, rtOpts->candidateConfig,rtOpts)) == NULL ) {
+	if( ( rtOpts->currentConfig = parseConfig(CFGOP_PARSE, NULL, candidateConfig, rtOpts)) == NULL ) {
 		*ret = 1;
-		dictionary_del(&rtOpts->candidateConfig);
+		dictionary_del(&candidateConfig);
 		goto configcheck;
 	}
 
@@ -3434,7 +3435,7 @@ Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOp
 	}
 
 	/* we don't need the candidate config any more */
-	dictionary_del(&rtOpts->candidateConfig);
+	dictionary_del(&candidateConfig);
 
 	/* Check network before going into background */
 	if(!testInterface(rtOpts->primaryIfaceName, rtOpts)) {
@@ -3477,7 +3478,7 @@ Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOp
 
  fail:
 	dictionary_del(&rtOpts->cliConfig);
-	dictionary_del(&rtOpts->candidateConfig);
+	dictionary_del(&candidateConfig);
 	dictionary_del(&rtOpts->currentConfig);
 	return 0;
 }

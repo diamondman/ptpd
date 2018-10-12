@@ -322,8 +322,8 @@ typedef struct RunTimeOpts {
 	 * 0 = no change
 	 */
 	UInteger32 restartSubsystems;
-	/* config dictionary containers - current, candidate, and from CLI */
-	dictionary *currentConfig, *candidateConfig, *cliConfig;
+	/* config dictionary containers - current and from CLI */
+	dictionary *currentConfig, *cliConfig;
 
 	Enumeration8 selectedPreset;
 
@@ -633,9 +633,6 @@ typedef struct PtpClock {
 
 	/* accumulating offset correction added when smearing leap second */
 	double leapSmearFudge;
-
-	/* configuration applied by management messages */
-	dictionary *managementConfig;
 
 	/* testing only - used to add a 1ms offset */
 #if 0
