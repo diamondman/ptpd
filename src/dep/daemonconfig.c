@@ -63,6 +63,8 @@
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 
+static char configFile[PATH_MAX+1];
+
 /*-
  * Helper macros - this is effectively the API for using the new config file interface.
  * The macros below cover all operations required in parsing the configuration.
@@ -2523,8 +2525,8 @@ loadConfigFile(dictionary **target, RunTimeOpts *rtOpts)
 {
 	dictionary *dict;
 
-	if ( (dict = iniparser_load(rtOpts->configFile)) == NULL) {
-		ERROR("Could not load configuration file: %s\n", rtOpts->configFile);
+	if ( (dict = iniparser_load(configFile)) == NULL) {
+		ERROR("Could not load configuration file: %s\n", configFile);
 		return FALSE;
 	}
 
@@ -2532,6 +2534,29 @@ loadConfigFile(dictionary **target, RunTimeOpts *rtOpts)
 	dictionary_del(&dict);
 
 	return TRUE;
+}
+
+Boolean
+reloadConfigFile(RunTimeOpts *rtOpts)
+{
+	/* if we don't have a config file specified, we're done - just reopen log files*/
+	if(strlen(configFile) !=  0) {
+
+		dictionary* tmpConfig = dictionary_new(0);
+
+		/* Try reloading the config file */
+		NOTIFY("Reloading configuration file: %s\n",configFile);
+
+		if(!loadConfigFile(&tmpConfig, rtOpts)) {
+			dictionary_del(&tmpConfig);
+		} else {
+			dictionary_merge(rtOpts->cliConfig, tmpConfig, 1, 1, "from command line");
+			applyConfig(tmpConfig, rtOpts);
+			dictionary_del(&tmpConfig);
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
 
 
@@ -2786,7 +2811,7 @@ short_help:
 
 		/* config file path */
 		case 'c':
-			strncpy(rtOpts->configFile, optarg, PATH_MAX);
+			strncpy(configFile, optarg, PATH_MAX);
 			break;
 		/* check configuration and exit */
 		case 'k':
@@ -3230,7 +3255,7 @@ static void dump_command_line_parameters(int argc, char **argv)
 }
 
 void
-applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock)
+applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts)
 {
 	Boolean reloadSuccessful = TRUE;
 
@@ -3376,9 +3401,9 @@ Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOp
 		dump_command_line_parameters(argc, argv);
 
 	/* Have we got a config file? */
-	if(strlen(rtOpts->configFile) > 0) {
+	if(strlen(configFile) > 0) {
 		/* config file settings overwrite all others, except for empty strings */
-		INFO("Loading configuration file: %s\n",rtOpts->configFile);
+		INFO("Loading configuration file: %s\n",configFile);
 		if(loadConfigFile(&rtOpts->candidateConfig, rtOpts)) {
 			dictionary_merge(rtOpts->cliConfig, rtOpts->candidateConfig, 1, 1, "from command line");
 		} else {

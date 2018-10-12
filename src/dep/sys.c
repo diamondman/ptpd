@@ -2841,27 +2841,7 @@ do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	}
 #endif /* RUNTIME_DEBUG */
 
-
-	/* if we don't have a config file specified, we're done - just reopen log files*/
-	if(strlen(rtOpts->configFile) !=  0) {
-
-		dictionary* tmpConfig = dictionary_new(0);
-
-		/* Try reloading the config file */
-		NOTIFY("Reloading configuration file: %s\n",rtOpts->configFile);
-
-		if(!loadConfigFile(&tmpConfig, rtOpts)) {
-
-			dictionary_del(&tmpConfig);
-
-		} else {
-			dictionary_merge(rtOpts->cliConfig, tmpConfig, 1, 1, "from command line");
-			applyConfig(tmpConfig, rtOpts, ptpClock);
-			dictionary_del(&tmpConfig);
-
-		}
-
-	}
+	reloadConfigFile(rtOpts);
 
 	/* tell the service it can perform any HUP-triggered actions */
 	ptpClock->timingService.reloadRequested = TRUE;

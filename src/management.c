@@ -500,7 +500,7 @@ handleManagement(MsgHeader *header,
 
 	if(ptpClock->managementConfig != NULL) {
 	    NOTICE("SET / COMMAND management message received - looking for configuration changes\n");
-	    applyConfig(ptpClock->managementConfig, rtOpts, ptpClock);
+	    applyConfig(ptpClock->managementConfig, rtOpts);
 	    dictionary_del(&ptpClock->managementConfig);
 	}
 

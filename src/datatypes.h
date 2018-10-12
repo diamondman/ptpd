@@ -230,8 +230,6 @@ typedef struct RunTimeOpts {
 	Boolean checkConfigOnly;
 	Boolean printLockFile;
 
-	char configFile[PATH_MAX+1];
-
 	LogFileHandler statisticsLog;
 	LogFileHandler recordLog;
 	LogFileHandler eventLog;
