@@ -275,15 +275,6 @@ ptpdShutdown(PtpClock * ptpClock)
 
 	clearLockFile(&rtOpts);
 
-	if(rtOpts.statusLog.logEnabled) {
-		/* close and remove the status file */
-		if(rtOpts.statusLog.logFP != NULL) {
-			fclose(rtOpts.statusLog.logFP);
-			rtOpts.statusLog.logFP = NULL;
-		}
-		unlink(rtOpts.statusLog.logPath);
-	}
-
 	stopLogging(&rtOpts);
 }
 

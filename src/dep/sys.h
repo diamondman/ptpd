@@ -18,7 +18,7 @@ int snprint_PortIdentity(char *s, int max_len, const PortIdentity *id);
 // Also in ptpd_logging.h. TODO: Figure out a nice, single place to put this.
 void logMessage(int priority, const char *format, ...);
 
-int restartLog(LogFileHandler* handler, Boolean quiet);
+Boolean restartLog(LogFileHandler* handler, Boolean quiet);
 void restartLogging(RunTimeOpts* rtOpts);
 void stopLogging(RunTimeOpts* rtOpts);
 void logStatistics(PtpClock *ptpClock);

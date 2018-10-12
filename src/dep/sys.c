@@ -151,7 +151,7 @@
 /* only C99 has the round function built-in */
 double round (double __x);
 
-static int closeLog(LogFileHandler* handler);
+static Boolean closeLog(LogFileHandler* handler);
 
 static Boolean maintainLogSize(LogFileHandler* handler);
 static void updateLogSize(LogFileHandler* handler);
@@ -597,60 +597,57 @@ end:
 
 
 /* Restart a file log target based on its settings  */
-int
+Boolean
 restartLog(LogFileHandler* handler, Boolean quiet)
 {
-        /* The FP is open - close it */
-        if(handler->logFP != NULL) {
+	closeLog(handler);
+
+        /* FP is not open and we're not logging */
+        if (!handler->logEnabled)
+                return TRUE;
+
+	/* Open the file */
+        if ( (handler->logFP = fopen(handler->logPath, handler->openMode)) == NULL) {
+                if(!quiet) PERROR("Could not open %s file", handler->logID);
+		return FALSE;
+        }
+
+	if(handler->truncateOnReopen) {
+		if(!ftruncate(fileno(handler->logFP), 0)) {
+			if(!quiet) INFO("Truncated %s file\n", handler->logID);
+		} else {
+			DBG("Could not truncate % file: %s\n", handler->logID, handler->logPath);
+		}
+	}
+	/* \n flushes output for us, no need for fflush() - if you want something different, set it later */
+	setlinebuf(handler->logFP);
+	return TRUE;
+}
+
+/* Close a file log target */
+static Boolean
+closeLog(LogFileHandler* handler)
+{
+	if(handler->logFP != NULL) {
+		//if(!quiet) INFO("Closing %s log file.\n", handler->logID);
 		handler->lastHash=0;
-                fclose(handler->logFP);
+		fclose(handler->logFP);
 		/*
 		 * fclose doesn't do this at least on Linux - changes the underlying FD to -1,
 		 * but not the FP to NULL - with this we can tell if the FP is closed
 		 */
 		handler->logFP=NULL;
-                /* If we're not logging to file (any more), call it quits */
-                if (!handler->logEnabled) {
-                    if(!quiet) INFO("Logging to %s file disabled. Closing file.\n", handler->logID);
-		    if(handler->unlinkOnClose)
-			unlink(handler->logPath);
-                    return 1;
-                }
-        }
-        /* FP is not open and we're not logging */
-        if (!handler->logEnabled)
-                return 1;
-
-	/* Open the file */
-        if ( (handler->logFP = fopen(handler->logPath, handler->openMode)) == NULL) {
-                if(!quiet) PERROR("Could not open %s file", handler->logID);
-        } else {
-		if(handler->truncateOnReopen) {
-			if(!ftruncate(fileno(handler->logFP), 0)) {
-				if(!quiet) INFO("Truncated %s file\n", handler->logID);
-			} else
-				DBG("Could not truncate % file: %s\n", handler->logID, handler->logPath);
+		/* If we're not logging to file (any more), call it quits */
+		if (!handler->logEnabled) {
+			if(handler->unlinkOnClose) {
+				//if(!quiet) INFO("Logging to %s file disabled. Deleting file.\n", handler->logID);
+				unlink(handler->logPath);
+			}
 		}
-		/* \n flushes output for us, no need for fflush() - if you want something different, set it later */
-                setlinebuf(handler->logFP);
-
+		return TRUE;
 	}
-        return (handler->logFP != NULL);
+	return FALSE;
 }
-
-/* Close a file log target */
-static int
-closeLog(LogFileHandler* handler)
-{
-        if(handler->logFP != NULL) {
-                fclose(handler->logFP);
-		handler->logFP=NULL;
-		return 1;
-        }
-
-	return 0;
-}
-
 
 /* Return TRUE only if the log file had to be rotated / truncated - FALSE does not mean error */
 /* Mini-logrotate: truncate file if exceeds preset size, also rotate up to n number of files if configured */
@@ -739,9 +736,16 @@ restartLogging(RunTimeOpts* rtOpts)
 void
 stopLogging(RunTimeOpts* rtOpts)
 {
+	rtOpts->statisticsLog.logEnabled = FALSE;
 	closeLog(&rtOpts->statisticsLog);
+
+	rtOpts->recordLog.logEnabled = FALSE;
 	closeLog(&rtOpts->recordLog);
+
+	rtOpts->eventLog.logEnabled = FALSE;
 	closeLog(&rtOpts->eventLog);
+
+	rtOpts->statusLog.logEnabled = FALSE;
 	closeLog(&rtOpts->statusLog);
 }
 
