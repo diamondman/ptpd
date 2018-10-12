@@ -62,10 +62,16 @@
 #include "constants.h" // For USER_DESCRIPTION
 #include "ptp_primitives.h"
 #include "timingdomain.h"
+#if defined PTPD_SNMP
+#  include "dep/snmp.h"
+#endif
 #include "datatypes.h"
 #include "dep/configdefaults.h"
-#include "dep/startup.h" // For ptpdStartup, ntpSetu
+#include "dep/startup.h" // For ptpdClockCreate
 #include "dep/daemonconfig.h"
+#if defined(PTPD_FEATURE_NTP)
+#  include "dep/ntpengine/ntpdcontrol.h"
+#endif
 #include "dep/sys.h"
 #include "protocol.h"
 #include "ptpd_logging.h"
@@ -146,6 +152,12 @@ main(int argc, char **argv)
 
 	timingDomain.init(&timingDomain);
 	timingDomain.updateInterval = 1;
+
+#if defined PTPD_SNMP
+	/* Start SNMP subsystem */
+	if (rtOpts.snmpEnabled)
+		snmpInit(&rtOpts, ptpClock);
+#endif
 
 	startupInProgress = FALSE;
 

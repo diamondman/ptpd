@@ -288,7 +288,7 @@ ptpdShutdown(PtpClock * ptpClock)
 }
 
 PtpClock *
-ptpClockCreate(RunTimeOpts* rtOpts, Integer16* ret) {
+ptpClockCreate(const RunTimeOpts* rtOpts, Integer16* ret) {
 	PtpClock* ptpClock;
 	/* Allocate memory after we're done with other checks but before going into daemon */
 	ptpClock = (PtpClock *) calloc(1, sizeof(PtpClock));
@@ -362,12 +362,6 @@ ptpClockCreate(RunTimeOpts* rtOpts, Integer16* ret) {
 	}
 
 	netPathClearSockets(ptpClock->netPath);
-
-#if defined PTPD_SNMP
-	/* Start SNMP subsystem */
-	if (rtOpts->snmpEnabled)
-		snmpInit(rtOpts, ptpClock);
-#endif
 
 	return ptpClock;
 
