@@ -110,7 +110,16 @@ static void issueManagement(MsgHeader*,MsgManagement*,const RunTimeOpts*,PtpCloc
 #endif
 static void issueManagementRespOrAck(MsgManagement*, Integer32, const RunTimeOpts*,PtpClock*);
 static void issueManagementErrorStatus(MsgManagement*, Integer32, const RunTimeOpts*,PtpClock*);
-
+/**
+ * \brief Management Message actions (Table 38 in the spec)
+ */
+enum {
+	GET=0,
+	SET,
+	RESPONSE,
+	COMMAND,
+	ACKNOWLEDGE
+};
 void
 handleManagement(MsgHeader *header,
 		 Boolean isFromSelf, Integer32 sourceAddress, RunTimeOpts *rtOpts, PtpClock *ptpClock)

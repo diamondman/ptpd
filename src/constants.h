@@ -304,16 +304,6 @@ enum {
 	CUM_FREQ_SCALE_FACTOR_OFFSET=0x2003
 };
 
-/**
- * \brief Management Message actions (Table 38 in the spec)
- */
-enum {
-	GET=0,
-	SET,
-	RESPONSE,
-	COMMAND,
-	ACKNOWLEDGE
-};
 
 /* Enterprise Profile TLV definitions */
 
