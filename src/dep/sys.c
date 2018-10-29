@@ -425,6 +425,7 @@ static int writeMessage(FILE* destination, uint32_t *lastHash, int priority, con
 {
 	extern RunTimeOpts rtOpts;
 	extern Boolean startupInProgress;
+	extern PtpClock *G_ptpClock;
 
 	int written;
 	char time_str[MAXTIMESTR];
@@ -436,7 +437,6 @@ static int writeMessage(FILE* destination, uint32_t *lastHash, int priority, con
 #endif /* RUNTIME_DEBUG */
 
 	extern char *translatePortState(PtpClock *ptpClock);
-	extern PtpClock *G_ptpClock;
 
 	if(destination == NULL)
 		return -1;
@@ -475,20 +475,20 @@ static int writeMessage(FILE* destination, uint32_t *lastHash, int priority, con
 		 */
 		gettimeofday(&now, 0);
 		strftime(time_str, MAXTIMESTR, "%F %X", localtime((time_t*)&now.tv_sec));
-		fprintf(destination, "%s.%06d ", time_str, (int)now.tv_usec  );
+		fprintf(destination, "%s.%06d ", time_str, (int)now.tv_usec);
 		fprintf(destination,PTPD_PROGNAME"[%d].%s (%-9s ",
-		(int)getpid(), startupInProgress ? "startup" : rtOpts.ifaceName,
-		priority == LOG_EMERG   ? "emergency)" :
-		priority == LOG_ALERT   ? "alert)" :
-		priority == LOG_CRIT    ? "critical)" :
-		priority == LOG_ERR     ? "error)" :
-		priority == LOG_WARNING ? "warning)" :
-		priority == LOG_NOTICE  ? "notice)" :
-		priority == LOG_INFO    ? "info)" :
-		priority == LOG_DEBUG   ? "debug1)" :
-		priority == LOG_DEBUG2  ? "debug2)" :
-		priority == LOG_DEBUGV  ? "debug3)" :
-		"unk)");
+			(int)getpid(), startupInProgress ? "startup" : rtOpts.ifaceName,
+			priority == LOG_EMERG   ? "emergency)" :
+			priority == LOG_ALERT   ? "alert)" :
+			priority == LOG_CRIT    ? "critical)" :
+			priority == LOG_ERR     ? "error)" :
+			priority == LOG_WARNING ? "warning)" :
+			priority == LOG_NOTICE  ? "notice)" :
+			priority == LOG_INFO    ? "info)" :
+			priority == LOG_DEBUG   ? "debug1)" :
+			priority == LOG_DEBUG2  ? "debug2)" :
+			priority == LOG_DEBUGV  ? "debug3)" :
+			"unk)");
 
 
 		fprintf(destination, " (%s) ", G_ptpClock ?
@@ -1066,7 +1066,7 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 	getAlarmSummary(alarmBuf, n, ptpClock->alarms, ALRM_MAX);
 
 	if(rtOpts->statusLog.logFP == NULL)
-	    return;
+		return;
 
 	char timeStr[MAXTIMESTR];
 	char hostName[MAXHOSTNAMELEN];
@@ -1091,9 +1091,9 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 	fprintf(out, 		STATUSPREFIX"  %s\n","Local time", timeStr);
 	strftime(timeStr, MAXTIMESTR, "%a %b %d %X %Z %Y", gmtime((time_t*)&now.tv_sec));
 	fprintf(out, 		STATUSPREFIX"  %s\n","Kernel time", timeStr);
-	fprintf(out, 		STATUSPREFIX"  %s%s\n","Interface", rtOpts->ifaceName,
+	fprintf(out,            STATUSPREFIX"  %s%s\n","Interface", rtOpts->ifaceName,
 		(rtOpts->backupIfaceEnabled && ptpClock->runningBackupInterface) ? " (backup)" : (rtOpts->backupIfaceEnabled)?
-		    " (primary)" : "");
+		" (primary)" : "");
 	fprintf(out, 		STATUSPREFIX"  %s\n","Preset", dictionary_get(rtOpts->currentConfig, "ptpengine:preset", ""));
 	fprintf(out, 		STATUSPREFIX"  %s%s","Transport", dictionary_get(rtOpts->currentConfig, "ptpengine:transport", ""),
 		(rtOpts->transport==UDP_IPV4 && rtOpts->pcap == TRUE)?" + libpcap":"");
@@ -1801,27 +1801,27 @@ checkFileLockable(const char *fileName, int *lockPid)
 Boolean
 checkOtherLocks(RunTimeOpts* rtOpts)
 {
-    char searchPattern[PATH_MAX];
-    char * lockPath = 0;
-    int lockPid = 0;
-    glob_t matchedFiles;
-    Boolean ret = TRUE;
-    int matches = 0, counter = 0;
+	char searchPattern[PATH_MAX];
+	char * lockPath = 0;
+	int lockPid = 0;
+	glob_t matchedFiles;
+	Boolean ret = TRUE;
+	int matches = 0, counter = 0;
 
 	/* no need to check locks */
 	if(rtOpts->ignore_daemon_lock ||
-		!rtOpts->autoLockFile)
-			return TRUE;
+	   !rtOpts->autoLockFile)
+		return TRUE;
 
-    /*
-     * Try to discover if we can run in desired mode
-     * based on the presence of other lock files
-     * and them being lockable
-     */
+	/*
+	 * Try to discover if we can run in desired mode
+	 * based on the presence of other lock files
+	 * and them being lockable
+	 */
 
 	/* Check for other ptpd running on the same interface - same for all modes */
-	snprintf(searchPattern, PATH_MAX,"%s/%s_*_%s.lock",
-	    rtOpts->lockDirectory, PTPD_PROGNAME,rtOpts->ifaceName);
+	snprintf(searchPattern, PATH_MAX, "%s/%s_*_%s.lock",
+		 rtOpts->lockDirectory, PTPD_PROGNAME, rtOpts->ifaceName);
 
 	DBGV("SearchPattern: %s\n",searchPattern);
 	switch(glob(searchPattern, 0, NULL, &matchedFiles)) {
@@ -1845,7 +1845,7 @@ checkOtherLocks(RunTimeOpts* rtOpts)
 		/* Could not check lock status */
 		case -1:
 		    ERROR("Looks like "USER_DESCRIPTION" may be already running on %s: %s found, but could not check lock\n",
-		    rtOpts->ifaceName, lockPath);
+			  rtOpts->ifaceName, lockPath);
 		    ret = FALSE;
 		    goto end;
 		/* It was possible to acquire lock - file looks abandoned */
@@ -1856,7 +1856,7 @@ checkOtherLocks(RunTimeOpts* rtOpts)
 		/* file is locked */
 		case 0:
 		    ERROR("Looks like "USER_DESCRIPTION" is already running on %s: %s found and is locked by pid %d\n",
-		    rtOpts->ifaceName, lockPath, lockPid);
+			  rtOpts->ifaceName, lockPath, lockPid);
 		    ret = FALSE;
 		    goto end;
 	    }
@@ -1864,57 +1864,58 @@ checkOtherLocks(RunTimeOpts* rtOpts)
 
 	if(matches > 0)
 		globfree(&matchedFiles);
+
 	/* Any mode that can control the clock - also check the clock driver */
 	if(rtOpts->clockQuality.clockClass > 127 ) {
-	    snprintf(searchPattern, PATH_MAX,"%s/%s_%s_*.lock",
-	    rtOpts->lockDirectory,PTPD_PROGNAME,DEFAULT_CLOCKDRIVER);
-	DBGV("SearchPattern: %s\n",searchPattern);
+		snprintf(searchPattern, PATH_MAX,"%s/%s_%s_*.lock",
+			 rtOpts->lockDirectory,PTPD_PROGNAME,DEFAULT_CLOCKDRIVER);
+		DBGV("SearchPattern: %s\n",searchPattern);
 
-	switch(glob(searchPattern, 0, NULL, &matchedFiles)) {
+		switch(glob(searchPattern, 0, NULL, &matchedFiles)) {
 
-	    case GLOB_NOSPACE:
-	    case GLOB_ABORTED:
-		    PERROR("Could not scan %s directory\n", rtOpts->lockDirectory);;
-		    ret = FALSE;
-		    goto end;
-	    default:
-		    break;
-	}
-	    counter = matchedFiles.gl_pathc;
-	    matches = counter;
-	    while (counter--) {
-		lockPath=matchedFiles.gl_pathv[counter];
-		DBG("matched: %s\n",lockPath);
-	    /* Check if there is a lock file with our clock driver in the name */
-		    switch(checkFileLockable(lockPath, &lockPid)) {
-			/* could not check lock status */
+		case GLOB_NOSPACE:
+		case GLOB_ABORTED:
+			PERROR("Could not scan %s directory\n", rtOpts->lockDirectory);;
+			ret = FALSE;
+			goto end;
+		default:
+			break;
+		}
+		counter = matchedFiles.gl_pathc;
+		matches = counter;
+		while (counter--) {
+			lockPath=matchedFiles.gl_pathv[counter];
+			DBG("matched: %s\n",lockPath);
+			/* Check if there is a lock file with our clock driver in the name */
+			switch(checkFileLockable(lockPath, &lockPid)) {
+				/* could not check lock status */
 			case -1:
-			    ERROR("Looks like "USER_DESCRIPTION" may already be controlling the \""DEFAULT_CLOCKDRIVER
-				    "\" clock: %s found, but could not check lock status.\n", lockPath);
-			    ret = FALSE;
-			    goto end;
-			/* it was possible to acquire lock - looks abandoned */
+				ERROR("Looks like "USER_DESCRIPTION" may already be controlling the \""DEFAULT_CLOCKDRIVER
+				      "\" clock: %s found, but could not check lock status.\n", lockPath);
+				ret = FALSE;
+				goto end;
+				/* it was possible to acquire lock - looks abandoned */
 			case 1:
-			    DBG("Lock file %s found, but is not locked for writing.\n", lockPath);
-			    ret = TRUE;
-			    break;
-			/* file is locked */
+				DBG("Lock file %s found, but is not locked for writing.\n", lockPath);
+				ret = TRUE;
+				break;
+				/* file is locked */
 			case 0:
-			    ERROR("Looks like "USER_DESCRIPTION" is already controlling the \""DEFAULT_CLOCKDRIVER
-				    "\" clock: %s found and is locked by pid %d\n", lockPath, lockPid);
+				ERROR("Looks like "USER_DESCRIPTION" is already controlling the \""DEFAULT_CLOCKDRIVER
+				      "\" clock: %s found and is locked by pid %d\n", lockPath, lockPid);
 			default:
-			    ret = FALSE;
-			    goto end;
-	    }
-	}
+				ret = FALSE;
+				goto end;
+			}
+		}
 	}
 
-    ret = TRUE;
+	ret = TRUE;
 
 end:
-    if(matches>0)
-	globfree(&matchedFiles);
-    return ret;
+	if(matches>0)
+		globfree(&matchedFiles);
+	return ret;
 }
 
 int
@@ -2851,8 +2852,8 @@ do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	ptpClock->timingService.reloadRequested = TRUE;
 
 	if(rtOpts->recordLog.logEnabled ||
-	    rtOpts->eventLog.logEnabled ||
-	    (rtOpts->statisticsLog.logEnabled))
+	   rtOpts->eventLog.logEnabled ||
+	   rtOpts->statisticsLog.logEnabled)
 		INFO("Reopening log files\n");
 
 	restartLogging(rtOpts);
