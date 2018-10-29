@@ -16,7 +16,8 @@
 #include "constants.h"
 
 #if !defined(linux) && !defined(__NetBSD__) && !defined(__FreeBSD__) && \
-  !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__sun) && !defined(__QNXNTO__)
+  !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__sun) && \
+  !defined(__QNXNTO__) && !defined(PTPD_OVERRIDE_OS_CHECK)
 #  error PTPD hasn't been ported to this OS - should be possible \
 if it's POSIX compatible, if you succeed, report it to ptpd-devel@sourceforge.net
 #endif
