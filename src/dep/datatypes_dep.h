@@ -29,14 +29,4 @@ typedef struct LogFileHandler {
 
 } LogFileHandler;
 
-typedef struct LeapSecondInfo {
-    int currentOffset;
-    int nextOffset;
-    int leapType;
-    Integer32 startTime;
-    Integer32 endTime;
-    Boolean valid;
-    Boolean offsetValid;
-} LeapSecondInfo;
-
 #endif /*DATATYPES_DEP_H_*/

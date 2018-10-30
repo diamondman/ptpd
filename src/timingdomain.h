@@ -112,4 +112,14 @@ int	timingServiceSetup(TimingService *service);
 
 extern TimingDomain timingDomain;
 
+typedef struct LeapSecondInfo {
+    int currentOffset;
+    int nextOffset;
+    int leapType;
+    Integer32 startTime;
+    Integer32 endTime;
+    Boolean valid;
+    Boolean offsetValid;
+} LeapSecondInfo;
+
 #endif /* TIMINGDOMAIN_H_ */
