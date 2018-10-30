@@ -2399,8 +2399,6 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 
 /* ==== Any additional logic should go here ===== */
 
-	rtOpts->ifaceName = rtOpts->primaryIfaceName;
-
 	/* Check timing packet ACLs */
 	if(rtOpts->timingAclEnabled) {
 
@@ -2483,7 +2481,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 		    "%s/"PTPD_PROGNAME"_%s_%s.lock",
 		    rtOpts->lockDirectory,
 		    (rtOpts->clockQuality.clockClass<128 && !rtOpts->slaveOnly) ? "master" : DEFAULT_CLOCKDRIVER,
-		    rtOpts->ifaceName);
+		    rtOpts->primaryIfaceName);
 	    DBG("Automatic lock file name is: %s\n", rtOpts->lockFile);
 	/*
 	 * Otherwise use default lock file name, with the specified lock directory
@@ -2537,7 +2535,7 @@ loadConfigFile(dictionary **target, RunTimeOpts *rtOpts)
 }
 
 Boolean
-reloadConfigFile(RunTimeOpts *rtOpts)
+reloadConfigFile(RunTimeOpts *rtOpts, PtpClock* ptpClock)
 {
 	/* if we don't have a config file specified, we're done - just reopen log files*/
 	if(strlen(configFile) !=  0) {
@@ -2551,7 +2549,7 @@ reloadConfigFile(RunTimeOpts *rtOpts)
 			dictionary_del(&tmpConfig);
 		} else {
 			dictionary_merge(rtOpts->cliConfig, tmpConfig, 1, 1, "from command line");
-			applyConfig(tmpConfig, rtOpts);
+			applyConfig(tmpConfig, rtOpts, ptpClock);
 			dictionary_del(&tmpConfig);
 			return TRUE;
 		}
@@ -3255,7 +3253,7 @@ static void dump_command_line_parameters(int argc, char **argv)
 }
 
 void
-applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts)
+applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock* ptpClock)
 {
 	Boolean reloadSuccessful = TRUE;
 	dictionary* candidateConfig;
@@ -3288,7 +3286,7 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts)
 
 	/* If we're told to re-check lock files, do it: tmpOpts already has what rtOpts should */
 	if( (rtOpts->restartSubsystems & PTPD_CHECK_LOCKS) &&
-	    tmpOpts.autoLockFile && !checkOtherLocks(&tmpOpts)) {
+	    tmpOpts.autoLockFile && !checkOtherLocks(&tmpOpts, ptpClock)) {
 		reloadSuccessful = FALSE;
 	}
 

@@ -112,6 +112,7 @@
 #endif /* ETHER_HDR_LEN */
 
 #ifdef PTPD_PCAP
+#  include <netinet/ether.h> // For ether_aton
 #  define PCAP_TIMEOUT 1 /* expressed in milliseconds */
 #  if defined(HAVE_PCAP_PCAP_H)
 #    include <pcap/pcap.h>
@@ -217,6 +218,8 @@ typedef struct NetPath {
 	Ipv4AccessList* timingAcl;
 	Ipv4AccessList* managementAcl;
 
+	Boolean runningBackupInterface;
+
 } NetPath;
 
 /**
@@ -319,7 +322,7 @@ netShutdown(NetPath * netPath)
  */
 
 static int
-interfaceExists(char* ifaceName)
+interfaceExists(const char* ifaceName)
 {
     int ret;
     struct ifaddrs *ifaddr, *ifa;
@@ -354,7 +357,7 @@ end:
 }
 
 static int
-getInterfaceFlags(char* ifaceName, unsigned int* flags)
+getInterfaceFlags(const char* ifaceName, unsigned int* flags)
 {
     int ret;
     struct ifaddrs *ifaddr, *ifa;
@@ -394,7 +397,7 @@ end:
    Return 1 on success, 0 when no suitable address available, -1 on failure.
  */
 static int
-getInterfaceAddress(char* ifaceName, int family, struct sockaddr* addr)
+getInterfaceAddress(const char* ifaceName, int family, struct sockaddr* addr)
 {
     int ret;
     struct ifaddrs *ifaddr, *ifa;
@@ -437,7 +440,7 @@ end:
    hw address available, -1 on failure.
  */
 static int
-getHwAddress (char* ifaceName, unsigned char* hwAddr, int hwAddrSize)
+getHwAddress (const char* ifaceName, unsigned char* hwAddr, int hwAddrSize)
 {
     int ret;
     if(!strlen(ifaceName))
@@ -539,7 +542,7 @@ end:
 
 }
 
-static int getInterfaceIndex(char *ifaceName)
+static int getInterfaceIndex(const char *ifaceName)
 {
 
 #ifndef SIOCGIFINDEX
@@ -580,7 +583,7 @@ static int getInterfaceIndex(char *ifaceName)
 
 }
 
-static Boolean getInterfaceInfo(char* ifaceName, InterfaceInfo* ifaceInfo)
+static Boolean getInterfaceInfo(const char* ifaceName, InterfaceInfo* ifaceInfo)
 {
     int res;
 
@@ -627,7 +630,7 @@ static Boolean getInterfaceInfo(char* ifaceName, InterfaceInfo* ifaceInfo)
 }
 
 Boolean
-testInterface(char * ifaceName, const RunTimeOpts* rtOpts)
+testInterface(const char * ifaceName, const RunTimeOpts* rtOpts)
 {
 	InterfaceInfo info;
 
@@ -903,13 +906,13 @@ netInitTimestamping(NetPath * netPath, const RunTimeOpts * rtOpts)
         memset(&tsInfo, 0, sizeof(tsInfo));
         memset(&ifRequest, 0, sizeof(ifRequest));
         tsInfo.cmd = ETHTOOL_GET_TS_INFO;
-        strncpy( ifRequest.ifr_name, rtOpts->ifaceName, IFNAMSIZ - 1);
+        strncpy( ifRequest.ifr_name, netPathGetInterfaceName(netPath, rtOpts), IFNAMSIZ - 1);
         ifRequest.ifr_data = (char *) &tsInfo;
         res = ioctl(netPath->eventSock, SIOCETHTOOL, &ifRequest);
 
 	if (res < 0) {
 		PERROR("Could not retrieve ethtool timestamping capabilities for %s - reverting to SO_TIMESTAMPNS",
-			    rtOpts->ifaceName);
+		       netPathGetInterfaceName(netPath, rtOpts));
 		val = 1;
 		netPath->txTimestampFailure = FALSE;
 	} else if((tsInfo.so_timestamping & val) != val) {
@@ -1104,7 +1107,7 @@ static int parseUnicastConfig(const RunTimeOpts *rtOpts, int maxCount, UnicastDe
  * @return TRUE if successful
  */
 Boolean
-netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
+netInit(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 {
 
 #ifdef __QNXNTO__
@@ -1151,20 +1154,19 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	}
 
 	/* let's see if we have another interface left before we die */
-	if(!testInterface(rtOpts->ifaceName, rtOpts)) {
+	if(!testInterface(netPathGetInterfaceName(netPath, rtOpts), rtOpts)) {
 
 		/* backup not enabled - exit */
 		if(!rtOpts->backupIfaceEnabled)
 		    return FALSE;
 
 		/* backup enabled - try the other interface */
-		ptpClock->runningBackupInterface = !ptpClock->runningBackupInterface;
+		netPathToggleUsePrimaryIf(netPath);
 
-		rtOpts->ifaceName = (ptpClock->runningBackupInterface)?rtOpts->backupIfaceName : rtOpts->primaryIfaceName;
-
-		NOTICE("Last resort - attempting to switch to %s interface\n", ptpClock->runningBackupInterface ? "backup" : "primary");
+		NOTICE("Last resort - attempting to switch to %s interface\n",
+		       netPathGetUsePrimaryIf(ptpClock->netPath) ? "primary" : "backup");
 		/* if this fails, we have no reason to live */
-		if(!testInterface(rtOpts->ifaceName, rtOpts)) {
+		if(!testInterface(netPathGetInterfaceName(netPath, rtOpts), rtOpts)) {
 		    return FALSE;
 		}
 	}
@@ -1173,7 +1175,7 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	netPath->interfaceInfo.addressFamily = AF_INET;
 
 	/* the if is here only to get rid of an unused result warning. */
-	if( getInterfaceInfo(rtOpts->ifaceName, &netPath->interfaceInfo)!= 1)
+	if( getInterfaceInfo(netPathGetInterfaceName(netPath, rtOpts), &netPath->interfaceInfo)!= 1)
 		return FALSE;
 
 	/* No HW address, we'll use the protocol address to form interfaceID -> clockID */
@@ -1198,7 +1200,7 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 
 		int promisc = (rtOpts->transport == IEEE_802_3 ) ? 1 : 0;
 
-		if ((netPath->pcapEvent = pcap_open_live(rtOpts->ifaceName,
+		if ((netPath->pcapEvent = pcap_open_live(netPathGetInterfaceName(netPath, rtOpts),
 							 PACKET_SIZE, promisc,
 							 PCAP_TIMEOUT,
 							 errbuf)) == NULL) {
@@ -1208,7 +1210,7 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 
 /* libpcap - new way - may be required for non-default buffer sizes  */
 /*
-		netPath->pcapEvent = pcap_create(rtOpts->ifaceName, errbuf);
+		netPath->pcapEvent = pcap_create(netPath->interfaceInfo.ifaceName, errbuf);
 		pcap_set_promisc(netPath->pcapEvent, promisc);
 		pcap_set_snaplen(netPath->pcapEvent, PACKET_SIZE);
 		pcap_set_timeout(netPath->pcapEvent, PCAP_TIMEOUT);
@@ -1238,7 +1240,7 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 			PERROR("failed to get pcap event fd");
 			return FALSE;
 		}
-		if ((netPath->pcapGeneral = pcap_open_live(rtOpts->ifaceName,
+		if ((netPath->pcapGeneral = pcap_open_live(netPathGetInterfaceName(netPath, rtOpts),
 							   PACKET_SIZE, promisc,
 							   PCAP_TIMEOUT,
 							 errbuf)) == NULL) {
@@ -1392,10 +1394,11 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 		 */
 
 		if ( rtOpts->ipMode == IPMODE_MULTICAST ) {
+		    const char* ifaceName = netPathGetInterfaceName(netPath, rtOpts);
 		    if (setsockopt(netPath->eventSock, SOL_SOCKET, SO_BINDTODEVICE,
-				rtOpts->ifaceName, strlen(rtOpts->ifaceName)) < 0
+				   ifaceName, strlen(ifaceName)) < 0
 			|| setsockopt(netPath->generalSock, SOL_SOCKET, SO_BINDTODEVICE,
-				rtOpts->ifaceName, strlen(rtOpts->ifaceName)) < 0){
+				ifaceName, strlen(ifaceName)) < 0){
 			PERROR("failed to call SO_BINDTODEVICE on the interface");
 			return FALSE;
 		    }
@@ -2546,8 +2549,34 @@ void netPathFree(NetPath** netPath)
 	*netPath = NULL;
 }
 
-NetPath* netPathCreate()
+NetPath* netPathCreate(const RunTimeOpts* rtOpts)
 {
 	NetPath* netPath = (NetPath*)calloc(1, sizeof(NetPath));
+	netPath->runningBackupInterface = FALSE;
 	return netPath;
+}
+
+const char* netPathGetInterfaceName(NetPath* netPath, const RunTimeOpts* rtOpts)
+{
+	if(rtOpts->backupIfaceEnabled &&
+	   netPath->runningBackupInterface) {
+		return rtOpts->backupIfaceName;
+	} else {
+		return rtOpts->primaryIfaceName;
+	}
+}
+
+void netPathToggleUsePrimaryIf(NetPath* netPath)
+{
+	netPath->runningBackupInterface = !netPath->runningBackupInterface;
+}
+
+void netPathSetUsePrimaryIf(NetPath* netPath, Boolean use_primary)
+{
+	netPath->runningBackupInterface = !use_primary;
+}
+
+Boolean netPathGetUsePrimaryIf(const NetPath* netPath)
+{
+	return !netPath->runningBackupInterface;
 }

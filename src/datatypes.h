@@ -188,7 +188,6 @@ typedef struct RunTimeOpts {
 	int announceTimeoutGracePeriod;
 //	Integer16 currentUtcOffset;
 
-	Octet* ifaceName;
 	Octet primaryIfaceName[IFACE_NAME_LENGTH];
 	Octet backupIfaceName[IFACE_NAME_LENGTH];
 	Boolean backupIfaceEnabled;

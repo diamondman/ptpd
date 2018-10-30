@@ -133,7 +133,7 @@ restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		}
 
 		/* Move back to primary interface only during configuration changes. */
-		ptpClock->runningBackupInterface = FALSE;
+		netPathSetUsePrimaryIf(ptpClock->netPath, TRUE);
 		toState(ptpClock->disabled ? PTP_DISABLED : PTP_INITIALIZING, rtOpts, ptpClock);
 
 	} else {
@@ -300,7 +300,7 @@ ptpClockCreate(const RunTimeOpts* rtOpts, Integer16* ret) {
 	DBG("allocated %d bytes for foreign master data\n",
 	    (int)(rtOpts->max_foreign_records * sizeof(ForeignMasterRecord)));
 
-	if (!(ptpClock->netPath = netPathCreate())) {
+	if (!(ptpClock->netPath = netPathCreate(rtOpts))) {
 		PERROR("Error: Failed to allocate memory for protocol engine NetPath data");
 		*ret = 2;
 		goto fail;

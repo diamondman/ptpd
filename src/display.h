@@ -21,7 +21,7 @@ void timeInterval_display(const TimeInterval*);
 void portIdentity_display(const PortIdentity*);
 void clockQuality_display (const ClockQuality*);
 void PTPText_display(const PTPText*, const PtpClock*);
-void iFaceName_display(const Octet*);
+void iFaceName_display(const char*, const Octet*);
 void unicast_display(const Octet*);
 
 void msgSync_display(const MsgSync *sync);

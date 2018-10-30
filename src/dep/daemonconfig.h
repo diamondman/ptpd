@@ -74,14 +74,14 @@ enum {
 #define    CFGOP_RESTART_FLAGS	1<<5	/* return subsystems affected by config changes */
 
 Boolean loadConfigFile (dictionary**, RunTimeOpts*);
-Boolean reloadConfigFile(RunTimeOpts*);
+Boolean reloadConfigFile(RunTimeOpts*, PtpClock*);
 void loadCommandLineKeys(dictionary*, int, char**);
 Boolean loadCommandLineOptions(RunTimeOpts*, dictionary*, int, char** , Integer16*);
 dictionary* parseConfig (int, void*, dictionary*, RunTimeOpts*);
 Boolean compareConfig(dictionary* source, dictionary* target);
 int checkSubsystemRestart(dictionary* newConfig, dictionary* oldConfig, RunTimeOpts *rtOpts);
 void setConfig(dictionary *dict, const char* key, const char *value);
-void applyConfig(dictionary*, RunTimeOpts*);
+void applyConfig(dictionary*, RunTimeOpts*, PtpClock*);
 Boolean runTimeOptsInit(int, char**, Integer16*, RunTimeOpts*);
 
 void enable_runtime_debug(void );

@@ -163,11 +163,11 @@ PTPText_display(const PTPText *p, const PtpClock *ptpClock)
 
 /**\brief Display the Network Interface Name*/
 void
-iFaceName_display(const Octet * iFaceName)
+iFaceName_display(const char * type, const Octet * iFaceName)
 {
 	int i;
 
-	DBGV("iFaceName : ");
+	DBGV("iFaceName (%s) : ", type);
 
 	for (i = 0; i < IFACE_NAME_LENGTH; i++) {
 		DBGV("%c", iFaceName[i]);
@@ -548,7 +548,8 @@ displayRunTimeOpts(const RunTimeOpts * rtOpts)
 	DBGV("currentUtcOffset : %d \n", rtOpts->timeProperties.currentUtcOffset);
 	DBGV("noAdjust : %d \n", rtOpts->noAdjust);
 	DBGV("logStatistics : %d \n", rtOpts->logStatistics);
-	iFaceName_display(rtOpts->ifaceName);
+	iFaceName_display("primary", rtOpts->primaryIfaceName);
+	iFaceName_display("backup", rtOpts->backupIfaceName);
 	DBGV("kP : %d \n", rtOpts->servoKP);
 	DBGV("kI : %d \n", rtOpts->servoKI);
 	DBGV("s : %d \n", rtOpts->s);

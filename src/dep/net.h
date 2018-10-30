@@ -5,36 +5,39 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#include <sys/param.h>
-#include <sys/socket.h> //Auto included by netinet/in.h
-#include <netinet/in.h>
+#include <sys/param.h> // For ssize_t, size_t, MAXHOSTNAMELEN
+#if !defined(MAXHOSTNAMELEN)
+#  define MAXHOSTNAMELEN 256
+#endif
 
-#if defined(HAVE_NET_IF_ARP_H)
-// Required by OpenBSD for netinet/if_ethers.h
-#  include <net/if_arp.h>
+#if defined(HAVE_NETINET_IN_H)
+#  include <netinet/in.h> // For INET_ADDRSTRLEN, struct in_addr
 #endif
 
 #if defined(HAVE_NET_IF_H)
-#  include <net/if.h>
+#  include <net/if.h> // For IF_NAMESIZE
+#endif
+
+#if defined(HAVE_NET_IF_ARP_H)
+#  include <net/if_arp.h> // Required by OpenBSD for netinet/if_ethers.h
 #endif
 
 #if defined(HAVE_NETINET_IF_ETHER_H)
-// Many BSD systems have this file, but OpenBSD defines ether_Addr here.
-#  include <netinet/if_ether.h>
+#  include <netinet/if_ether.h> // For struct ether_addr (OpenBSD)
 #endif
 
 #if defined(HAVE_NET_ETHERNET_H)
-#  include <net/ethernet.h>
+#  include <net/ethernet.h> // For struct ether_addr (non OpenBSD)
 #endif
+
+#include "ptp_primitives.h"
+#include "ptp_datatypes.h" // For TimeInterval
+#include "dep/ipv4_acl.h" // For struct Ipv4AccessList
+#include "datatypes_stub.h" // For struct RunTimeOpts, struct PtpClock
 
 #if !defined(ETHER_ADDR_LEN) && defined(ETHERADDRL)
 #  define ETHER_ADDR_LEN ETHERADDRL // sun related
-#endif /* ETHER_ADDR_LEN && ETHERADDRL */
-
-#include "ptp_primitives.h"
-#include "ptp_datatypes.h"
-#include "dep/ipv4_acl.h" // Only used for opaque type Ipv4AccessList
-#include "datatypes_stub.h"
+#endif
 
 #define IFACE_NAME_LENGTH         IF_NAMESIZE
 #define NET_ADDRESS_LENGTH        INET_ADDRSTRLEN
@@ -50,9 +53,9 @@ static inline uint8_t* ether_addr_octet(struct ether_addr* addr) {
 typedef struct NetPath NetPath;
 
 Boolean netShutdown(NetPath*);
-Boolean testInterface(char* ifaceName, const RunTimeOpts* rtOpts);
+Boolean testInterface(const char* ifaceName, const RunTimeOpts* rtOpts);
 Boolean hostLookup(const char* hostname, Integer32* addr);
-Boolean netInit(NetPath*,RunTimeOpts*,PtpClock*);
+Boolean netInit(NetPath*,const RunTimeOpts*,PtpClock*);
 void netInitializeACLs(NetPath*, const RunTimeOpts*);
 int netSelect(TimeInternal*,NetPath*,fd_set*);
 ssize_t netRecvEvent(Octet*,TimeInternal*,NetPath*,int,Boolean*);
@@ -88,6 +91,11 @@ Boolean netPathEventSocketIsSet(const NetPath*, fd_set*);
 Boolean netPathGeneralSocketIsSet(const NetPath*, fd_set*);
 
 void netPathFree(NetPath**);
-NetPath* netPathCreate();
+NetPath* netPathCreate(const RunTimeOpts*);
+
+void netPathSetUsePrimaryIf(NetPath* netPath, Boolean use_primary);
+void netPathToggleUsePrimaryIf(NetPath* netPath);
+const char* netPathGetInterfaceName(NetPath* netPath, const RunTimeOpts* rtOpts);
+Boolean netPathGetUsePrimaryIf(const NetPath* netPath);
 
 #endif

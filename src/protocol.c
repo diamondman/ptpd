@@ -244,8 +244,8 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	} else {
 	    toState(PTP_INITIALIZING, rtOpts, ptpClock);
 	}
-	if(rtOpts->statusLog.logEnabled)
-		writeStatusFile(ptpClock, rtOpts, TRUE);
+
+	writeStatusFile(ptpClock, rtOpts, TRUE);
 
 	/* run the status file update every 1 .. 1.2 seconds */
 	timerStart(&ptpClock->timers[STATUSFILE_UPDATE_TIMER],rtOpts->statusFileUpdateInterval * (1.0 + 0.2 * getRand()));
@@ -253,8 +253,7 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	DBG("Debug Initializing...\n");
 
-	if(rtOpts->statusLog.logEnabled)
-		writeStatusFile(ptpClock, rtOpts, TRUE);
+	writeStatusFile(ptpClock, rtOpts, TRUE);
 
 	for (;;)
 	{
@@ -765,13 +764,6 @@ doInit(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	/* initialize networking */
 	netShutdown(ptpClock->netPath);
 
-	if(rtOpts->backupIfaceEnabled &&
-		ptpClock->runningBackupInterface) {
-		rtOpts->ifaceName = rtOpts->backupIfaceName;
-	} else {
-		rtOpts->ifaceName = rtOpts->primaryIfaceName;
-	}
-
 	if (!netInit(ptpClock->netPath, rtOpts, ptpClock)) {
 		ERROR("Failed to initialize network\n");
 		toState(PTP_FAULTY, rtOpts, ptpClock);
@@ -792,8 +784,7 @@ doInit(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	toState(PTP_LISTENING, rtOpts, ptpClock);
 
-	if(rtOpts->statusLog.logEnabled)
-		writeStatusFile(ptpClock, rtOpts, TRUE);
+	writeStatusFile(ptpClock, rtOpts, TRUE);
 
 	return TRUE;
 }
@@ -905,24 +896,24 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 					ptpClock->bestMaster = NULL;
 					/* if flipping between primary and backup interface, a full nework re-init is required */
 					if(rtOpts->backupIfaceEnabled) {
-						ptpClock->runningBackupInterface = !ptpClock->runningBackupInterface;
+						netPathToggleUsePrimaryIf(ptpClock->netPath);
 						toState(PTP_INITIALIZING, rtOpts, ptpClock);
-						NOTICE("Now switching to %s interface\n", ptpClock->runningBackupInterface ?
-							    "backup":"primary");
-					    } else {
-
+						NOTICE("Now switching to %s interface\n",
+						       netPathGetUsePrimaryIf(ptpClock->netPath) ?
+						       "primary":"backup");
+					} else {
 						toState(PTP_LISTENING, rtOpts, ptpClock);
-					    }
-
 					}
+				}
 			} else {
 
 				    /* if flipping between primary and backup interface, a full nework re-init is required */
 				    if(rtOpts->backupIfaceEnabled) {
-					ptpClock->runningBackupInterface = !ptpClock->runningBackupInterface;
+					netPathToggleUsePrimaryIf(ptpClock->netPath);
 					toState(PTP_INITIALIZING, rtOpts, ptpClock);
-					NOTICE("Now switching to %s interface\n", ptpClock->runningBackupInterface ?
-						"backup":"primary");
+					NOTICE("Now switching to %s interface\n",
+					       netPathGetUsePrimaryIf(ptpClock->netPath) ?
+					       "primary":"backup");
 
 				    } else {
 				/*

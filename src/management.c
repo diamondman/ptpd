@@ -63,7 +63,6 @@
 #include "management.h"
 #include "dep/sys.h" // For getTime
 #include "dep/net.h" // Only for netSendGeneral
-#include "dep/startup.h" // Only for applyConfig
 #include "dep/msg.h"
 #include "protocol.h"
 #include "display.h"
@@ -501,7 +500,7 @@ handleManagement(MsgHeader *header,
 
 	if(managementConfig != NULL) {
 	    NOTICE("SET / COMMAND management message received - looking for configuration changes\n");
-	    applyConfig(managementConfig, rtOpts);
+	    applyConfig(managementConfig, rtOpts, ptpClock);
 	    dictionary_del(&managementConfig);
 	}
 

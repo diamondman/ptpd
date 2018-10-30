@@ -477,7 +477,8 @@ static int writeMessage(FILE* destination, uint32_t *lastHash, int priority, con
 		strftime(time_str, MAXTIMESTR, "%F %X", localtime((time_t*)&now.tv_sec));
 		fprintf(destination, "%s.%06d ", time_str, (int)now.tv_usec);
 		fprintf(destination,PTPD_PROGNAME"[%d].%s (%-9s ",
-			(int)getpid(), startupInProgress ? "startup" : rtOpts.ifaceName,
+			(int)getpid(), startupInProgress ? "startup" :
+			netPathGetInterfaceName(G_ptpClock->netPath, &rtOpts),
 			priority == LOG_EMERG   ? "emergency)" :
 			priority == LOG_ALERT   ? "alert)" :
 			priority == LOG_CRIT    ? "critical)" :
@@ -1060,6 +1061,9 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 	char outBuf[2048];
 	char tmpBuf[200];
 
+	if(!rtOpts->statusLog.logEnabled)
+		return;
+
 	int n = getAlarmSummary(NULL, 0, ptpClock->alarms, ALRM_MAX);
 	char alarmBuf[n];
 
@@ -1091,8 +1095,9 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 	fprintf(out, 		STATUSPREFIX"  %s\n","Local time", timeStr);
 	strftime(timeStr, MAXTIMESTR, "%a %b %d %X %Z %Y", gmtime((time_t*)&now.tv_sec));
 	fprintf(out, 		STATUSPREFIX"  %s\n","Kernel time", timeStr);
-	fprintf(out,            STATUSPREFIX"  %s%s\n","Interface", rtOpts->ifaceName,
-		(rtOpts->backupIfaceEnabled && ptpClock->runningBackupInterface) ? " (backup)" : (rtOpts->backupIfaceEnabled)?
+	fprintf(out, 		STATUSPREFIX"  %s%s\n", "Interface", netPathGetInterfaceName(ptpClock->netPath, rtOpts),
+		(rtOpts->backupIfaceEnabled && !netPathGetUsePrimaryIf(ptpClock->netPath)) ?
+		" (backup)" : (rtOpts->backupIfaceEnabled) ?
 		" (primary)" : "");
 	fprintf(out, 		STATUSPREFIX"  %s\n","Preset", dictionary_get(rtOpts->currentConfig, "ptpengine:preset", ""));
 	fprintf(out, 		STATUSPREFIX"  %s%s","Transport", dictionary_get(rtOpts->currentConfig, "ptpengine:transport", ""),
@@ -1799,7 +1804,7 @@ checkFileLockable(const char *fileName, int *lockPid)
  * or clock driver name
  */
 Boolean
-checkOtherLocks(RunTimeOpts* rtOpts)
+checkOtherLocks(RunTimeOpts* rtOpts, PtpClock* ptpClock)
 {
 	char searchPattern[PATH_MAX];
 	char * lockPath = 0;
@@ -1821,7 +1826,7 @@ checkOtherLocks(RunTimeOpts* rtOpts)
 
 	/* Check for other ptpd running on the same interface - same for all modes */
 	snprintf(searchPattern, PATH_MAX, "%s/%s_*_%s.lock",
-		 rtOpts->lockDirectory, PTPD_PROGNAME, rtOpts->ifaceName);
+		 rtOpts->lockDirectory, PTPD_PROGNAME, netPathGetInterfaceName(ptpClock->netPath, rtOpts));
 
 	DBGV("SearchPattern: %s\n",searchPattern);
 	switch(glob(searchPattern, 0, NULL, &matchedFiles)) {
@@ -1845,7 +1850,7 @@ checkOtherLocks(RunTimeOpts* rtOpts)
 		/* Could not check lock status */
 		case -1:
 		    ERROR("Looks like "USER_DESCRIPTION" may be already running on %s: %s found, but could not check lock\n",
-			  rtOpts->ifaceName, lockPath);
+			  netPathGetInterfaceName(ptpClock->netPath, rtOpts), lockPath);
 		    ret = FALSE;
 		    goto end;
 		/* It was possible to acquire lock - file looks abandoned */
@@ -1856,7 +1861,7 @@ checkOtherLocks(RunTimeOpts* rtOpts)
 		/* file is locked */
 		case 0:
 		    ERROR("Looks like "USER_DESCRIPTION" is already running on %s: %s found and is locked by pid %d\n",
-			  rtOpts->ifaceName, lockPath, lockPid);
+			  netPathGetInterfaceName(ptpClock->netPath, rtOpts), lockPath, lockPid);
 		    ret = FALSE;
 		    goto end;
 	    }
@@ -2846,7 +2851,7 @@ do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	}
 #endif /* RUNTIME_DEBUG */
 
-	reloadConfigFile(rtOpts);
+	reloadConfigFile(rtOpts, ptpClock);
 
 	/* tell the service it can perform any HUP-triggered actions */
 	ptpClock->timingService.reloadRequested = TRUE;
@@ -2987,21 +2992,6 @@ sysPrePtpClockInit(RunTimeOpts* rtOpts, Integer16* ret)
 		}
 	}
 
-	/* First lock check, just to be user-friendly to the operator */
-	if(!rtOpts->ignore_daemon_lock) {
-		if(!writeLockFile(rtOpts)){
-			/* check and create Lock */
-			ERROR("Error: file lock failed (use -L or global:ignore_lock to ignore lock file)\n");
-			*ret = 3;
-			return FALSE;
-		}
-		/* check for potential conflicts when automatic lock files are used */
-		if(!checkOtherLocks(rtOpts)) {
-			*ret = 3;
-			return FALSE;
-		}
-	}
-
 #if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined(__QNXNTO__)
 	/* Try binding to a single CPU core if configured to do so */
 	if(rtOpts->cpuNumber > -1) {
@@ -3019,6 +3009,28 @@ sysPrePtpClockInit(RunTimeOpts* rtOpts, Integer16* ret)
 	signal(SIGHUP,  catchSignals);
 	signal(SIGUSR1, catchSignals);
 	signal(SIGUSR2, catchSignals);
+
+	*ret = 0;
+	return TRUE;
+}
+
+Boolean
+sysPostPtpClockInit(RunTimeOpts* rtOpts, PtpClock* ptpClock, Integer16* ret)
+{
+	/* First lock check, just to be user-friendly to the operator */
+	if(!rtOpts->ignore_daemon_lock) {
+		if(!writeLockFile(rtOpts)){
+			/* check and create Lock */
+			ERROR("Error: file lock failed (use -L or global:ignore_lock to ignore lock file)\n");
+			*ret = 3;
+			return FALSE;
+		}
+		/* check for potential conflicts when automatic lock files are used */
+		if(!checkOtherLocks(rtOpts, ptpClock)) {
+			*ret = 3;
+			return FALSE;
+		}
+	}
 
 	*ret = 0;
 	return TRUE;

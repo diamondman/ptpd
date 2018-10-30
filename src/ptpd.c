@@ -95,20 +95,18 @@ TimingDomain timingDomain;
 int
 main(int argc, char **argv)
 {
-	PtpClock *ptpClock;
+	PtpClock *ptpClock = NULL;
 	Integer16 ret;
 	TimingService *ts;
 
 	startupInProgress = TRUE;
 
-	timingDomainSetup(&timingDomain);
-
-	timingDomain.electionLeft = 10;
 
 	/* Initialize run time options with command line arguments */
 	if (!runTimeOptsInit(argc, argv, &ret, &rtOpts) ||
 	    !sysPrePtpClockInit(&rtOpts, &ret) ||
-	    !(ptpClock = ptpClockCreate(&rtOpts, &ret))
+	    !(ptpClock = ptpClockCreate(&rtOpts, &ret)) ||
+	    !sysPostPtpClockInit(&rtOpts, ptpClock,  &ret)
 	    ) {
 		if (ret != 0 && !rtOpts.checkConfigOnly)
 			ERROR(USER_DESCRIPTION" startup failed\n");
@@ -119,16 +117,20 @@ main(int argc, char **argv)
 	restartLogging(&rtOpts);
 
 	NOTICE(USER_DESCRIPTION" started successfully on %s using \"%s\" preset (PID %d)\n",
-			    rtOpts.ifaceName,
-			    (getPtpPreset(rtOpts.selectedPreset, &rtOpts)).presetName,
-			    getpid());
+	       netPathGetInterfaceName(ptpClock->netPath, &rtOpts),
+	       (getPtpPreset(rtOpts.selectedPreset, &rtOpts)).presetName,
+	       getpid());
 
+	timingDomainSetup(&timingDomain);
+	timingDomain.electionLeft = 10;
 	timingDomain.electionDelay = rtOpts.electionDelay;
+	timingDomain.updateInterval = 1;
 
 	/* configure PTP TimeService */
 
 	timingDomain.services[0] = &ptpClock->timingService;
 	timingDomain.serviceCount = 1;
+
 	ts = timingDomain.services[0];
 	strncpy(ts->id, "PTP0", TIMINGSERVICE_MAX_DESC);
 	ts->dataSet.type = TIMINGSERVICE_PTP;
@@ -151,7 +153,6 @@ main(int argc, char **argv)
 #endif
 
 	timingDomain.init(&timingDomain);
-	timingDomain.updateInterval = 1;
 
 #if defined PTPD_SNMP
 	/* Start SNMP subsystem */
