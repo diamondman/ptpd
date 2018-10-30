@@ -1024,9 +1024,9 @@ static int parseUnicastConfig(const RunTimeOpts *rtOpts, int maxCount, UnicastDe
     char* text__;
     int tmp = 0;
 
-    if(strlen(rtOpts->unicastDestinations)==0) return 0;
+    if(strlen(rtOpts->sysopts.unicastDestinations)==0) return 0;
 
-    text_=strdup(rtOpts->unicastDestinations);
+    text_=strdup(rtOpts->sysopts.unicastDestinations);
 
     for(text__=text_;found < maxCount; text__=NULL) {
 
@@ -1050,7 +1050,7 @@ static int parseUnicastConfig(const RunTimeOpts *rtOpts, int maxCount, UnicastDe
 
     found = 0;
 
-    text_=strdup(rtOpts->unicastDomains);
+    text_=strdup(rtOpts->sysopts.unicastDomains);
 
     for(text__=text_;found < total; text__=NULL) {
 
@@ -1070,7 +1070,7 @@ static int parseUnicastConfig(const RunTimeOpts *rtOpts, int maxCount, UnicastDe
 
     found = 0;
 
-    text_=strdup(rtOpts->unicastLocalPreference);
+    text_=strdup(rtOpts->sysopts.unicastLocalPreference);
 
     for(text__=text_;found < total; text__=NULL) {
 
@@ -1194,7 +1194,7 @@ netInit(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 		((struct sockaddr_in*)&(netPath->interfaceInfo.afAddress))->sin_addr));
 
 #ifdef PTPD_PCAP
-	if (rtOpts->pcap == TRUE) {
+	if (rtOpts->sysopts.pcap == TRUE) {
 
 		netPath->txTimestampFailure = TRUE;
 
@@ -1303,7 +1303,7 @@ netInit(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 
 		/* disable UDP checksum validation (Linux) */
 #ifdef SO_NO_CHECK
-		if(rtOpts->disableUdpChecksums) {
+		if(rtOpts->sysopts.disableUdpChecksums) {
 			if (setsockopt(netPath->eventSock, SOL_SOCKET, SO_NO_CHECK , &temp,
 			sizeof(int)) < 0
 			|| setsockopt(netPath->generalSock, SOL_SOCKET, SO_NO_CHECK , &temp,
@@ -1320,7 +1320,7 @@ netInit(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 		 */
 
 		if(rtOpts->ipMode == IPMODE_UNICAST ||
-		   rtOpts->ignore_daemon_lock) {
+		   rtOpts->sysopts.ignore_daemon_lock) {
 			addr.sin_addr = netPath->interfaceAddr;
 		} else {
 			addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -1408,12 +1408,12 @@ netInit(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 #endif
 
 		/* Set socket dscp */
-		if(rtOpts->dscpValue) {
+		if(rtOpts->sysopts.dscpValue) {
 
 			if (setsockopt(netPath->eventSock, IPPROTO_IP, IP_TOS,
-				 &rtOpts->dscpValue, sizeof(int)) < 0
+				 &rtOpts->sysopts.dscpValue, sizeof(int)) < 0
 			    || setsockopt(netPath->generalSock, IPPROTO_IP, IP_TOS,
-				&rtOpts->dscpValue, sizeof(int)) < 0) {
+				&rtOpts->sysopts.dscpValue, sizeof(int)) < 0) {
 				    PERROR("Failed to set socket DSCP bits");
 				    return FALSE;
 				}
@@ -1430,11 +1430,12 @@ netInit(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 		if(rtOpts->delayMechanism==P2P && rtOpts->ipMode==IPMODE_UNICAST) {
 			ptpClock->unicastPeerDestination.transportAddress = 0;
 		    	if(rtOpts->unicastPeerDestinationSet &&
-				rtOpts->delayMechanism==P2P && !hostLookup(rtOpts->unicastPeerDestination,
-				&ptpClock->unicastPeerDestination.transportAddress)) {
+			   rtOpts->delayMechanism==P2P &&
+			   !hostLookup(rtOpts->sysopts.unicastPeerDestination,
+				       &ptpClock->unicastPeerDestination.transportAddress)) {
 
 			    ERROR("Could not parse P2P unicast destination %s:\n",
-				    rtOpts->unicastPeerDestination);
+				    rtOpts->sysopts.unicastPeerDestination);
 			    return FALSE;
 
 			} else if(!rtOpts->unicastPeerDestinationSet) {
@@ -1453,13 +1454,13 @@ netInit(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 				return FALSE;
 
 			/* set socket time-to-live  */
-			if(!netSetMulticastTTL(netPath->eventSock,rtOpts->ttl) ||
-			    !netSetMulticastTTL(netPath->generalSock,rtOpts->ttl))
+			if(!netSetMulticastTTL(netPath->eventSock,rtOpts->sysopts.ttl) ||
+			    !netSetMulticastTTL(netPath->generalSock,rtOpts->sysopts.ttl))
 				return FALSE;
 
 			/* start tracking TTL */
-			netPath->ttlEvent = rtOpts->ttl;
-			netPath->ttlGeneral = rtOpts->ttl;
+			netPath->ttlEvent = rtOpts->sysopts.ttl;
+			netPath->ttlGeneral = rtOpts->sysopts.ttl;
 		}
 
 		/* try enabling the capture of destination address */
@@ -1514,17 +1515,17 @@ netInit(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 void netInitializeACLs(NetPath* netPath, const RunTimeOpts* rtOpts)
 {
 	/* Compile ACLs */
-	if(rtOpts->timingAclEnabled) {
+	if(rtOpts->sysopts.timingAclEnabled) {
 		freeIpv4AccessList(&netPath->timingAcl);
-		netPath->timingAcl=createIpv4AccessList(rtOpts->timingAclPermitText,
-							rtOpts->timingAclDenyText,
-							rtOpts->timingAclOrder);
+		netPath->timingAcl=createIpv4AccessList(rtOpts->sysopts.timingAclPermitText,
+							rtOpts->sysopts.timingAclDenyText,
+							rtOpts->sysopts.timingAclOrder);
 	}
-	if(rtOpts->managementAclEnabled) {
+	if(rtOpts->sysopts.managementAclEnabled) {
 		freeIpv4AccessList(&netPath->managementAcl);
-		netPath->managementAcl=createIpv4AccessList(rtOpts->managementAclPermitText,
-							    rtOpts->managementAclDenyText,
-							    rtOpts->managementAclOrder);
+		netPath->managementAcl=createIpv4AccessList(rtOpts->sysopts.managementAclPermitText,
+							    rtOpts->sysopts.managementAclDenyText,
+							    rtOpts->sysopts.managementAclOrder);
 	}
 }
 
@@ -2093,11 +2094,11 @@ netSendEvent(Octet * buf, UInteger16 length, NetPath * netPath,
 		} else {
 			addr.sin_addr.s_addr = netPath->multicastAddr;
                         /* Is TTL OK? */
-			if(netPath->ttlEvent != rtOpts->ttl) {
+			if(netPath->ttlEvent != rtOpts->sysopts.ttl) {
 				/* Try restoring TTL */
 			/* set socket time-to-live  */
-			if (netSetMulticastTTL(netPath->eventSock,rtOpts->ttl)) {
-				    netPath->ttlEvent = rtOpts->ttl;
+			if (netSetMulticastTTL(netPath->eventSock,rtOpts->sysopts.ttl)) {
+				    netPath->ttlEvent = rtOpts->sysopts.ttl;
 				}
             		}
 			ret = sendto(netPath->eventSock, buf, length, 0,
@@ -2183,10 +2184,10 @@ netSendGeneral(Octet * buf, UInteger16 length, NetPath * netPath,
 			addr.sin_addr.s_addr = netPath->multicastAddr;
 
                         /* Is TTL OK? */
-			if(netPath->ttlGeneral != rtOpts->ttl) {
+			if(netPath->ttlGeneral != rtOpts->sysopts.ttl) {
 				/* Try restoring TTL */
-				if (netSetMulticastTTL(netPath->generalSock,rtOpts->ttl)) {
-				    netPath->ttlGeneral = rtOpts->ttl;
+				if (netSetMulticastTTL(netPath->generalSock,rtOpts->sysopts.ttl)) {
+				    netPath->ttlGeneral = rtOpts->sysopts.ttl;
 				}
             		}
 

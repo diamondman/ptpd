@@ -1041,7 +1041,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	     "To test it, please build with --enable-experimental-options\n");
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "ptpengine:use_libpcap",
-		PTPD_RESTART_NETWORK, &rtOpts->pcap,FALSE,
+		PTPD_RESTART_NETWORK, &rtOpts->sysopts.pcap,FALSE,
 		"Use libpcap for sending and receiving traffic (automatically enabled\n"
 	"	 in Ethernet mode).");
 
@@ -1053,12 +1053,13 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	    "To test it and use the Ethernet transport, please build with --enable-experimental-options\n");
 #elif defined(PTPD_PCAP)
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "ptpengine:use_libpcap",
-		PTPD_RESTART_NETWORK, &rtOpts->pcap, rtOpts->pcap,
+		PTPD_RESTART_NETWORK, &rtOpts->sysopts.pcap, rtOpts->sysopts.pcap,
 		"Use libpcap for sending and receiving traffic (automatically enabled\n"
 	"	 in Ethernet mode).");
 
 	/* in ethernet mode, activate pcap and overwrite previous setting */
-	CONFIG_KEY_CONDITIONAL_TRIGGER(rtOpts->transport==IEEE_802_3, rtOpts->pcap,TRUE, rtOpts->pcap);
+	CONFIG_KEY_CONDITIONAL_TRIGGER(rtOpts->transport==IEEE_802_3,
+				       rtOpts->sysopts.pcap,TRUE, rtOpts->sysopts.pcap);
 #else
 	if(CONFIG_ISTRUE("ptpengine:use_libpcap"))
 	INFO("Libpcap support disabled or not available. Please install libpcap,\n"
@@ -1066,7 +1067,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	     " to use ptpengine:use_libpcap.\n");
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "ptpengine:use_libpcap",
-		PTPD_RESTART_NETWORK, &rtOpts->pcap,FALSE,
+		PTPD_RESTART_NETWORK, &rtOpts->sysopts.pcap,FALSE,
 		"Use libpcap for sending and receiving traffic (automatically enabled\n"
 	"	 in Ethernet mode).");
 
@@ -1081,7 +1082,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 #endif /* PTPD_PCAP */
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "ptpengine:disable_udp_checksums",
-		PTPD_RESTART_NETWORK, &rtOpts->disableUdpChecksums, rtOpts->disableUdpChecksums,
+		PTPD_RESTART_NETWORK, &rtOpts->sysopts.disableUdpChecksums, rtOpts->sysopts.disableUdpChecksums,
 		"Disable UDP checksum validation on UDP sockets (Linux only).\n"
 	"        Workaround for situations where a node (like Transparent Clock).\n"
 	"        does not rewrite checksums\n");
@@ -1439,14 +1440,16 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	CONFIG_KEY_TRIGGER("ptpengine:unicast_destinations", rtOpts->unicastDestinationsSet,TRUE, rtOpts->unicastDestinationsSet);
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "ptpengine:unicast_destinations",
-		PTPD_RESTART_NETWORK, rtOpts->unicastDestinations, sizeof(rtOpts->unicastDestinations), rtOpts->unicastDestinations,
+		PTPD_RESTART_NETWORK, rtOpts->sysopts.unicastDestinations,
+		sizeof(rtOpts->sysopts.unicastDestinations), rtOpts->sysopts.unicastDestinations,
 		"Specify unicast slave addresses for unicast master operation, or unicast\n"
 	"	 master addresses for slave operation. Format is similar to an ACL: comma,\n"
 	"        tab or space-separated IPv4 unicast addresses, one or more. For a slave,\n"
 	"        when unicast negotiation is used, setting this is mandatory.");
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "ptpengine:unicast_domains",
-		PTPD_RESTART_NETWORK, rtOpts->unicastDomains, sizeof(rtOpts->unicastDomains), rtOpts->unicastDomains,
+		PTPD_RESTART_NETWORK, rtOpts->sysopts.unicastDomains,
+		sizeof(rtOpts->sysopts.unicastDomains), rtOpts->sysopts.unicastDomains,
 		"Specify PTP domain number for each configured unicast destination (ptpengine:unicast_destinations).\n"
 	"	 This is only used by slave-only clocks using unicast destinations to allow for each master\n"
 	"        to be in a separate domain, such as with Telecom Profile. The number of entries should match the number\n"
@@ -1454,7 +1457,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	"        ptpengine:domain. The format is a comma, tab or space-separated list of 8-bit unsigned integers (0 .. 255)");
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "ptpengine:unicast_local_preference",
-		PTPD_RESTART_NETWORK, rtOpts->unicastLocalPreference, sizeof(rtOpts->unicastLocalPreference), rtOpts->unicastLocalPreference,
+		PTPD_RESTART_NETWORK, rtOpts->sysopts.unicastLocalPreference, sizeof(rtOpts->sysopts.unicastLocalPreference), rtOpts->sysopts.unicastLocalPreference,
 		"Specify a local preference for each configured unicast destination (ptpengine:unicast_destinations).\n"
 	"	 This is only used by slave-only clocks using unicast destinations to allow for each master's\n"
 	"        BMC selection to be influenced by the slave, such as with Telecom Profile. The number of entries should match the number\n"
@@ -1471,7 +1474,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	CONFIG_KEY_TRIGGER("ptpengine:unicast_peer_destination", rtOpts->unicastPeerDestinationSet,TRUE, rtOpts->unicastPeerDestinationSet);
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "ptpengine:unicast_peer_destination",
-		PTPD_RESTART_NETWORK, rtOpts->unicastPeerDestination, sizeof(rtOpts->unicastPeerDestination), rtOpts->unicastPeerDestination,
+		PTPD_RESTART_NETWORK, rtOpts->sysopts.unicastPeerDestination, sizeof(rtOpts->sysopts.unicastPeerDestination), rtOpts->sysopts.unicastPeerDestination,
 		"Specify peer unicast adress for P2P unicast. Mandatory when\n"
 	"	 running unicast mode and P2P delay mode.");
 
@@ -1495,12 +1498,12 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 		"	 is disabled, this setting has no effect.",RANGECHECK_RANGE,0,255);
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "ptpengine:multicast_ttl",
-		PTPD_RESTART_NETWORK, INTTYPE_INT, &rtOpts->ttl, rtOpts->ttl,
+		PTPD_RESTART_NETWORK, INTTYPE_INT, &rtOpts->sysopts.ttl, rtOpts->sysopts.ttl,
 		"Multicast time to live for multicast PTP packets (ignored and set to 1\n"
 	"	 for peer to peer messages).",RANGECHECK_RANGE,1,64);
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "ptpengine:ip_dscp",
-		PTPD_RESTART_NETWORK, INTTYPE_INT, &rtOpts->dscpValue, rtOpts->dscpValue,
+		PTPD_RESTART_NETWORK, INTTYPE_INT, &rtOpts->sysopts.dscpValue, rtOpts->sysopts.dscpValue,
 		"DiffServ CodepPoint for packet prioritisation (decimal). When set to zero, \n"
 	"	 this option is not used. Use 46 for Expedited Forwarding (0x2e).",RANGECHECK_RANGE,0,63);
 
@@ -1822,17 +1825,17 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 #endif
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "ptpengine:sigusr2_clears_counters",
-		PTPD_RESTART_NONE, &rtOpts->clearCounters, rtOpts->clearCounters,
+		PTPD_RESTART_NONE, &rtOpts->sysopts.clearCounters, rtOpts->sysopts.clearCounters,
 		"Clear counters after dumping all counter values on SIGUSR2.");
 
 	/* Defining the ACLs enables ACL matching */
-	CONFIG_KEY_TRIGGER("ptpengine:timing_acl_permit", rtOpts->timingAclEnabled,TRUE, rtOpts->timingAclEnabled);
-	CONFIG_KEY_TRIGGER("ptpengine:timing_acl_deny", rtOpts->timingAclEnabled,TRUE, rtOpts->timingAclEnabled);
-	CONFIG_KEY_TRIGGER("ptpengine:management_acl_permit", rtOpts->managementAclEnabled,TRUE, rtOpts->managementAclEnabled);
-	CONFIG_KEY_TRIGGER("ptpengine:management_acl_deny", rtOpts->managementAclEnabled,TRUE, rtOpts->managementAclEnabled);
+	CONFIG_KEY_TRIGGER("ptpengine:timing_acl_permit", rtOpts->sysopts.timingAclEnabled,TRUE, rtOpts->sysopts.timingAclEnabled);
+	CONFIG_KEY_TRIGGER("ptpengine:timing_acl_deny", rtOpts->sysopts.timingAclEnabled,TRUE, rtOpts->sysopts.timingAclEnabled);
+	CONFIG_KEY_TRIGGER("ptpengine:management_acl_permit", rtOpts->sysopts.managementAclEnabled,TRUE, rtOpts->sysopts.managementAclEnabled);
+	CONFIG_KEY_TRIGGER("ptpengine:management_acl_deny", rtOpts->sysopts.managementAclEnabled,TRUE, rtOpts->sysopts.managementAclEnabled);
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "ptpengine:timing_acl_permit",
-		PTPD_RESTART_ACLS, rtOpts->timingAclPermitText, sizeof(rtOpts->timingAclPermitText), rtOpts->timingAclPermitText,
+		PTPD_RESTART_ACLS, rtOpts->sysopts.timingAclPermitText, sizeof(rtOpts->sysopts.timingAclPermitText), rtOpts->sysopts.timingAclPermitText,
 		"Permit access control list for timing packets. Format is a series of \n"
         "        comma, space or tab separated  network prefixes: IPv4 addresses or full CIDR notation a.b.c.d/x,\n"
         "        where a.b.c.d is the subnet and x is the decimal mask, or a.b.c.d/v.x.y.z where a.b.c.d is the\n"
@@ -1840,7 +1843,8 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
         "        incoming messages. IP access lists are only supported when using the IP transport.");
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "ptpengine:timing_acl_deny",
-		PTPD_RESTART_ACLS, rtOpts->timingAclDenyText, sizeof(rtOpts->timingAclDenyText), rtOpts->timingAclDenyText,
+		PTPD_RESTART_ACLS, rtOpts->sysopts.timingAclDenyText,
+	        sizeof(rtOpts->sysopts.timingAclDenyText), rtOpts->sysopts.timingAclDenyText,
 		"Deny access control list for timing packets. Format is a series of \n"
         "        comma, space or tab separated  network prefixes: IPv4 addresses or full CIDR notation a.b.c.d/x,\n"
         "        where a.b.c.d is the subnet and x is the decimal mask, or a.b.c.d/v.x.y.z where a.b.c.d is the\n"
@@ -1848,7 +1852,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
         "        incoming messages. IP access lists are only supported when using the IP transport.");
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "ptpengine:management_acl_permit",
-		PTPD_RESTART_ACLS, rtOpts->managementAclPermitText, sizeof(rtOpts->managementAclPermitText), rtOpts->managementAclPermitText,
+		PTPD_RESTART_ACLS, rtOpts->sysopts.managementAclPermitText, sizeof(rtOpts->sysopts.managementAclPermitText), rtOpts->sysopts.managementAclPermitText,
 		"Permit access control list for management messages. Format is a series of \n"
 	"	 comma, space or tab separated  network prefixes: IPv4 addresses or full CIDR notation a.b.c.d/x,\n"
 	"	 where a.b.c.d is the subnet and x is the decimal mask, or a.b.c.d/v.x.y.z where a.b.c.d is the\n"
@@ -1856,7 +1860,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	"        incoming messages. IP access lists are only supported when using the IP transport.");
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "ptpengine:management_acl_deny",
-		PTPD_RESTART_ACLS, rtOpts->managementAclDenyText, sizeof(rtOpts->managementAclDenyText), rtOpts->managementAclDenyText,
+		PTPD_RESTART_ACLS, rtOpts->sysopts.managementAclDenyText, sizeof(rtOpts->sysopts.managementAclDenyText), rtOpts->sysopts.managementAclDenyText,
 		"Deny access control list for management messages. Format is a series of \n"
         "        comma, space or tab separated  network prefixes: IPv4 addresses or full CIDR notation a.b.c.d/x,\n"
         "        where a.b.c.d is the subnet and x is the decimal mask, or a.b.c.d/v.x.y.z where a.b.c.d is the\n"
@@ -1865,7 +1869,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 
 
 	parseResult &= configMapSelectValue(opCode, opArg, dict, target, "ptpengine:timing_acl_order",
-		PTPD_RESTART_ACLS, &rtOpts->timingAclOrder, rtOpts->timingAclOrder,
+		PTPD_RESTART_ACLS, &rtOpts->sysopts.timingAclOrder, rtOpts->sysopts.timingAclOrder,
 		"Order in which permit and deny access lists are evaluated for timing\n"
 	"	 packets, the evaluation process is the same as for Apache httpd.",
 				"permit-deny", 	ACL_PERMIT_DENY,
@@ -1873,7 +1877,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 				);
 
 	parseResult &= configMapSelectValue(opCode, opArg, dict, target, "ptpengine:management_acl_order",
-		PTPD_RESTART_ACLS, &rtOpts->managementAclOrder, rtOpts->managementAclOrder,
+		PTPD_RESTART_ACLS, &rtOpts->sysopts.managementAclOrder, rtOpts->sysopts.managementAclOrder,
 		"Order in which permit and deny access lists are evaluated for management\n"
 	"	 messages, the evaluation process is the same as for Apache httpd.",
 				"permit-deny", 	ACL_PERMIT_DENY,
@@ -1882,8 +1886,8 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 
 
 	/* Ethernet mode disables ACL processing*/
-	CONFIG_KEY_CONDITIONAL_TRIGGER(rtOpts->transport == IEEE_802_3, rtOpts->timingAclEnabled,FALSE, rtOpts->timingAclEnabled);
-	CONFIG_KEY_CONDITIONAL_TRIGGER(rtOpts->transport == IEEE_802_3, rtOpts->managementAclEnabled,FALSE, rtOpts->managementAclEnabled);
+	CONFIG_KEY_CONDITIONAL_TRIGGER(rtOpts->transport == IEEE_802_3, rtOpts->sysopts.timingAclEnabled,FALSE, rtOpts->sysopts.timingAclEnabled);
+	CONFIG_KEY_CONDITIONAL_TRIGGER(rtOpts->transport == IEEE_802_3, rtOpts->sysopts.managementAclEnabled,FALSE, rtOpts->sysopts.managementAclEnabled);
 
 
 
@@ -1918,7 +1922,8 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 #endif /* HAVE_LINUX_RTC_H */
 
 	parseResult &= configMapSelectValue(opCode, opArg, dict, target, "clock:drift_handling",
-		PTPD_RESTART_NONE, &rtOpts->drift_recovery_method, rtOpts->drift_recovery_method,
+					    PTPD_RESTART_NONE, &rtOpts->sysopts.drift_recovery_method,
+					    rtOpts->sysopts.drift_recovery_method,
 		"Observed drift handling method between servo restarts:\n"
 	"	 reset: set to zero (not recommended)\n"
 	"	 preserve: use kernel value,\n"
@@ -1931,7 +1936,8 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 				);
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "clock:drift_file",
-		PTPD_RESTART_NONE, rtOpts->driftFile, sizeof(rtOpts->driftFile), rtOpts->driftFile,
+				       PTPD_RESTART_NONE, rtOpts->sysopts.driftFile,
+				       sizeof(rtOpts->sysopts.driftFile), rtOpts->sysopts.driftFile,
 	"Specify drift file");
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "clock:leap_second_pause_period",
@@ -2123,58 +2129,73 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:use_syslog",
-		PTPD_RESTART_LOGGING, &rtOpts->useSysLog, rtOpts->useSysLog,
+		PTPD_RESTART_LOGGING, &rtOpts->sysopts.useSysLog, rtOpts->sysopts.useSysLog,
 		"Send log messages to syslog. Disabling this\n"
 	"        sends all messages to stdout (or speficied log file).");
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "global:lock_file",
-		PTPD_RESTART_DAEMON, rtOpts->lockFile, sizeof(rtOpts->lockFile), rtOpts->lockFile,
+				       PTPD_RESTART_DAEMON, rtOpts->sysopts.lockFile,
+				       sizeof(rtOpts->sysopts.lockFile), rtOpts->sysopts.lockFile,
 	"Lock file location");
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:auto_lockfile",
-		PTPD_RESTART_DAEMON, &rtOpts->autoLockFile, rtOpts->autoLockFile,
+		PTPD_RESTART_DAEMON, &rtOpts->sysopts.autoLockFile, rtOpts->sysopts.autoLockFile,
 	"	 Use mode specific and interface specific lock file\n"
 	"	 (overrides global:lock_file).");
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "global:lock_directory",
-		PTPD_RESTART_DAEMON, rtOpts->lockDirectory, sizeof(rtOpts->lockDirectory), rtOpts->lockDirectory,
+				       PTPD_RESTART_DAEMON, rtOpts->sysopts.lockDirectory,
+				       sizeof(rtOpts->sysopts.lockDirectory),
+				       rtOpts->sysopts.lockDirectory,
 		 "Lock file directory: used with automatic mode-specific lock files,\n"
 	"	 also used when no lock file is specified. When lock file\n"
 	"	 is specified, it's expected to be an absolute path.");
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:ignore_lock",
-		PTPD_RESTART_DAEMON, &rtOpts->ignore_daemon_lock, rtOpts->ignore_daemon_lock,
+					PTPD_RESTART_DAEMON, &rtOpts->sysopts.ignore_daemon_lock,
+					rtOpts->sysopts.ignore_daemon_lock,
 	"Skip lock file checking and locking.");
 
 	/* if quality file specified, enable quality recording  */
-	CONFIG_KEY_TRIGGER("global:quality_file", rtOpts->recordLog.logEnabled,TRUE,FALSE);
+	CONFIG_KEY_TRIGGER("global:quality_file", rtOpts->sysopts.recordLog.logEnabled,TRUE,FALSE);
 	parseResult &= configMapString(opCode, opArg, dict, target, "global:quality_file",
-		PTPD_RESTART_LOGGING, rtOpts->recordLog.logPath, sizeof(rtOpts->recordLog.logPath), rtOpts->recordLog.logPath,
+				       PTPD_RESTART_LOGGING, rtOpts->sysopts.recordLog.logPath,
+				       sizeof(rtOpts->sysopts.recordLog.logPath),
+				       rtOpts->sysopts.recordLog.logPath,
 		"File used to record data about sync packets. Enables recording when set.");
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:quality_file_max_size",
-		PTPD_RESTART_LOGGING, INTTYPE_U32, &rtOpts->recordLog.maxSize, rtOpts->recordLog.maxSize,
+				    PTPD_RESTART_LOGGING, INTTYPE_U32,
+				    &rtOpts->sysopts.recordLog.maxSize,
+				    rtOpts->sysopts.recordLog.maxSize,
 		"Maximum sync packet record file size (in kB) - file will be truncated\n"
 	"	if size exceeds the limit. 0 - no limit.", RANGECHECK_MIN,0,0);
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:quality_file_max_files",
-		PTPD_RESTART_LOGGING, INTTYPE_INT, &rtOpts->recordLog.maxFiles, rtOpts->recordLog.maxFiles,
+				    PTPD_RESTART_LOGGING, INTTYPE_INT,
+				    &rtOpts->sysopts.recordLog.maxFiles,
+				    rtOpts->sysopts.recordLog.maxFiles,
 		"Enable log rotation of the sync packet record file up to n files.\n"
 	"	 0 - do not rotate.\n", RANGECHECK_RANGE,0, 100);
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:quality_file_truncate",
-		PTPD_RESTART_LOGGING, &rtOpts->recordLog.truncateOnReopen, rtOpts->recordLog.truncateOnReopen,
+					PTPD_RESTART_LOGGING,
+					&rtOpts->sysopts.recordLog.truncateOnReopen,
+					rtOpts->sysopts.recordLog.truncateOnReopen,
 		"Truncate the sync packet record file every time it is (re) opened:\n"
 	"	 startup and SIGHUP.");
 
 	/* if status file specified, enable status logging*/
-	CONFIG_KEY_TRIGGER("global:status_file", rtOpts->statusLog.logEnabled,TRUE,FALSE);
+	CONFIG_KEY_TRIGGER("global:status_file", rtOpts->sysopts.statusLog.logEnabled,TRUE,FALSE);
 	parseResult &= configMapString(opCode, opArg, dict, target, "global:status_file",
-		PTPD_RESTART_LOGGING, rtOpts->statusLog.logPath, sizeof(rtOpts->statusLog.logPath), rtOpts->statusLog.logPath,
+				       PTPD_RESTART_LOGGING, rtOpts->sysopts.statusLog.logPath,
+				       sizeof(rtOpts->sysopts.statusLog.logPath),
+				       rtOpts->sysopts.statusLog.logPath,
 	"File used to log "PTPD_PROGNAME" status information.");
 	/* status file can be disabled even if specified */
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:log_status",
-		PTPD_RESTART_NONE, &rtOpts->statusLog.logEnabled, rtOpts->statusLog.logEnabled,
+					PTPD_RESTART_NONE, &rtOpts->sysopts.statusLog.logEnabled,
+					rtOpts->sysopts.statusLog.logEnabled,
 		"Enable / disable writing status information to file.");
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:status_update_interval",
@@ -2203,27 +2224,35 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
      */
 
 	/* if log file specified, enable file logging - otherwise disable */
-	CONFIG_KEY_TRIGGER("global:log_file", rtOpts->eventLog.logEnabled,TRUE,FALSE);
+	CONFIG_KEY_TRIGGER("global:log_file", rtOpts->sysopts.eventLog.logEnabled,TRUE,FALSE);
 	parseResult &= configMapString(opCode, opArg, dict, target, "global:log_file",
-		PTPD_RESTART_LOGGING, rtOpts->eventLog.logPath, sizeof(rtOpts->eventLog.logPath), rtOpts->eventLog.logPath,
+				       PTPD_RESTART_LOGGING, rtOpts->sysopts.eventLog.logPath,
+				       sizeof(rtOpts->sysopts.eventLog.logPath),
+				       rtOpts->sysopts.eventLog.logPath,
 		"Specify log file path (event log). Setting this enables logging to file.");
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:log_file_max_size",
-		PTPD_RESTART_LOGGING, INTTYPE_U32, &rtOpts->eventLog.maxSize, rtOpts->eventLog.maxSize,
+				    PTPD_RESTART_LOGGING, INTTYPE_U32,
+				    &rtOpts->sysopts.eventLog.maxSize,
+				    rtOpts->sysopts.eventLog.maxSize,
 		"Maximum log file size (in kB) - log file will be truncated if size exceeds\n"
 	"	 the limit. 0 - no limit.", RANGECHECK_MIN,0,0);
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:log_file_max_files",
-		PTPD_RESTART_NONE, INTTYPE_INT, &rtOpts->eventLog.maxFiles, rtOpts->eventLog.maxFiles,
+				    PTPD_RESTART_NONE, INTTYPE_INT,
+				    &rtOpts->sysopts.eventLog.maxFiles,
+				    rtOpts->sysopts.eventLog.maxFiles,
 		"Enable log rotation of the sync packet record file up to n files.\n"
 	"	 0 - do not rotate.\n", RANGECHECK_RANGE,0, 100);
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:log_file_truncate",
-		PTPD_RESTART_LOGGING, &rtOpts->eventLog.truncateOnReopen, rtOpts->eventLog.truncateOnReopen,
+					PTPD_RESTART_LOGGING,
+					&rtOpts->sysopts.eventLog.truncateOnReopen,
+					rtOpts->sysopts.eventLog.truncateOnReopen,
 		"Truncate the log file every time it is (re) opened: startup and SIGHUP.");
 
 	parseResult &= configMapSelectValue(opCode, opArg, dict, target, "global:log_level",
-		PTPD_RESTART_NONE, &rtOpts->logLevel, rtOpts->logLevel,
+		PTPD_RESTART_NONE, &rtOpts->sysopts.logLevel, rtOpts->sysopts.logLevel,
 		"Specify log level (only messages at this priority or higer will be logged).\n"
 	"	 The minimal level is LOG_ERR. LOG_ALL enables debug output if compiled with\n"
 	"	 RUNTIME_DEBUG.",
@@ -2235,29 +2264,29 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 				);
 
 	/* if statistics file specified, enable statistics logging - otherwise disable  - log_statistics also controlled further below*/
-	CONFIG_KEY_TRIGGER("global:statistics_file", rtOpts->statisticsLog.logEnabled,TRUE,FALSE);
+	CONFIG_KEY_TRIGGER("global:statistics_file", rtOpts->sysopts.statisticsLog.logEnabled,TRUE,FALSE);
 	CONFIG_KEY_TRIGGER("global:statistics_file", rtOpts->logStatistics,TRUE,FALSE);
 	parseResult &= configMapString(opCode, opArg, dict, target, "global:statistics_file",
-		PTPD_RESTART_LOGGING, rtOpts->statisticsLog.logPath, sizeof(rtOpts->statisticsLog.logPath), rtOpts->statisticsLog.logPath,
+		PTPD_RESTART_LOGGING, rtOpts->sysopts.statisticsLog.logPath, sizeof(rtOpts->sysopts.statisticsLog.logPath), rtOpts->sysopts.statisticsLog.logPath,
 		"Specify statistics log file path. Setting this enables logging of \n"
 	"	 statistics, but can be overriden with global:log_statistics.");
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:statistics_log_interval",
-		PTPD_RESTART_NONE, INTTYPE_INT, &rtOpts->statisticsLogInterval, rtOpts->statisticsLogInterval,
+		PTPD_RESTART_NONE, INTTYPE_INT, &rtOpts->sysopts.statisticsLogInterval, rtOpts->sysopts.statisticsLogInterval,
 		 "Log timing statistics every n seconds for Sync and Delay messages\n"
 	"	 (0 - log all).",RANGECHECK_MIN,0,0);
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:statistics_file_max_size",
-		PTPD_RESTART_LOGGING, INTTYPE_U32, &rtOpts->statisticsLog.maxSize, rtOpts->statisticsLog.maxSize,
+		PTPD_RESTART_LOGGING, INTTYPE_U32, &rtOpts->sysopts.statisticsLog.maxSize, rtOpts->sysopts.statisticsLog.maxSize,
 		"Maximum statistics log file size (in kB) - log file will be truncated\n"
 	"	 if size exceeds the limit. 0 - no limit.",RANGECHECK_MIN,0,0);
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:statistics_file_max_files",
-		PTPD_RESTART_LOGGING, INTTYPE_INT, &rtOpts->statisticsLog.maxFiles, rtOpts->statisticsLog.maxFiles,
+		PTPD_RESTART_LOGGING, INTTYPE_INT, &rtOpts->sysopts.statisticsLog.maxFiles, rtOpts->sysopts.statisticsLog.maxFiles,
 		"Enable log rotation of the statistics file up to n files. 0 - do not rotate.", RANGECHECK_RANGE,0, 100);
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:statistics_file_truncate",
-		PTPD_RESTART_LOGGING, &rtOpts->statisticsLog.truncateOnReopen, rtOpts->statisticsLog.truncateOnReopen,
+		PTPD_RESTART_LOGGING, &rtOpts->sysopts.statisticsLog.truncateOnReopen, rtOpts->sysopts.statisticsLog.truncateOnReopen,
 		"Truncate the statistics file every time it is (re) opened: startup and SIGHUP.");
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:dump_packets",
@@ -2266,16 +2295,16 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 
 	/* this also checks if the verbose_foreground flag is set correctly */
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:verbose_foreground",
-		PTPD_RESTART_DAEMON, &rtOpts->nonDaemon, rtOpts->nonDaemon,
+		PTPD_RESTART_DAEMON, &rtOpts->sysopts.nonDaemon, rtOpts->sysopts.nonDaemon,
 		"Run in foreground with statistics and all messages logged to stdout.\n"
 	"	 Overrides log file and statistics file settings and disables syslog.\n");
 
 	if(CONFIG_ISTRUE("global:verbose_foreground")) {
-		rtOpts->useSysLog    = FALSE;
+		rtOpts->sysopts.useSysLog    = FALSE;
 		rtOpts->logStatistics = TRUE;
-		rtOpts->statisticsLogInterval = 0;
-		rtOpts->eventLog.logEnabled = FALSE;
-		rtOpts->statisticsLog.logEnabled = FALSE;
+		rtOpts->sysopts.statisticsLogInterval = 0;
+		rtOpts->sysopts.eventLog.logEnabled = FALSE;
+		rtOpts->sysopts.statisticsLog.logEnabled = FALSE;
 	}
 
 	/*
@@ -2285,11 +2314,11 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	 */
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:foreground",
-		PTPD_RESTART_DAEMON, &rtOpts->nonDaemon, rtOpts->nonDaemon,
+		PTPD_RESTART_DAEMON, &rtOpts->sysopts.nonDaemon, rtOpts->sysopts.nonDaemon,
 		"Run in foreground - ignored when global:verbose_foreground is set");
 
 	if(CONFIG_ISTRUE("global:verbose_foreground")) {
-		rtOpts->nonDaemon = TRUE;
+		rtOpts->sysopts.nonDaemon = TRUE;
 	}
 
 	/* If this is processed after verbose_foreground, we can still control logStatistics */
@@ -2298,7 +2327,8 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 		"Log timing statistics for every PTP packet received\n");
 
 	parseResult &= configMapSelectValue(opCode, opArg, dict, target, "global:statistics_timestamp_format",
-		PTPD_RESTART_NONE, &rtOpts->statisticsTimestamp, rtOpts->statisticsTimestamp,
+					    PTPD_RESTART_NONE, &rtOpts->sysopts.statisticsTimestamp,
+					    rtOpts->sysopts.statisticsTimestamp,
 		"Timestamp format used when logging timing statistics\n"
 	"        (when global:log_statistics is enabled):\n"
 	"        datetime - formatttted date and time: YYYY-MM-DD hh:mm:ss.uuuuuu\n"
@@ -2311,11 +2341,12 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 		);
 
 	/* If statistics file is enabled but logStatistics isn't, disable logging to file */
-	CONFIG_KEY_CONDITIONAL_TRIGGER(rtOpts->statisticsLog.logEnabled && !rtOpts->logStatistics,
-					rtOpts->statisticsLog.logEnabled, FALSE, rtOpts->statisticsLog.logEnabled);
+	CONFIG_KEY_CONDITIONAL_TRIGGER(rtOpts->sysopts.statisticsLog.logEnabled && !rtOpts->logStatistics,
+				       rtOpts->sysopts.statisticsLog.logEnabled, FALSE,
+				       rtOpts->sysopts.statisticsLog.logEnabled);
 
 #if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined (__QNXNTO__)
-	parseResult &= configMapInt(opCode, opArg, dict, target, "global:cpuaffinity_cpucore", PTPD_CHANGE_CPUAFFINITY, INTTYPE_INT, &rtOpts->cpuNumber, rtOpts->cpuNumber,
+	parseResult &= configMapInt(opCode, opArg, dict, target, "global:cpuaffinity_cpucore", PTPD_CHANGE_CPUAFFINITY, INTTYPE_INT, &rtOpts->sysopts.cpuNumber, rtOpts->sysopts.cpuNumber,
 		"Bind "PTPD_PROGNAME" process to a selected CPU core number.\n"
 	"        0 = first CPU core, etc. -1 = do not bind to a single core.", RANGECHECK_RANGE,
 	-1,255);
@@ -2400,49 +2431,49 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 /* ==== Any additional logic should go here ===== */
 
 	/* Check timing packet ACLs */
-	if(rtOpts->timingAclEnabled) {
+	if(rtOpts->sysopts.timingAclEnabled) {
 
 		int pResult, dResult;
 
-		if((pResult = maskParser(rtOpts->timingAclPermitText, NULL)) == -1)
+		if((pResult = maskParser(rtOpts->sysopts.timingAclPermitText, NULL)) == -1)
 			ERROR("Error while parsing timing permit access list: \"%s\"\n",
-				rtOpts->timingAclPermitText);
-		if((dResult = maskParser(rtOpts->timingAclDenyText, NULL)) == -1)
+				rtOpts->sysopts.timingAclPermitText);
+		if((dResult = maskParser(rtOpts->sysopts.timingAclDenyText, NULL)) == -1)
 			ERROR("Error while parsing timing deny access list: \"%s\"\n",
-				rtOpts->timingAclDenyText);
+				rtOpts->sysopts.timingAclDenyText);
 
 		/* -1 = ACL format error*/
 		if(pResult == -1 || dResult == -1) {
 			parseResult = FALSE;
-			rtOpts->timingAclEnabled = FALSE;
+			rtOpts->sysopts.timingAclEnabled = FALSE;
 		}
 		/* 0 = no entries - we simply don't match */
 		if(pResult == 0 && dResult == 0) {
-			rtOpts->timingAclEnabled = FALSE;
+			rtOpts->sysopts.timingAclEnabled = FALSE;
 		}
 	}
 
 
 	/* Check management message ACLs */
-	if(rtOpts->managementAclEnabled) {
+	if(rtOpts->sysopts.managementAclEnabled) {
 
 		int pResult, dResult;
 
-		if((pResult = maskParser(rtOpts->managementAclPermitText, NULL)) == -1)
+		if((pResult = maskParser(rtOpts->sysopts.managementAclPermitText, NULL)) == -1)
 			ERROR("Error while parsing management permit access list: \"%s\"\n",
-				rtOpts->managementAclPermitText);
-		if((dResult = maskParser(rtOpts->managementAclDenyText, NULL)) == -1)
+			      rtOpts->sysopts.managementAclPermitText);
+		if((dResult = maskParser(rtOpts->sysopts.managementAclDenyText, NULL)) == -1)
 			ERROR("Error while parsing management deny access list: \"%s\"\n",
-				rtOpts->managementAclDenyText);
+				rtOpts->sysopts.managementAclDenyText);
 
 		/* -1 = ACL format error*/
 		if(pResult == -1 || dResult == -1) {
 			parseResult = FALSE;
-			rtOpts->managementAclEnabled = FALSE;
+			rtOpts->sysopts.managementAclEnabled = FALSE;
 		}
 		/* 0 = no entries - we simply don't match */
 		if(pResult == 0 && dResult == 0) {
-			rtOpts->managementAclEnabled = FALSE;
+			rtOpts->sysopts.managementAclEnabled = FALSE;
 		}
 	}
 
@@ -2450,7 +2481,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	rtOpts->servoMaxPpb *= 1000;
 
 	/* Shift DSCP to accept the 6-bit value */
-	rtOpts->dscpValue = rtOpts->dscpValue << 2;
+	rtOpts->sysopts.dscpValue = rtOpts->sysopts.dscpValue << 2;
 
 	/*
 	 * We're in hybrid mode and we haven't specified the delay request interval:
@@ -2474,23 +2505,23 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	 * if clock class is <128 (master only), use "master" and interface name
 	 * if clock class is >127 (can be slave), use clock driver and interface name
 	 */
-	if(rtOpts->autoLockFile) {
+	if(rtOpts->sysopts.autoLockFile) {
 
-	    memset(rtOpts->lockFile, 0, PATH_MAX);
-	    snprintf(rtOpts->lockFile, PATH_MAX,
+	    memset(rtOpts->sysopts.lockFile, 0, PATH_MAX);
+	    snprintf(rtOpts->sysopts.lockFile, PATH_MAX,
 		    "%s/"PTPD_PROGNAME"_%s_%s.lock",
-		    rtOpts->lockDirectory,
+		    rtOpts->sysopts.lockDirectory,
 		    (rtOpts->clockQuality.clockClass<128 && !rtOpts->slaveOnly) ? "master" : DEFAULT_CLOCKDRIVER,
 		    rtOpts->primaryIfaceName);
-	    DBG("Automatic lock file name is: %s\n", rtOpts->lockFile);
+	    DBG("Automatic lock file name is: %s\n", rtOpts->sysopts.lockFile);
 	/*
 	 * Otherwise use default lock file name, with the specified lock directory
 	 * which will be set do default from constants_dep.h if not configured
 	 */
 	} else {
 		if(!CONFIG_ISSET("global:lock_file"))
-			snprintf(rtOpts->lockFile, PATH_MAX,
-				"%s/%s", rtOpts->lockDirectory, DEFAULT_LOCKFILE_NAME);
+			snprintf(rtOpts->sysopts.lockFile, PATH_MAX,
+				"%s/%s", rtOpts->sysopts.lockDirectory, DEFAULT_LOCKFILE_NAME);
 	}
 
 /* ==== END additional logic */
@@ -2905,12 +2936,12 @@ short_help:
 			return FALSE;
 		/* run in foreground */
 		case 'C':
-			rtOpts->nonDaemon=1;
+			rtOpts->sysopts.nonDaemon=1;
 			dictionary_set(dict,"global:foreground", "Y");
 			break;
 		/* verbose mode */
 		case 'V':
-			rtOpts->nonDaemon=1;
+			rtOpts->sysopts.nonDaemon=1;
 			dictionary_set(dict,"global:foreground", "Y");
 			dictionary_set(dict,"global:verbose_foreground", "Y");
 			break;
@@ -3286,7 +3317,7 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock* ptpClock)
 
 	/* If we're told to re-check lock files, do it: tmpOpts already has what rtOpts should */
 	if( (rtOpts->restartSubsystems & PTPD_CHECK_LOCKS) &&
-	    tmpOpts.autoLockFile && !checkOtherLocks(&tmpOpts, ptpClock)) {
+	    tmpOpts.sysopts.autoLockFile && !checkOtherLocks(&tmpOpts, ptpClock)) {
 		reloadSuccessful = FALSE;
 	}
 
@@ -3307,18 +3338,19 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock* ptpClock)
 	if(rtOpts->restartSubsystems & PTPD_CHANGE_CPUAFFINITY) {
 		NOTIFY("Applying CPU binding configuration: changing selected CPU core\n");
 
-		if(setCpuAffinity(tmpOpts.cpuNumber) < 0) {
-			if(tmpOpts.cpuNumber == -1) {
-				ERROR("Could not unbind from CPU core %d\n", rtOpts->cpuNumber);
+		if(setCpuAffinity(tmpOpts.sysopts.cpuNumber) < 0) {
+			if(tmpOpts.sysopts.cpuNumber == -1) {
+				ERROR("Could not unbind from CPU core %d\n",
+				      rtOpts->sysopts.cpuNumber);
 			} else {
-				ERROR("Could bind to CPU core %d\n", tmpOpts.cpuNumber);
+				ERROR("Could bind to CPU core %d\n", tmpOpts.sysopts.cpuNumber);
 			}
 			reloadSuccessful = FALSE;
 		} else {
-			if(tmpOpts.cpuNumber > -1)
-				INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", tmpOpts.cpuNumber);
+			if(tmpOpts.sysopts.cpuNumber > -1)
+				INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", tmpOpts.sysopts.cpuNumber);
 			else
-				INFO("Successfully unbound "PTPD_PROGNAME" from cpu core CPU core %d\n", rtOpts->cpuNumber);
+				INFO("Successfully unbound "PTPD_PROGNAME" from cpu core CPU core %d\n", rtOpts->sysopts.cpuNumber);
 		}
 	}
 #endif
@@ -3427,7 +3459,7 @@ Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOp
 
 	/* we've been told to print the lock file and exit cleanly */
 	if(rtOpts->printLockFile) {
-		printf("%s\n", rtOpts->lockFile);
+		printf("%s\n", rtOpts->sysopts.lockFile);
 		*ret = 0;
 		goto fail;
 	}
@@ -3467,8 +3499,8 @@ Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOp
 
 	/*  DAEMON */
 #ifdef PTPD_NO_DAEMON
-	if(!rtOpts->nonDaemon){
-		rtOpts->nonDaemon=TRUE;
+	if(!rtOpts->sysopts.nonDaemon){
+		rtOpts->sysopts.nonDaemon=TRUE;
 	}
 #endif
 

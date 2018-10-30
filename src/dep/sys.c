@@ -443,7 +443,7 @@ static int writeMessage(FILE* destination, uint32_t *lastHash, int priority, con
 
 	/* If we're starting up as daemon, only print <= WARN */
 	if ((destination == stderr) &&
-		!rtOpts.nonDaemon && startupInProgress &&
+		!rtOpts.sysopts.nonDaemon && startupInProgress &&
 		(priority > LOG_WARNING)){
 		    return 1;
 		}
@@ -466,7 +466,7 @@ static int writeMessage(FILE* destination, uint32_t *lastHash, int priority, con
 #endif /* RUNTIME_DEBUG */
 
 	/* Print timestamps and prefixes only if we're running in foreground or logging to file*/
-	if( rtOpts.nonDaemon || destination != stderr) {
+	if( rtOpts.sysopts.nonDaemon || destination != stderr) {
 
 		/*
 		 * select debug tagged with timestamps. This will slow down PTP itself if you send a lot of messages!
@@ -538,17 +538,18 @@ logMessage(int priority, const char * format, ...)
 #endif
 
 	/* log level filter */
-	if(priority > rtOpts.logLevel) {
+	if(priority > rtOpts.sysopts.logLevel) {
 	    goto end;
 	}
 	/* If we're using a log file and the message has been written OK, we're done*/
-	if(rtOpts.eventLog.logEnabled && rtOpts.eventLog.logFP != NULL) {
-	    if(writeMessage(rtOpts.eventLog.logFP, &rtOpts.eventLog.lastHash, priority, format, ap) > 0) {
-		maintainLogSize(&rtOpts.eventLog);
+	if(rtOpts.sysopts.eventLog.logEnabled && rtOpts.sysopts.eventLog.logFP != NULL) {
+	    if(writeMessage(rtOpts.sysopts.eventLog.logFP, &rtOpts.sysopts.eventLog.lastHash,
+			    priority, format, ap) > 0) {
+		maintainLogSize(&rtOpts.sysopts.eventLog);
 		if(!startupInProgress)
 		    goto end;
 		else {
-		    rtOpts.eventLog.lastHash = 0;
+		    rtOpts.sysopts.eventLog.lastHash = 0;
 		    goto std_err;
 		    }
 	    }
@@ -559,8 +560,8 @@ logMessage(int priority, const char * format, ...)
 	 * If we're running in background and we're starting up, also log first
 	 * messages to syslog to at least leave a trace.
 	 */
-	if (rtOpts.useSysLog ||
-	    (!rtOpts.nonDaemon && startupInProgress)) {
+	if (rtOpts.sysopts.useSysLog ||
+	    (!rtOpts.sysopts.nonDaemon && startupInProgress)) {
 		static Boolean syslogOpened;
 #ifdef RUNTIME_DEBUG
 		/*
@@ -581,14 +582,14 @@ logMessage(int priority, const char * format, ...)
 			goto end;
 		}
 		else {
-			rtOpts.eventLog.lastHash = 0;
+			rtOpts.sysopts.eventLog.lastHash = 0;
 			goto std_err;
 		}
 	}
 std_err:
 
 	/* Either all else failed or we're running in foreground - or we also log to stderr */
-	writeMessage(stderr, &rtOpts.eventLog.lastHash, priority, format, ap1);
+	writeMessage(stderr, &rtOpts.sysopts.eventLog.lastHash, priority, format, ap1);
 
 end:
 	va_end(ap1);
@@ -721,33 +722,33 @@ maintainLogSize(LogFileHandler* handler)
 void
 restartLogging(RunTimeOpts* rtOpts)
 {
-	if(!restartLog(&rtOpts->statisticsLog, TRUE))
-		NOTIFY("Failed logging to %s file\n", rtOpts->statisticsLog.logID);
+	if(!restartLog(&rtOpts->sysopts.statisticsLog, TRUE))
+		NOTIFY("Failed logging to %s file\n", rtOpts->sysopts.statisticsLog.logID);
 
-	if(!restartLog(&rtOpts->recordLog, TRUE))
-		NOTIFY("Failed logging to %s file\n", rtOpts->recordLog.logID);
+	if(!restartLog(&rtOpts->sysopts.recordLog, TRUE))
+		NOTIFY("Failed logging to %s file\n", rtOpts->sysopts.recordLog.logID);
 
-	if(!restartLog(&rtOpts->eventLog, TRUE))
-		NOTIFY("Failed logging to %s file\n", rtOpts->eventLog.logID);
+	if(!restartLog(&rtOpts->sysopts.eventLog, TRUE))
+		NOTIFY("Failed logging to %s file\n", rtOpts->sysopts.eventLog.logID);
 
-	if(!restartLog(&rtOpts->statusLog, TRUE))
-		NOTIFY("Failed logging to %s file\n", rtOpts->statusLog.logID);
+	if(!restartLog(&rtOpts->sysopts.statusLog, TRUE))
+		NOTIFY("Failed logging to %s file\n", rtOpts->sysopts.statusLog.logID);
 }
 
 void
 stopLogging(RunTimeOpts* rtOpts)
 {
-	rtOpts->statisticsLog.logEnabled = FALSE;
-	closeLog(&rtOpts->statisticsLog);
+	rtOpts->sysopts.statisticsLog.logEnabled = FALSE;
+	closeLog(&rtOpts->sysopts.statisticsLog);
 
-	rtOpts->recordLog.logEnabled = FALSE;
-	closeLog(&rtOpts->recordLog);
+	rtOpts->sysopts.recordLog.logEnabled = FALSE;
+	closeLog(&rtOpts->sysopts.recordLog);
 
-	rtOpts->eventLog.logEnabled = FALSE;
-	closeLog(&rtOpts->eventLog);
+	rtOpts->sysopts.eventLog.logEnabled = FALSE;
+	closeLog(&rtOpts->sysopts.eventLog);
 
-	rtOpts->statusLog.logEnabled = FALSE;
-	closeLog(&rtOpts->statusLog);
+	rtOpts->sysopts.statusLog.logEnabled = FALSE;
+	closeLog(&rtOpts->sysopts.statusLog);
 }
 
 void
@@ -767,8 +768,9 @@ logStatistics(PtpClock * ptpClock)
 		return;
 	}
 
-	if(rtOpts.statisticsLog.logEnabled && rtOpts.statisticsLog.logFP != NULL)
-	    destination = rtOpts.statisticsLog.logFP;
+	if(rtOpts.sysopts.statisticsLog.logEnabled &&
+	   rtOpts.sysopts.statisticsLog.logFP != NULL)
+	    destination = rtOpts.sysopts.statisticsLog.logFP;
 	else
 	    destination = stdout;
 
@@ -780,7 +782,7 @@ logStatistics(PtpClock * ptpClock)
 #ifdef PTPD_STATISTICS
 			", One Way Delay Mean, One Way Delay Std Dev, Offset From Master Mean, Offset From Master Std Dev, Observed Drift Mean, Observed Drift Std Dev, raw delayMS, raw delaySM"
 #endif
-			"\n", (rtOpts.statisticsTimestamp == TIMESTAMP_BOTH) ? "Timestamp, Unix timestamp" : "Timestamp");
+			"\n", (rtOpts.sysopts.statisticsTimestamp == TIMESTAMP_BOTH) ? "Timestamp, Unix timestamp" : "Timestamp");
 	}
 
 	memset(sbuf, 0, sizeof(sbuf));
@@ -791,11 +793,11 @@ logStatistics(PtpClock * ptpClock)
 	 * print one log entry per X seconds for Sync and DelayResp messages, to reduce disk usage.
 	 */
 
-	if ((ptpClock->portDS.portState == PTP_SLAVE) && (rtOpts.statisticsLogInterval)) {
+	if ((ptpClock->portDS.portState == PTP_SLAVE) && (rtOpts.sysopts.statisticsLogInterval)) {
 
 		switch(ptpClock->char_last_msg) {
 			case 'S':
-			if((now.seconds - prev_now_sync.seconds) < rtOpts.statisticsLogInterval){
+			if((now.seconds - prev_now_sync.seconds) < rtOpts.sysopts.statisticsLogInterval){
 				DBGV("Suppressed Sync statistics log entry - statisticsLogInterval configured\n");
 				return;
 			}
@@ -803,7 +805,7 @@ logStatistics(PtpClock * ptpClock)
 			    break;
 			case 'D':
 			case 'P':
-			if((now.seconds - prev_now_delay.seconds) < rtOpts.statisticsLogInterval){
+			if((now.seconds - prev_now_delay.seconds) < rtOpts.sysopts.statisticsLogInterval){
 				DBGV("Suppressed Sync statistics log entry - statisticsLogInterval configured\n");
 				return;
 			}
@@ -816,8 +818,8 @@ logStatistics(PtpClock * ptpClock)
 	time_s = now.seconds;
 
 	/* output date-time timestamp if configured */
-	if (rtOpts.statisticsTimestamp == TIMESTAMP_DATETIME ||
-	    rtOpts.statisticsTimestamp == TIMESTAMP_BOTH) {
+	if (rtOpts.sysopts.statisticsTimestamp == TIMESTAMP_DATETIME ||
+	    rtOpts.sysopts.statisticsTimestamp == TIMESTAMP_BOTH) {
 	    strftime(time_str, MAXTIMESTR, "%Y-%m-%d %X", localtime(&time_s));
 	    len += snprintf(sbuf + len, sizeof(sbuf) - len, "%s.%06d, %s, ",
 		       time_str, (int)now.nanoseconds/1000, /* Timestamp */
@@ -825,8 +827,8 @@ logStatistics(PtpClock * ptpClock)
 	}
 
 	/* output unix timestamp s.ns if configured */
-	if (rtOpts.statisticsTimestamp == TIMESTAMP_UNIX ||
-	    rtOpts.statisticsTimestamp == TIMESTAMP_BOTH) {
+	if (rtOpts.sysopts.statisticsTimestamp == TIMESTAMP_UNIX ||
+	    rtOpts.sysopts.statisticsTimestamp == TIMESTAMP_BOTH) {
 	    len += snprintf(sbuf + len, sizeof(sbuf) - len, "%d.%06d, %s,",
 		       now.seconds, now.nanoseconds, /* Timestamp */
 		       translatePortState(ptpClock)); /* State */
@@ -927,7 +929,7 @@ logStatistics(PtpClock * ptpClock)
 	len += snprintf(sbuf + len, sizeof(sbuf) - len, "\n");
 
 #if 0   /* NOTE: Do we want this? */
-	if (rtOpts.nonDaemon) {
+	if (rtOpts.sysopts.nonDaemon) {
 		/* in -C mode, adding an extra \n makes stats more clear intermixed with debug comments */
 		len += snprintf(sbuf + len, sizeof(sbuf) - len, "\n");
 	}
@@ -943,8 +945,8 @@ logStatistics(PtpClock * ptpClock)
 	    }
 	}
 
-	if(destination == rtOpts.statisticsLog.logFP) {
-		if (maintainLogSize(&rtOpts.statisticsLog))
+	if(destination == rtOpts.sysopts.statisticsLog.logFP) {
+		if (maintainLogSize(&rtOpts.sysopts.statisticsLog))
 			ptpClock->resetStatisticsLog = TRUE;
 	}
 }
@@ -1061,7 +1063,7 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 	char outBuf[2048];
 	char tmpBuf[200];
 
-	if(!rtOpts->statusLog.logEnabled)
+	if(!rtOpts->sysopts.statusLog.logEnabled)
 		return;
 
 	int n = getAlarmSummary(NULL, 0, ptpClock->alarms, ALRM_MAX);
@@ -1069,7 +1071,7 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 
 	getAlarmSummary(alarmBuf, n, ptpClock->alarms, ALRM_MAX);
 
-	if(rtOpts->statusLog.logFP == NULL)
+	if(rtOpts->sysopts.statusLog.logFP == NULL)
 		return;
 
 	char timeStr[MAXTIMESTR];
@@ -1082,7 +1084,7 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 	gettimeofday(&now, 0);
 	strftime(timeStr, MAXTIMESTR, "%a %b %d %X %Z %Y", localtime((time_t*)&now.tv_sec));
 
-	FILE* out = rtOpts->statusLog.logFP;
+	FILE* out = rtOpts->sysopts.statusLog.logFP;
 	memset(outBuf, 0, sizeof(outBuf));
 
 	setbuf(out, outBuf);
@@ -1101,7 +1103,7 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 		" (primary)" : "");
 	fprintf(out, 		STATUSPREFIX"  %s\n","Preset", dictionary_get(rtOpts->currentConfig, "ptpengine:preset", ""));
 	fprintf(out, 		STATUSPREFIX"  %s%s","Transport", dictionary_get(rtOpts->currentConfig, "ptpengine:transport", ""),
-		(rtOpts->transport==UDP_IPV4 && rtOpts->pcap == TRUE)?" + libpcap":"");
+		(rtOpts->transport==UDP_IPV4 && rtOpts->sysopts.pcap == TRUE)?" + libpcap":"");
 
 	if(rtOpts->transport != IEEE_802_3) {
 	    fprintf(out,", %s", dictionary_get(rtOpts->currentConfig, "ptpengine:ip_mode", ""));
@@ -1467,11 +1469,11 @@ void
 recordSync(UInteger16 sequenceId, TimeInternal * time)
 {
 	extern RunTimeOpts rtOpts;
-	if (rtOpts.recordLog.logEnabled && rtOpts.recordLog.logFP != NULL) {
-		fprintf(rtOpts.recordLog.logFP, "%d %llu\n", sequenceId,
+	if (rtOpts.sysopts.recordLog.logEnabled && rtOpts.sysopts.recordLog.logFP != NULL) {
+		fprintf(rtOpts.sysopts.recordLog.logFP, "%d %llu\n", sequenceId,
 		  ((time->seconds * 1000000000ULL) + time->nanoseconds)
 		);
-		maintainLogSize(&rtOpts.recordLog);
+		maintainLogSize(&rtOpts.sysopts.recordLog);
 	}
 }
 
@@ -1814,8 +1816,8 @@ checkOtherLocks(RunTimeOpts* rtOpts, PtpClock* ptpClock)
 	int matches = 0, counter = 0;
 
 	/* no need to check locks */
-	if(rtOpts->ignore_daemon_lock ||
-	   !rtOpts->autoLockFile)
+	if(rtOpts->sysopts.ignore_daemon_lock ||
+	   !rtOpts->sysopts.autoLockFile)
 		return TRUE;
 
 	/*
@@ -1826,14 +1828,15 @@ checkOtherLocks(RunTimeOpts* rtOpts, PtpClock* ptpClock)
 
 	/* Check for other ptpd running on the same interface - same for all modes */
 	snprintf(searchPattern, PATH_MAX, "%s/%s_*_%s.lock",
-		 rtOpts->lockDirectory, PTPD_PROGNAME, netPathGetInterfaceName(ptpClock->netPath, rtOpts));
+		 rtOpts->sysopts.lockDirectory, PTPD_PROGNAME,
+		 netPathGetInterfaceName(ptpClock->netPath, rtOpts));
 
 	DBGV("SearchPattern: %s\n",searchPattern);
 	switch(glob(searchPattern, 0, NULL, &matchedFiles)) {
 
 	    case GLOB_NOSPACE:
 	    case GLOB_ABORTED:
-		    PERROR("Could not scan %s directory\n", rtOpts->lockDirectory);;
+		    PERROR("Could not scan %s directory\n", rtOpts->sysopts.lockDirectory);;
 		    ret = FALSE;
 		    goto end;
 	    default:
@@ -1873,14 +1876,14 @@ checkOtherLocks(RunTimeOpts* rtOpts, PtpClock* ptpClock)
 	/* Any mode that can control the clock - also check the clock driver */
 	if(rtOpts->clockQuality.clockClass > 127 ) {
 		snprintf(searchPattern, PATH_MAX,"%s/%s_%s_*.lock",
-			 rtOpts->lockDirectory,PTPD_PROGNAME,DEFAULT_CLOCKDRIVER);
+			 rtOpts->sysopts.lockDirectory, PTPD_PROGNAME, DEFAULT_CLOCKDRIVER);
 		DBGV("SearchPattern: %s\n",searchPattern);
 
 		switch(glob(searchPattern, 0, NULL, &matchedFiles)) {
 
 		case GLOB_NOSPACE:
 		case GLOB_ABORTED:
-			PERROR("Could not scan %s directory\n", rtOpts->lockDirectory);;
+			PERROR("Could not scan %s directory\n", rtOpts->sysopts.lockDirectory);;
 			ret = FALSE;
 			goto end;
 		default:
@@ -1928,33 +1931,33 @@ writeLockFile(RunTimeOpts* rtOpts)
 {
 	int lockPid = 0;
 
-	DBGV("Checking lock file: %s\n", rtOpts->lockFile);
+	DBGV("Checking lock file: %s\n", rtOpts->sysopts.lockFile);
 
-	if ( (G_lockFilePointer=fopen(rtOpts->lockFile, "w+")) == NULL) {
-		PERROR("Could not open lock file %s for writing", rtOpts->lockFile);
+	if ( (G_lockFilePointer=fopen(rtOpts->sysopts.lockFile, "w+")) == NULL) {
+		PERROR("Could not open lock file %s for writing", rtOpts->sysopts.lockFile);
 		return(0);
 	}
 	if (lockFile(fileno(G_lockFilePointer)) < 0) {
 		if ( checkLockStatus(fileno(G_lockFilePointer),
 				     DEFAULT_LOCKMODE, &lockPid) == 0) {
 			ERROR("Another "PTPD_PROGNAME" instance is running: %s locked by PID %d\n",
-			      rtOpts->lockFile, lockPid);
+			      rtOpts->sysopts.lockFile, lockPid);
 		} else {
-			PERROR("Could not acquire lock on %s:", rtOpts->lockFile);
+			PERROR("Could not acquire lock on %s:", rtOpts->sysopts.lockFile);
 		}
 		goto failure;
 	}
 	if(ftruncate(fileno(G_lockFilePointer), 0) == -1) {
 		PERROR("Could not truncate %s: %s",
-			rtOpts->lockFile, strerror(errno));
+			rtOpts->sysopts.lockFile, strerror(errno));
 		goto failure;
 	}
 	if ( fprintf(G_lockFilePointer, "%ld\n", (long)getpid()) == -1) {
 		PERROR("Could not write to lock file %s: %s",
-			rtOpts->lockFile, strerror(errno));
+			rtOpts->sysopts.lockFile, strerror(errno));
 		goto failure;
 	}
-	INFO("Successfully acquired lock on %s\n", rtOpts->lockFile);
+	INFO("Successfully acquired lock on %s\n", rtOpts->sysopts.lockFile);
 	fflush(G_lockFilePointer);
 	return(1);
 	failure:
@@ -1965,11 +1968,11 @@ writeLockFile(RunTimeOpts* rtOpts)
 void clearLockFile(RunTimeOpts* rtOpts)
 {
 	/* properly clean lockfile (eventough new deaemons can acquire the lock after we die) */
-	if(!rtOpts->ignore_daemon_lock && G_lockFilePointer != NULL) {
+	if(!rtOpts->sysopts.ignore_daemon_lock && G_lockFilePointer != NULL) {
 		fclose(G_lockFilePointer);
 		G_lockFilePointer = NULL;
 	}
-	unlink(rtOpts->lockFile);
+	unlink(rtOpts->sysopts.lockFile);
 }
 
 
@@ -2295,7 +2298,7 @@ restoreDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet)
 
 	DBGV("restoreDrift called\n");
 
-	if (ptpClock->drift_saved && rtOpts->drift_recovery_method > 0 ) {
+	if (ptpClock->drift_saved && rtOpts->sysopts.drift_recovery_method > 0 ) {
 		ptpClock->servo.observedDrift = ptpClock->last_saved_drift;
 		if (!rtOpts->noAdjust && ptpClock->clockControl.granted) {
 			adjFreq_wrapper(rtOpts, ptpClock, -ptpClock->last_saved_drift);
@@ -2304,16 +2307,16 @@ restoreDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet)
 		return;
 	}
 
-	switch (rtOpts->drift_recovery_method) {
+	switch (rtOpts->sysopts.drift_recovery_method) {
 
 		case DRIFT_FILE:
 
-			if( (driftFP = fopen(rtOpts->driftFile,"r")) == NULL) {
+			if( (driftFP = fopen(rtOpts->sysopts.driftFile,"r")) == NULL) {
 			    if(errno!=ENOENT) {
 				    PERROR("Could not open drift file: %s - using current kernel frequency offset. Ignore this error if ",
-				    rtOpts->driftFile);
+				    rtOpts->sysopts.driftFile);
 			    } else {
-				    NOTICE("Drift file %s not found - will be initialised on write\n",rtOpts->driftFile);
+				    NOTICE("Drift file %s not found - will be initialised on write\n",rtOpts->sysopts.driftFile);
 			    }
 			} else if (fscanf(driftFP, "%lf", &recovered_drift) != 1) {
 				PERROR("Could not load saved offset from drift file - using current kernel frequency offset");
@@ -2326,11 +2329,11 @@ restoreDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet)
 			fclose(driftFP);
 			if(quiet)
 				DBGV("Observed drift loaded from %s: "DRIFTFORMAT" ppb\n",
-					rtOpts->driftFile,
+					rtOpts->sysopts.driftFile,
 					recovered_drift);
 			else
 				INFO("Observed drift loaded from %s: "DRIFTFORMAT" ppb\n",
-					rtOpts->driftFile,
+					rtOpts->sysopts.driftFile,
 					recovered_drift);
 				break;
 			}
@@ -2396,12 +2399,12 @@ saveDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet)
             ptpClock->portDS.portState == PTP_LISTENING )
                 return;
 
-	if (rtOpts->drift_recovery_method > 0) {
+	if (rtOpts->sysopts.drift_recovery_method > 0) {
 		ptpClock->last_saved_drift = ptpClock->servo.observedDrift;
 		ptpClock->drift_saved = TRUE;
 	}
 
-	if (rtOpts->drift_recovery_method != DRIFT_FILE)
+	if (rtOpts->sysopts.drift_recovery_method != DRIFT_FILE)
 		return;
 
 	if(ptpClock->servo.runningMaxOutput) {
@@ -2409,8 +2412,8 @@ saveDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet)
 	    return;
 	}
 
-	if( (driftFP = fopen(rtOpts->driftFile,"w")) == NULL) {
-		PERROR("Could not open drift file %s for writing", rtOpts->driftFile);
+	if( (driftFP = fopen(rtOpts->sysopts.driftFile,"w")) == NULL) {
+		PERROR("Could not open drift file %s for writing", rtOpts->sysopts.driftFile);
 		return;
 	}
 
@@ -2419,10 +2422,10 @@ saveDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet)
 
 	if (quiet) {
 		DBGV("Wrote observed drift ("DRIFTFORMAT" ppb) to %s\n",
-		    ptpClock->servo.observedDrift, rtOpts->driftFile);
+		    ptpClock->servo.observedDrift, rtOpts->sysopts.driftFile);
 	} else {
 		INFO("Wrote observed drift ("DRIFTFORMAT" ppb) to %s\n",
-		    ptpClock->servo.observedDrift, rtOpts->driftFile);
+		    ptpClock->servo.observedDrift, rtOpts->sysopts.driftFile);
 	}
 	fclose(driftFP);
 }
@@ -2856,14 +2859,14 @@ do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	/* tell the service it can perform any HUP-triggered actions */
 	ptpClock->timingService.reloadRequested = TRUE;
 
-	if(rtOpts->recordLog.logEnabled ||
-	   rtOpts->eventLog.logEnabled ||
-	   rtOpts->statisticsLog.logEnabled)
+	if(rtOpts->sysopts.recordLog.logEnabled ||
+	   rtOpts->sysopts.eventLog.logEnabled ||
+	   rtOpts->sysopts.statisticsLog.logEnabled)
 		INFO("Reopening log files\n");
 
 	restartLogging(rtOpts);
 
-	if(rtOpts->statisticsLog.logEnabled)
+	if(rtOpts->sysopts.statisticsLog.logEnabled)
 		ptpClock->resetStatisticsLog = TRUE;
 }
 
@@ -2912,17 +2915,17 @@ checkSignals(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 #endif
 		displayCounters(ptpClock);
 		displayAlarms(ptpClock->alarms, ALRM_MAX);
-		if(rtOpts->timingAclEnabled) {
+		if(netPathGetTimingACL(ptpClock->netPath)) {
 			INFO("\n\n");
 			INFO("** Timing message ACL:\n");
 			dumpIpv4AccessList(netPathGetTimingACL(ptpClock->netPath));
 		}
-		if(rtOpts->managementAclEnabled) {
+		if(netPathGetManagementACL(ptpClock->netPath)) {
 			INFO("\n\n");
 			INFO("** Management message ACL:\n");
 			dumpIpv4AccessList(netPathGetManagementACL(ptpClock->netPath));
 		}
-		if(rtOpts->clearCounters) {
+		if(rtOpts->sysopts.clearCounters) {
 			clearCounters(ptpClock);
 			NOTIFY("PTP engine counters cleared\n");
 		}
@@ -2967,7 +2970,7 @@ sysPrePtpClockInit(RunTimeOpts* rtOpts, Integer16* ret)
 	}
 
 	/* DAEMON */
-	if(!rtOpts->nonDaemon){
+	if(!rtOpts->sysopts.nonDaemon){
 		/*
 		 * fork to daemon - nochdir non-zero to preserve the working directory:
 		 * allows relative paths to be used for log files, config files etc.
@@ -2994,11 +2997,11 @@ sysPrePtpClockInit(RunTimeOpts* rtOpts, Integer16* ret)
 
 #if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined(__QNXNTO__)
 	/* Try binding to a single CPU core if configured to do so */
-	if(rtOpts->cpuNumber > -1) {
-		if(setCpuAffinity(rtOpts->cpuNumber) < 0) {
-			ERROR("Could not bind to CPU core %d\n", rtOpts->cpuNumber);
+	if(rtOpts->sysopts.cpuNumber > -1) {
+		if(setCpuAffinity(rtOpts->sysopts.cpuNumber) < 0) {
+			ERROR("Could not bind to CPU core %d\n", rtOpts->sysopts.cpuNumber);
 		} else {
-			INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", rtOpts->cpuNumber);
+			INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", rtOpts->sysopts.cpuNumber);
 		}
 	}
 #endif
@@ -3018,7 +3021,7 @@ Boolean
 sysPostPtpClockInit(RunTimeOpts* rtOpts, PtpClock* ptpClock, Integer16* ret)
 {
 	/* First lock check, just to be user-friendly to the operator */
-	if(!rtOpts->ignore_daemon_lock) {
+	if(!rtOpts->sysopts.ignore_daemon_lock) {
 		if(!writeLockFile(rtOpts)){
 			/* check and create Lock */
 			ERROR("Error: file lock failed (use -L or global:ignore_lock to ignore lock file)\n");

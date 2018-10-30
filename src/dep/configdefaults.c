@@ -202,7 +202,7 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 	rtOpts->ipMode = IPMODE_MULTICAST;
 	rtOpts->dot1AS = FALSE;
 
-	rtOpts->disableUdpChecksums = TRUE;
+	rtOpts->sysopts.disableUdpChecksums = TRUE;
 
 	rtOpts->unicastNegotiation = FALSE;
 	rtOpts->unicastNegotiationListening = FALSE;
@@ -213,7 +213,7 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 
 	rtOpts->noAdjust = NO_ADJUST;  // false
 	rtOpts->logStatistics = TRUE;
-	rtOpts->statisticsTimestamp = TIMESTAMP_DATETIME;
+	rtOpts->sysopts.statisticsTimestamp = TIMESTAMP_DATETIME;
 
 	rtOpts->periodicUpdates = FALSE; /* periodically log a status update */
 
@@ -224,19 +224,19 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 	rtOpts->inboundLatency.nanoseconds = DEFAULT_INBOUND_LATENCY;
 	rtOpts->outboundLatency.nanoseconds = DEFAULT_OUTBOUND_LATENCY;
 	rtOpts->max_foreign_records = DEFAULT_MAX_FOREIGN_RECORDS;
-	rtOpts->nonDaemon = FALSE;
+	rtOpts->sysopts.nonDaemon = FALSE;
 
 	/*
 	 * defaults for new options
 	 */
 	rtOpts->ignore_delayreq_interval_master = FALSE;
 	rtOpts->do_IGMP_refresh = TRUE;
-	rtOpts->useSysLog       = FALSE;
+	rtOpts->sysopts.useSysLog       = FALSE;
 	rtOpts->announceReceiptTimeout  = DEFAULT_ANNOUNCE_RECEIPT_TIMEOUT;
 #ifdef RUNTIME_DEBUG
 	rtOpts->debug_level = LOG_INFO;			/* by default debug messages as disabled, but INFO messages and below are printed */
 #endif
-	rtOpts->ttl = 64;
+	rtOpts->sysopts.ttl = 64;
 	rtOpts->delayMechanism   = DEFAULT_DELAY_MECHANISM;
 	rtOpts->noResetClock     = DEFAULT_NO_RESET_CLOCK;
 	rtOpts->portDisabled	 = FALSE;
@@ -246,8 +246,8 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 	rtOpts->setRtc		 = FALSE;
 #endif /* HAVE_LINUX_RTC_H */
 
-	rtOpts->clearCounters = FALSE;
-	rtOpts->statisticsLogInterval = 0;
+	rtOpts->sysopts.clearCounters = FALSE;
+	rtOpts->sysopts.statisticsLogInterval = 0;
 
 	rtOpts->initial_delayreq = DEFAULT_DELAYREQ_INTERVAL;
 	rtOpts->logMinDelayReqInterval = DEFAULT_DELAYREQ_INTERVAL;
@@ -260,13 +260,15 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 	rtOpts->logMaxSyncInterval = 5;
 	rtOpts->logMaxAnnounceInterval = 5;
 
-	rtOpts->drift_recovery_method = DRIFT_KERNEL;
-	strncpy(rtOpts->lockDirectory, DEFAULT_LOCKDIR, PATH_MAX);
-	strncpy(rtOpts->driftFile, DEFAULT_DRIFTFILE, PATH_MAX);
+	rtOpts->sysopts.drift_recovery_method = DRIFT_KERNEL;
+	strncpy(rtOpts->sysopts.lockDirectory, DEFAULT_LOCKDIR, PATH_MAX);
+	strncpy(rtOpts->sysopts.driftFile, DEFAULT_DRIFTFILE, PATH_MAX);
 /*	strncpy(rtOpts->lockFile, DEFAULT_LOCKFILE, PATH_MAX); */
-	rtOpts->autoLockFile = FALSE;
+	rtOpts->sysopts.autoLockFile = FALSE;
+#ifdef PTPD_SNMP
 	rtOpts->snmpEnabled = FALSE;
 	rtOpts->snmpTrapsEnabled = FALSE;
+#endif
 	rtOpts->alarmsEnabled = FALSE;
 	rtOpts->alarmInitialDelay = 0;
 	rtOpts->alarmMinAge = 30;
@@ -283,7 +285,7 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 	strncpy(rtOpts->portDescription,"ptpd", sizeof(rtOpts->portDescription));
 
 	/* highest possible */
-	rtOpts->logLevel = LOG_ALL;
+	rtOpts->sysopts.logLevel = LOG_ALL;
 
 	/* ADJ_FREQ_MAX by default */
 	rtOpts->servoMaxPpb = ADJ_FREQ_MAX / 1000;
@@ -304,10 +306,10 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 	rtOpts->requireUtcValid = FALSE;
 
 	/* Try 46 for expedited forwarding */
-	rtOpts->dscpValue = 0;
+	rtOpts->sysopts.dscpValue = 0;
 
 #if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined (__QNXNTO__)
-	rtOpts-> cpuNumber = -1;
+	rtOpts->sysopts.cpuNumber = -1;
 #endif /* (linux && HAVE_SCHED_H) || HAVE_SYS_CPUSET_H*/
 
 #ifdef PTPD_STATISTICS
@@ -417,33 +419,33 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 
 /* Log file settings */
 
-	rtOpts->statisticsLog.logID = "statistics";
-	rtOpts->statisticsLog.openMode = "a+";
-	rtOpts->statisticsLog.logFP = NULL;
-	rtOpts->statisticsLog.truncateOnReopen = FALSE;
-	rtOpts->statisticsLog.unlinkOnClose = FALSE;
-	rtOpts->statisticsLog.maxSize = 0;
+	rtOpts->sysopts.statisticsLog.logID = "statistics";
+	rtOpts->sysopts.statisticsLog.openMode = "a+";
+	rtOpts->sysopts.statisticsLog.logFP = NULL;
+	rtOpts->sysopts.statisticsLog.truncateOnReopen = FALSE;
+	rtOpts->sysopts.statisticsLog.unlinkOnClose = FALSE;
+	rtOpts->sysopts.statisticsLog.maxSize = 0;
 
-	rtOpts->recordLog.logID = "record";
-	rtOpts->recordLog.openMode = "a+";
-	rtOpts->recordLog.logFP = NULL;
-	rtOpts->recordLog.truncateOnReopen = FALSE;
-	rtOpts->recordLog.unlinkOnClose = FALSE;
-	rtOpts->recordLog.maxSize = 0;
+	rtOpts->sysopts.recordLog.logID = "record";
+	rtOpts->sysopts.recordLog.openMode = "a+";
+	rtOpts->sysopts.recordLog.logFP = NULL;
+	rtOpts->sysopts.recordLog.truncateOnReopen = FALSE;
+	rtOpts->sysopts.recordLog.unlinkOnClose = FALSE;
+	rtOpts->sysopts.recordLog.maxSize = 0;
 
-	rtOpts->eventLog.logID = "log";
-	rtOpts->eventLog.openMode = "a+";
-	rtOpts->eventLog.logFP = NULL;
-	rtOpts->eventLog.truncateOnReopen = FALSE;
-	rtOpts->eventLog.unlinkOnClose = FALSE;
-	rtOpts->eventLog.maxSize = 0;
+	rtOpts->sysopts.eventLog.logID = "log";
+	rtOpts->sysopts.eventLog.openMode = "a+";
+	rtOpts->sysopts.eventLog.logFP = NULL;
+	rtOpts->sysopts.eventLog.truncateOnReopen = FALSE;
+	rtOpts->sysopts.eventLog.unlinkOnClose = FALSE;
+	rtOpts->sysopts.eventLog.maxSize = 0;
 
-	rtOpts->statusLog.logID = "status";
-	rtOpts->statusLog.openMode = "w";
-	strncpy(rtOpts->statusLog.logPath, DEFAULT_STATUSFILE, PATH_MAX);
-	rtOpts->statusLog.logFP = NULL;
-	rtOpts->statusLog.truncateOnReopen = FALSE;
-	rtOpts->statusLog.unlinkOnClose = TRUE;
+	rtOpts->sysopts.statusLog.logID = "status";
+	rtOpts->sysopts.statusLog.openMode = "w";
+	strncpy(rtOpts->sysopts.statusLog.logPath, DEFAULT_STATUSFILE, PATH_MAX);
+	rtOpts->sysopts.statusLog.logFP = NULL;
+	rtOpts->sysopts.statusLog.truncateOnReopen = FALSE;
+	rtOpts->sysopts.statusLog.unlinkOnClose = TRUE;
 
 /* Management message support settings */
 	rtOpts->managementEnabled = TRUE;
@@ -451,10 +453,10 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 
 /* IP ACL settings */
 
-	rtOpts->timingAclEnabled = FALSE;
-	rtOpts->managementAclEnabled = FALSE;
-	rtOpts->timingAclOrder = ACL_DENY_PERMIT;
-	rtOpts->managementAclOrder = ACL_DENY_PERMIT;
+	rtOpts->sysopts.timingAclEnabled = FALSE;
+	rtOpts->sysopts.managementAclEnabled = FALSE;
+	rtOpts->sysopts.timingAclOrder = ACL_DENY_PERMIT;
+	rtOpts->sysopts.managementAclOrder = ACL_DENY_PERMIT;
 
 	// by default we don't check Sync message sequence continuity
 	rtOpts->syncSequenceChecking = FALSE;

@@ -1185,7 +1185,7 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		periodicUpdate(rtOpts, ptpClock);
 	}
 
-        if(rtOpts->statusLog.logEnabled && timerExpired(&ptpClock->timers[STATUSFILE_UPDATE_TIMER])) {
+        if(rtOpts->sysopts.statusLog.logEnabled && timerExpired(&ptpClock->timers[STATUSFILE_UPDATE_TIMER])) {
                 writeStatusFile(ptpClock,rtOpts,TRUE);
 		/* ensures that the current updare interval is used */
 		timerStart(&ptpClock->timers[STATUSFILE_UPDATE_TIMER],rtOpts->statusFileUpdateInterval);
@@ -1279,7 +1279,7 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 		tmpAddr.s_addr = netPathGetLastSourceAddress(ptpClock->netPath);
 #endif /* RUNTIME_DEBUG */
 		if(ptpClock->msgTmpHeader.messageType == MANAGEMENT) {
-			if(rtOpts->managementAclEnabled) {
+			if(netPathGetManagementACL(ptpClock->netPath)) {
 			    if (!matchIpv4AccessList(
 				netPathGetManagementACL(ptpClock->netPath),
 				ntohl(netPathGetLastSourceAddress(ptpClock->netPath)))) {
@@ -1289,7 +1289,7 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
 				} else
 					DBG("ACL Accepted management message from %s\n", inet_ntoa(tmpAddr));
 			}
-	        } else if(rtOpts->timingAclEnabled) {
+	        } else if(netPathGetTimingACL(ptpClock->netPath)) {
 			if(!matchIpv4AccessList(
 				netPathGetTimingACL(ptpClock->netPath),
 				ntohl(netPathGetLastSourceAddress(ptpClock->netPath)))) {
