@@ -39,6 +39,14 @@
 #define IFACE_NAME_LENGTH         IF_NAMESIZE
 #define NET_ADDRESS_LENGTH        INET_ADDRSTRLEN
 
+static inline uint8_t* ether_addr_octet(struct ether_addr* addr) {
+#ifdef HAVE_STRUCT_ETHER_ADDR_OCTET
+  return addr->octet;
+#else
+  return addr->ether_addr_octet;
+#endif
+}
+
 typedef struct NetPath NetPath;
 
 Boolean netShutdown(NetPath*);

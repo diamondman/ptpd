@@ -90,7 +90,7 @@ void initData(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		else if (i==4) ptpClock->defaultDS.clockIdentity[i]=0xFE;
 		else
 		{
-		  ptpClock->defaultDS.clockIdentity[i] = macaddr.octet[j];
+		  ptpClock->defaultDS.clockIdentity[i] = ether_addr_octet(&macaddr)[j];
 		  j++;
 		}
 	}
@@ -178,7 +178,8 @@ void initData(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	 *  Initialize random number generator using same method as ptpv1:
 	 *  seed is now initialized from the last bytes of our mac addres (collected in net.c:findIface())
 	 */
-	srand((macaddr.octet[PTP_UUID_LENGTH - 1] << 8) + macaddr.octet[PTP_UUID_LENGTH - 2]);
+	srand((ether_addr_octet(&macaddr)[PTP_UUID_LENGTH - 1] << 8) +
+	      ether_addr_octet(&macaddr)[PTP_UUID_LENGTH - 2]);
 
 	/*Init other stuff*/
 	ptpClock->number_foreign_records = 0;

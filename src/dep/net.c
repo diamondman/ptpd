@@ -129,6 +129,7 @@
 #include "arith.h"
 #include "datatypes.h"
 #include "ptpd_logging.h"
+#include "ptpd_utils.h"
 
 /* choose kernel-level nanoseconds or microseconds resolution on the client-side */
 #if !defined(SO_TIMESTAMPING) && !defined(SO_TIMESTAMPNS) && !defined(SO_TIMESTAMP) && !defined(SO_BINTIME)
@@ -1132,13 +1133,10 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 #ifdef PTPD_PCAP
 	if (rtOpts->transport == IEEE_802_3) {
 		netPath->headerOffset = PACKET_BEGIN_ETHER;
-#  ifdef HAVE_STRUCT_ETHER_ADDR_OCTET
-		memcpy(netPath->etherDest.octet, ether_aton(PTP_ETHER_DST), ETHER_ADDR_LEN);
-		memcpy(netPath->peerEtherDest.octet, ether_aton(PTP_ETHER_PEER), ETHER_ADDR_LEN);
-#  else
-		memcpy(netPath->etherDest.ether_addr_octet, ether_aton(PTP_ETHER_DST), ETHER_ADDR_LEN);
-		memcpy(netPath->peerEtherDest.ether_addr_octet, ether_aton(PTP_ETHER_PEER), ETHER_ADDR_LEN);
-#  endif /* HAVE_STRUCT_ETHER_ADDR_OCTET */
+		memcpy(ether_addr_octet(&(netPath->etherDest)),
+		       ether_aton(PTP_ETHER_DST), ETHER_ADDR_LEN);
+		memcpy(ether_addr_octet(&netPath->peerEtherDest),
+		       ether_aton(PTP_ETHER_PEER), ETHER_ADDR_LEN);
 	} else
 #endif
 		netPath->headerOffset = PACKET_BEGIN_UDP;
@@ -1181,14 +1179,13 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	/* No HW address, we'll use the protocol address to form interfaceID -> clockID */
 	if( !netPath->interfaceInfo.hasHwAddress && netPath->interfaceInfo.hasAfAddress ) {
 		uint32_t addr = ((struct sockaddr_in*)&(netPath->interfaceInfo.afAddress))->sin_addr.s_addr;
-		memcpy(netPath->interfaceID.octet, &addr, 2);
-		memcpy(netPath->interfaceID.octet + 4, &addr + 2, 2);
+		memcpy(ether_addr_octet(&(netPath->interfaceID)), &addr, 2);
+		memcpy(ether_addr_octet(&(netPath->interfaceID)) + 4, &addr + 2, 2);
 	/* Initialise interfaceID with hardware address */
 	} else {
-		    memcpy(&netPath->interfaceID.octet, &netPath->interfaceInfo.hwAddress,
-			    sizeof(netPath->interfaceID.octet) <= sizeof(netPath->interfaceInfo.hwAddress) ?
-				    sizeof(netPath->interfaceID.octet) : sizeof(netPath->interfaceInfo.hwAddress)
-			    );
+		memcpy(&netPath->interfaceID, &netPath->interfaceInfo.hwAddress,
+		       min(sizeof(netPath->interfaceID), sizeof(netPath->interfaceInfo.hwAddress))
+		);
 	}
 
 	DBG("Listening on IP: %s\n",inet_ntoa(
@@ -1977,13 +1974,8 @@ netSendPcapEther(Octet * buf,  UInteger16 length,
 			struct ether_addr * dst, struct ether_addr * src,
 			pcap_t * pcap) {
 	Octet ether[ETHER_HDR_LEN + PACKET_SIZE];
-#  ifdef HAVE_STRUCT_ETHER_ADDR_OCTET
-	memcpy(ether, dst->octet, ETHER_ADDR_LEN);
-	memcpy(ether + ETHER_ADDR_LEN, src->octet, ETHER_ADDR_LEN);
-#  else
-	memcpy(ether, dst->ether_addr_octet, ETHER_ADDR_LEN);
-	memcpy(ether + ETHER_ADDR_LEN, src->ether_addr_octet, ETHER_ADDR_LEN);
-#  endif /* HAVE_STRUCT_ETHER_ADDR_OCTET */
+	memcpy(ether, ether_addr_octet(dst), ETHER_ADDR_LEN);
+	memcpy(ether + ETHER_ADDR_LEN, ether_addr_octet(src), ETHER_ADDR_LEN);
 	*((short *)&ether[2 * ETHER_ADDR_LEN]) = htons(PTP_ETHER_TYPE);
 	memcpy(ether + ETHER_HDR_LEN, buf, length);
 
@@ -2023,7 +2015,7 @@ netSendEvent(Octet * buf, UInteger16 length, NetPath * netPath,
 	if ((netPath->pcapGeneral != NULL) && (rtOpts->transport == IEEE_802_3 )) {
 		ret = netSendPcapEther(buf, length,
 			&netPath->etherDest,
-			(struct ether_addr *)netPath->interfaceID.octet,
+			&netPath->interfaceID,
 			netPath->pcapGeneral);
 		if (ret <= 0)
 			DBG("Error sending ether multicast event message\n");
@@ -2155,7 +2147,7 @@ netSendGeneral(Octet * buf, UInteger16 length, NetPath * netPath,
 	if ((netPath->pcapGeneral != NULL) && (rtOpts->transport == IEEE_802_3)) {
 		ret = netSendPcapEther(buf, length,
 			&netPath->etherDest,
-			(struct ether_addr *)netPath->interfaceID.octet,
+			&netPath->interfaceID,
 			netPath->pcapGeneral);
 
 		if (ret <= 0)
@@ -2225,7 +2217,7 @@ netSendPeerGeneral(Octet * buf, UInteger16 length, NetPath * netPath, const RunT
 	if ((netPath->pcapGeneral != NULL) && (rtOpts->transport == IEEE_802_3)) {
 		ret = netSendPcapEther(buf, length,
 			&netPath->peerEtherDest,
-			(struct ether_addr *)netPath->interfaceID.octet,
+			&netPath->interfaceID,
 			netPath->pcapGeneral);
 
 		if (ret <= 0)
@@ -2289,7 +2281,7 @@ netSendPeerEvent(Octet * buf, UInteger16 length, NetPath * netPath, const RunTim
 	if ((netPath->pcapGeneral != NULL) && (rtOpts->transport == IEEE_802_3)) {
 		ret = netSendPcapEther(buf, length,
 			&netPath->peerEtherDest,
-			(struct ether_addr *)netPath->interfaceID.octet,
+			&netPath->interfaceID,
 			netPath->pcapGeneral);
 
 		if (ret <= 0)

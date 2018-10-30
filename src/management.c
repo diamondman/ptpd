@@ -612,8 +612,8 @@ static void handleMMClockDescription(MsgManagement* incoming, MsgManagement* out
                 XMALLOC(data->physicalAddress.addressField, PTP_UUID_LENGTH);
 		struct ether_addr macaddr = netPathGetMacAddress(ptpClock->netPath);
                 memcpy(data->physicalAddress.addressField,
-                        macaddr.octet,
-                        PTP_UUID_LENGTH);
+		       ether_addr_octet(&macaddr),
+		       PTP_UUID_LENGTH);
 		/* protocol address */
                 data->protocolAddress.addressLength = 4;
                 data->protocolAddress.networkProtocol = 1;
