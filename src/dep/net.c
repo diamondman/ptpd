@@ -1157,7 +1157,7 @@ netInit(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	if(!testInterface(netPathGetInterfaceName(netPath, rtOpts), rtOpts)) {
 
 		/* backup not enabled - exit */
-		if(!rtOpts->backupIfaceEnabled)
+		if(!rtOpts->sysopts.backupIfaceEnabled)
 		    return FALSE;
 
 		/* backup enabled - try the other interface */
@@ -2557,13 +2557,13 @@ NetPath* netPathCreate(const RunTimeOpts* rtOpts)
 	return netPath;
 }
 
-const char* netPathGetInterfaceName(NetPath* netPath, const RunTimeOpts* rtOpts)
+const char* netPathGetInterfaceName(const NetPath* netPath, const RunTimeOpts* rtOpts)
 {
-	if(rtOpts->backupIfaceEnabled &&
+	if(rtOpts->sysopts.backupIfaceEnabled &&
 	   netPath->runningBackupInterface) {
-		return rtOpts->backupIfaceName;
+		return rtOpts->sysopts.backupIfaceName;
 	} else {
-		return rtOpts->primaryIfaceName;
+		return rtOpts->sysopts.primaryIfaceName;
 	}
 }
 
@@ -2580,4 +2580,21 @@ void netPathSetUsePrimaryIf(NetPath* netPath, Boolean use_primary)
 Boolean netPathGetUsePrimaryIf(const NetPath* netPath)
 {
 	return !netPath->runningBackupInterface;
+}
+
+const char* netGetInterfaceNameFromIndex(const RunTimeOpts* rtOpts, int index)
+{
+	switch(index) {
+	case 0: // Primary
+		return rtOpts->sysopts.primaryIfaceName;
+	case 1: // Secondary
+		return rtOpts->sysopts.backupIfaceName;
+	default:
+		return "{INV}";
+	}
+}
+
+Boolean netHasBackupInterface(const RunTimeOpts* rtOpts)
+{
+	return rtOpts->sysopts.backupIfaceEnabled;
 }

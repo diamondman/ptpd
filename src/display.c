@@ -548,8 +548,8 @@ displayRunTimeOpts(const RunTimeOpts * rtOpts)
 	DBGV("currentUtcOffset : %d \n", rtOpts->timeProperties.currentUtcOffset);
 	DBGV("noAdjust : %d \n", rtOpts->noAdjust);
 	DBGV("logStatistics : %d \n", rtOpts->logStatistics);
-	iFaceName_display("primary", rtOpts->primaryIfaceName);
-	iFaceName_display("backup", rtOpts->backupIfaceName);
+	iFaceName_display("primary", netGetInterfaceNameFromIndex(rtOpts, 0));
+	iFaceName_display("backup", netGetInterfaceNameFromIndex(rtOpts, 1));
 	DBGV("kP : %d \n", rtOpts->servoKP);
 	DBGV("kI : %d \n", rtOpts->servoKI);
 	DBGV("s : %d \n", rtOpts->s);

@@ -186,10 +186,6 @@ typedef struct RunTimeOpts {
 
 	int announceTimeoutGracePeriod;
 
-	Octet primaryIfaceName[IFACE_NAME_LENGTH];
-	Octet backupIfaceName[IFACE_NAME_LENGTH];
-	Boolean backupIfaceEnabled;
-
 	Boolean	noResetClock; // don't step the clock if offset > 1s
 	Boolean stepForce; // force clock step on first sync after startup
 	Boolean stepOnce; // only step clock on first sync after startup
@@ -384,6 +380,10 @@ typedef struct RunTimeOpts {
 		char unicastDestinations[MAXHOSTNAMELEN * UNICAST_MAX_DESTINATIONS];
 		char unicastDomains[MAXHOSTNAMELEN * UNICAST_MAX_DESTINATIONS];
 		char unicastLocalPreference[MAXHOSTNAMELEN * UNICAST_MAX_DESTINATIONS];
+
+		Octet primaryIfaceName[IFACE_NAME_LENGTH];
+		Octet backupIfaceName[IFACE_NAME_LENGTH];
+		Boolean backupIfaceEnabled;
 
 
 		// SYS

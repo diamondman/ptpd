@@ -95,7 +95,9 @@ NetPath* netPathCreate(const RunTimeOpts*);
 
 void netPathSetUsePrimaryIf(NetPath* netPath, Boolean use_primary);
 void netPathToggleUsePrimaryIf(NetPath* netPath);
-const char* netPathGetInterfaceName(NetPath* netPath, const RunTimeOpts* rtOpts);
+const char* netPathGetInterfaceName(const NetPath* netPath, const RunTimeOpts* rtOpts);
 Boolean netPathGetUsePrimaryIf(const NetPath* netPath);
+const char* netGetInterfaceNameFromIndex(const RunTimeOpts*, int);
+Boolean netHasBackupInterface(const RunTimeOpts*);
 
 #endif

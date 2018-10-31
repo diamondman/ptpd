@@ -894,8 +894,8 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 					ptpClock->number_foreign_records = 0;
 					ptpClock->foreign_record_i = 0;
 					ptpClock->bestMaster = NULL;
-					/* if flipping between primary and backup interface, a full nework re-init is required */
-					if(rtOpts->backupIfaceEnabled) {
+					/* if flipping between primary and backup interface, a full network re-init is required */
+					if(netHasBackupInterface(rtOpts)) {
 						netPathToggleUsePrimaryIf(ptpClock->netPath);
 						toState(PTP_INITIALIZING, rtOpts, ptpClock);
 						NOTICE("Now switching to %s interface\n",
@@ -908,7 +908,7 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			} else {
 
 				    /* if flipping between primary and backup interface, a full nework re-init is required */
-				    if(rtOpts->backupIfaceEnabled) {
+				    if(netHasBackupInterface(rtOpts)) {
 					netPathToggleUsePrimaryIf(ptpClock->netPath);
 					toState(PTP_INITIALIZING, rtOpts, ptpClock);
 					NOTICE("Now switching to %s interface\n",

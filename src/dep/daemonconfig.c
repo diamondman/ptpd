@@ -923,15 +923,21 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	CONFIG_KEY_REQUIRED("ptpengine:interface");
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "ptpengine:interface",
-		PTPD_RESTART_NETWORK, rtOpts->primaryIfaceName, sizeof(rtOpts->primaryIfaceName), rtOpts->primaryIfaceName,
+				       PTPD_RESTART_NETWORK, rtOpts->sysopts.primaryIfaceName,
+				       sizeof(rtOpts->sysopts.primaryIfaceName),
+				       rtOpts->sysopts.primaryIfaceName,
 	"Network interface to use - eth0, igb0 etc. (required).");
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "ptpengine:backup_interface",
-		PTPD_RESTART_NETWORK, rtOpts->backupIfaceName, sizeof(rtOpts->backupIfaceName), rtOpts->backupIfaceName,
+				       PTPD_RESTART_NETWORK,
+				       rtOpts->sysopts.backupIfaceName,
+				       sizeof(rtOpts->sysopts.backupIfaceName),
+				       rtOpts->sysopts.backupIfaceName,
 		"Backup network interface to use - eth0, igb0 etc. When no GM available, \n"
 	"	 slave will keep alternating between primary and secondary until a GM is found.\n");
 
-	CONFIG_KEY_TRIGGER("ptpengine:backup_interface", rtOpts->backupIfaceEnabled,TRUE,FALSE);
+	CONFIG_KEY_TRIGGER("ptpengine:backup_interface",
+			   rtOpts->sysopts.backupIfaceEnabled, TRUE, FALSE);
 
 	/* Preset option names have to be mapped to defined presets - no free strings here */
 	parseResult &= configMapSelectValue(opCode, opArg, dict, target, "ptpengine:preset",
@@ -2525,7 +2531,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 		    "%s/"PTPD_PROGNAME"_%s_%s.lock",
 		    rtOpts->sysopts.lockDirectory,
 		    (rtOpts->clockQuality.clockClass<128 && !rtOpts->slaveOnly) ? "master" : DEFAULT_CLOCKDRIVER,
-		    rtOpts->primaryIfaceName);
+		    rtOpts->sysopts.primaryIfaceName);
 	    DBG("Automatic lock file name is: %s\n", rtOpts->sysopts.lockFile);
 	/*
 	 * Otherwise use default lock file name, with the specified lock directory
@@ -3337,13 +3343,15 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock* ptpClock)
 	/* If the network configuration has changed, check if the interface is OK */
 	if(rtOpts->restartSubsystems & PTPD_RESTART_NETWORK) {
 		INFO("Network configuration changed - checking interface(s)\n");
-		if(!testInterface(tmpOpts.primaryIfaceName, &tmpOpts)) {
+		if(!testInterface(tmpOpts.sysopts.primaryIfaceName, &tmpOpts)) {
 			reloadSuccessful = FALSE;
-			ERROR("Error: Cannot use %s interface\n",tmpOpts.primaryIfaceName);
+			ERROR("Error: Cannot use %s interface\n",tmpOpts.sysopts.primaryIfaceName);
 		}
-		if(rtOpts->backupIfaceEnabled && !testInterface(tmpOpts.backupIfaceName, &tmpOpts)) {
+		if(rtOpts->sysopts.backupIfaceEnabled &&
+		   !testInterface(tmpOpts.sysopts.backupIfaceName, &tmpOpts)) {
 			rtOpts->restartSubsystems = -1;
-			ERROR("Error: Cannot use %s interface as backup\n",tmpOpts.backupIfaceName);
+			ERROR("Error: Cannot use %s interface as backup\n",
+			      tmpOpts.sysopts.backupIfaceName);
 		}
 	}
 #if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined(__QNXNTO__)
@@ -3481,13 +3489,14 @@ Boolean runTimeOptsInit(int argc, char **argv, Integer16* ret, RunTimeOpts* rtOp
 	dictionary_del(&candidateConfig);
 
 	/* Check network before going into background */
-	if(!testInterface(rtOpts->primaryIfaceName, rtOpts)) {
-		ERROR("Error: Cannot use %s interface\n",rtOpts->primaryIfaceName);
+	if(!testInterface(rtOpts->sysopts.primaryIfaceName, rtOpts)) {
+		ERROR("Error: Cannot use %s interface\n",rtOpts->sysopts.primaryIfaceName);
 		*ret = 1;
 		goto configcheck;
 	}
-	if(rtOpts->backupIfaceEnabled && !testInterface(rtOpts->backupIfaceName, rtOpts)) {
-		ERROR("Error: Cannot use %s interface as backup\n",rtOpts->backupIfaceName);
+	if(rtOpts->sysopts.backupIfaceEnabled &&
+	   !testInterface(rtOpts->sysopts.backupIfaceName, rtOpts)) {
+		ERROR("Error: Cannot use %s interface as backup\n",rtOpts->sysopts.backupIfaceName);
 		*ret = 1;
 		goto configcheck;
 	}

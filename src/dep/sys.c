@@ -1124,8 +1124,8 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 	strftime(timeStr, MAXTIMESTR, "%a %b %d %X %Z %Y", gmtime((time_t*)&now.tv_sec));
 	fprintf(out, 		STATUSPREFIX"  %s\n","Kernel time", timeStr);
 	fprintf(out, 		STATUSPREFIX"  %s%s\n", "Interface", netPathGetInterfaceName(ptpClock->netPath, rtOpts),
-		(rtOpts->backupIfaceEnabled && !netPathGetUsePrimaryIf(ptpClock->netPath)) ?
-		" (backup)" : (rtOpts->backupIfaceEnabled) ?
+		(rtOpts->sysopts.backupIfaceEnabled && !netPathGetUsePrimaryIf(ptpClock->netPath)) ?
+		" (backup)" : (rtOpts->sysopts.backupIfaceEnabled) ?
 		" (primary)" : "");
 	fprintf(out, 		STATUSPREFIX"  %s\n","Preset", dictionary_get(rtOpts->currentConfig, "ptpengine:preset", ""));
 	fprintf(out, 		STATUSPREFIX"  %s%s","Transport", dictionary_get(rtOpts->currentConfig, "ptpengine:transport", ""),
