@@ -71,8 +71,7 @@ Boolean getKernelUtcOffset(int *utc_offset);
 void restoreDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet);
 void saveDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet);
 
-int parseLeapFile(char * path, LeapSecondInfo *info);
-
+Boolean updateLeapInfo(const RunTimeOpts*, LeapSecondInfo *);
 void updateXtmp (TimeInternal oldTime, TimeInternal newTime);
 int setCpuAffinity(int cpu);
 

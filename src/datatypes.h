@@ -231,10 +231,6 @@ typedef struct RunTimeOpts {
 	Boolean ignore_delayreq_interval_master;
 	Boolean autoDelayReqInterval;
 
-	char leapFile[PATH_MAX+1]; /* leap seconds file location */
-
-	LeapSecondInfo	leapInfo;
-
 #ifdef PTPD_SNMP
 	Boolean snmpEnabled;		/* SNMP subsystem enabled / disabled even if compiled in */
 	Boolean snmpTrapsEnabled; 	/* enable sending of SNMP traps (requires alarms enabled) */
@@ -412,6 +408,7 @@ typedef struct RunTimeOpts {
 					       * When automatic lock files used */
 		Boolean autoLockFile; /* mode and interface specific lock files are used
 					    * when set to TRUE */
+		char leapFile[PATH_MAX+1]; /* leap seconds file location */
 
 	} sysopts;
 

@@ -2458,7 +2458,8 @@ saveDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet)
 
 #undef DRIFTFORMAT
 
-int parseLeapFile(char *path, LeapSecondInfo *info)
+//int parseLeapFile(char *path, LeapSecondInfo *info)
+Boolean updateLeapInfo(const RunTimeOpts* rtOpts, LeapSecondInfo *info)
 {
     FILE *leapFP;
     TimeInternal now;
@@ -2470,13 +2471,20 @@ int parseLeapFile(char *path, LeapSecondInfo *info)
     int ntpOffset = 0;
     int res;
 
+    if(!rtOpts || !info) return FALSE;
+
+    // Check that the leap file was provided. Abort if not.
+    if(strcmp(rtOpts->sysopts.leapFile,"") == 0) return FALSE;
+
+    memset(info, 0, sizeof(LeapSecondInfo));
+
     getTime(&now);
 
     info->valid = FALSE;
 
-    if( (leapFP = fopen(path,"r")) == NULL) {
-	PERROR("Could not open leap second list file %s", path);
-	return 0;
+    if( (leapFP = fopen(rtOpts->sysopts.leapFile,"r")) == NULL) {
+	PERROR("Could not open leap second list file %s", rtOpts->sysopts.leapFile);
+	return FALSE;
     } else
 
     memset(info, 0, sizeof(LeapSecondInfo));
@@ -2517,7 +2525,7 @@ int parseLeapFile(char *path, LeapSecondInfo *info)
     /* leap file past expiry date */
     if(utcExpiry && utcExpiry < now.seconds) {
 	WARNING("Leap seconds file is expired. Please download the current version\n");
-	return 0;
+	return FALSE;
     }
 
     /* we have the current offset - the rest can be invalid but at least we have this */
@@ -2525,11 +2533,11 @@ int parseLeapFile(char *path, LeapSecondInfo *info)
 	info->offsetValid = TRUE;
     }
 
-    /* if anything failed, return 0 so we know we cannot use leap file information */
+    /* if anything failed, return FALSE so we know we cannot use leap file information */
     if((info->startTime == 0) || (info->endTime == 0) ||
 	(info->currentOffset == 0) || (info->nextOffset == 0)) {
-	return 0;
-	INFO("Leap seconds file %s loaded (incomplete): now %d, current %d next %d from %d to %d, type %s\n", path,
+	return FALSE;
+	INFO("Leap seconds file %s loaded (incomplete): now %d, current %d next %d from %d to %d, type %s\n", rtOpts->sysopts.leapFile,
 	now.seconds,
 	info->currentOffset, info->nextOffset,
 	info->startTime, info->endTime, info->leapType > 0 ? "positive" : info->leapType < 0 ? "negative" : "unknown");
@@ -2543,12 +2551,12 @@ int parseLeapFile(char *path, LeapSecondInfo *info)
 	info->leapType = -1;
     }
 
-    INFO("Leap seconds file %s loaded: now %d, current %d next %d from %d to %d, type %s\n", path,
+    INFO("Leap seconds file %s loaded: now %d, current %d next %d from %d to %d, type %s\n", rtOpts->sysopts.leapFile,
 	now.seconds,
 	info->currentOffset, info->nextOffset,
 	info->startTime, info->endTime, info->leapType > 0 ? "positive" : info->leapType < 0 ? "negative" : "unknown");
     info->valid = TRUE;
-    return 1;
+    return TRUE;
 }
 
 void

@@ -1960,7 +1960,8 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	"	 if it's running as master",RANGECHECK_RANGE,3600,86400);
 
 	parseResult &= configMapString(opCode, opArg, dict, target, "clock:leap_seconds_file",
-		PTPD_RESTART_NONE, rtOpts->leapFile, sizeof(rtOpts->leapFile), rtOpts->leapFile,
+				       PTPD_RESTART_NONE, rtOpts->sysopts.leapFile,
+				       sizeof(rtOpts->sysopts.leapFile), rtOpts->sysopts.leapFile,
 	"Specify leap second file location - up to date version can be downloaded from \n"
 	"        http://www.ietf.org/timezones/data/leap-seconds.list");
 

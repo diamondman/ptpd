@@ -23,7 +23,7 @@
 #  include "dep/ntpengine/ntpdcontrol.h"
 #endif
 #include "datatypes.h"
-#include "dep/sys.h" // Only for parseLeapFile, getTime, updateXtmp
+#include "dep/sys.h" // Only for updateLeapInfo, getTime, updateXtmp
 #include "ptpd_logging.h"
 #include "ptpd_utils.h"
 
@@ -56,6 +56,8 @@ static int ntpServiceClockUpdate (TimingService* service);
 static int timingDomainInit(TimingDomain *domain);
 static int timingDomainShutdown(TimingDomain *domain);
 static int timingDomainUpdate(TimingDomain *domain);
+
+static LeapSecondInfo leapInfo;
 
 int
 timingDomainSetup(TimingDomain *domain)
@@ -175,10 +177,8 @@ ptpServiceInit (TimingService* service)
 	RunTimeOpts *rtOpts = (RunTimeOpts*)service->config;
 	PtpClock *ptpClock  = (PtpClock*)service->controller;
 
-	memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));
-	if(strcmp(rtOpts->leapFile,"")) {
-		parseLeapFile(rtOpts->leapFile, &rtOpts->leapInfo);
-	}
+	memset(&leapInfo, 0, sizeof(LeapSecondInfo));
+	updateLeapInfo(rtOpts, &leapInfo);
 
 	/* read current UTC offset from leap file or from kernel if not configured */
 	if(ptpClock->timePropertiesDS.ptpTimescale &&
@@ -257,38 +257,35 @@ prepareLeapFlags(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	ptpClock->clockStatus.override = FALSE;
 
 	/* then we try the offset from leap file if valid - takes priority over kernel */
-	if(rtOpts->leapInfo.offsetValid) {
-		ptpClock->clockStatus.utcOffset = rtOpts->leapInfo.currentOffset;
+	if(leapInfo.offsetValid) {
+		ptpClock->clockStatus.utcOffset = leapInfo.currentOffset;
 		ptpClock->clockStatus.override = TRUE;
 	}
 
 	/* if we have valid leap second info from leap file, we use it */
-	if(rtOpts->leapInfo.valid) {
+	if(leapInfo.valid) {
 
 		ptpClock->clockStatus.leapInsert = FALSE;
 		ptpClock->clockStatus.leapDelete = FALSE;
 
-		if( now.seconds >= rtOpts->leapInfo.startTime &&
-		    now.seconds < rtOpts->leapInfo.endTime) {
+		if( now.seconds >= leapInfo.startTime &&
+		    now.seconds < leapInfo.endTime) {
 			DBG("Leap second pending - leap file\n");
-			if(rtOpts->leapInfo.leapType == 1) {
+			if(leapInfo.leapType == 1) {
 				ptpClock->clockStatus.leapInsert = TRUE;
 			}
-			if(rtOpts->leapInfo.leapType == -1) {
+			if(leapInfo.leapType == -1) {
 				ptpClock->clockStatus.leapDelete = TRUE;
 			}
 
 			ptpClock->clockStatus.override = TRUE;
 		}
-		if(now.seconds >= rtOpts->leapInfo.endTime) {
-			ptpClock->clockStatus.utcOffset = rtOpts->leapInfo.nextOffset;
+		if(now.seconds >= leapInfo.endTime) {
+			ptpClock->clockStatus.utcOffset = leapInfo.nextOffset;
 			ptpClock->clockStatus.override = TRUE;
-			if(strcmp(rtOpts->leapFile,"")) {
-				memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));
-				parseLeapFile(rtOpts->leapFile, &rtOpts->leapInfo);
-
-				if(rtOpts->leapInfo.offsetValid) {
-					ptpClock->clockStatus.utcOffset = rtOpts->leapInfo.currentOffset;
+			if(updateLeapInfo(rtOpts, &leapInfo)) {
+				if(leapInfo.offsetValid) {
+					ptpClock->clockStatus.utcOffset = leapInfo.currentOffset;
 				}
 			}
 		}
@@ -311,9 +308,8 @@ ptpServiceUpdate (TimingService* service)
 	netPathResetSentPacketCount(ptpClock->netPath);
 	netPathResetReceivedPacketCount(ptpClock->netPath);
 
-	if(service->reloadRequested && strcmp(rtOpts->leapFile,"")) {
-		memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));
-		parseLeapFile(rtOpts->leapFile, &rtOpts->leapInfo);
+	if(service->reloadRequested) {
+		updateLeapInfo(rtOpts, &leapInfo);
 		service->reloadRequested = FALSE;
 	}
 
@@ -495,10 +491,7 @@ ptpServiceClockUpdate (TimingService* service)
 	/* Major time change */
 	if(clockStatus->majorChange){
 		/* re-parse leap seconds file */
-		if(strcmp(rtOpts->leapFile,"")) {
-			memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));
-			parseLeapFile(rtOpts->leapFile, &rtOpts->leapInfo);
-		}
+		updateLeapInfo(rtOpts, &leapInfo);
 #ifdef HAVE_LINUX_RTC_H
 		if(rtOpts->setRtc) {
 			NOTICE_LOCAL_ID(service, "Major time change - syncing the RTC\n");
