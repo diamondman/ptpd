@@ -399,10 +399,10 @@ typedef struct RunTimeOpts {
 		Enumeration8 logLevel;
 		int statisticsLogInterval;
 		Boolean useSysLog;
-		LogFileHandler statisticsLog;
-		LogFileHandler recordLog;
-		LogFileHandler eventLog;
-		LogFileHandler statusLog;
+		LogFileConfig statisticsLogConfig;
+		LogFileConfig recordLogConfig;
+		LogFileConfig eventLogConfig;
+		LogFileConfig statusLogConfig;
 		Boolean  nonDaemon;
 		char lockFile[PATH_MAX+1]; /* lock file location */
 		char driftFile[PATH_MAX+1]; /* drift file location */

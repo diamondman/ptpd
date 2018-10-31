@@ -6,6 +6,7 @@
 #include "dep/datatypes_dep.h"
 #include "ptp_datatypes.h"
 #include "datatypes_stub.h"
+#include "ptpd_logging.h"
 
 char *dump_TimeInternal(const TimeInternal * p);
 char *dump_TimeInternal2(const char *st1, const TimeInternal * p1, const char *st2, const TimeInternal * p2);
@@ -19,8 +20,8 @@ int snprint_PortIdentity(char *s, int max_len, const PortIdentity *id);
 // Also in ptpd_logging.h. TODO: Figure out a nice, single place to put this.
 void logMessage(int priority, const char *format, ...);
 
-Boolean restartLog(LogFileHandler* handler, Boolean quiet);
-void restartLogging(RunTimeOpts* rtOpts);
+Boolean initLogging(RunTimeOpts* rtOpts);
+void restartLogging();
 void stopLogging(RunTimeOpts* rtOpts);
 void logStatistics(PtpClock *ptpClock);
 void periodicUpdate(const RunTimeOpts *rtOpts, PtpClock *ptpClock);
@@ -74,6 +75,9 @@ int parseLeapFile(char * path, LeapSecondInfo *info);
 
 void updateXtmp (TimeInternal oldTime, TimeInternal newTime);
 int setCpuAffinity(int cpu);
+
+Boolean LogFileHandlerIsEnabled(LogFile_e);
+
 
 
 #endif /* include guard */

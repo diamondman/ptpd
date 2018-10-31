@@ -127,5 +127,12 @@
 // Defined in dep/sys.c, declared here for convenience.
 void logMessage(int priority, const char *format, ...);
 
+typedef enum {
+  LOGFILE_STATISTICS=0,
+  LOGFILE_RECORD,
+  LOGFILE_EVENT,
+  LOGFILE_STATUS,
+  LOGFILE_MAX
+} LogFile_e;
 
 #endif

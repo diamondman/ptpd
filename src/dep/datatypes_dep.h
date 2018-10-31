@@ -11,22 +11,16 @@
 
 #include "ptp_primitives.h"
 
-typedef struct LogFileHandler {
-
+typedef struct LogFileConfig {
+	Boolean logInitiallyEnabled;
 	char* logID;
 	char* openMode;
 	char logPath[PATH_MAX+1];
-	FILE* logFP;
 
-	Boolean logEnabled;
 	Boolean truncateOnReopen;
 	Boolean unlinkOnClose;
-
-	uint32_t lastHash;
-	UInteger32 maxSize;
-	UInteger32 fileSize;
 	int maxFiles;
-
-} LogFileHandler;
+	UInteger32 maxSize;
+} LogFileConfig;
 
 #endif /*DATATYPES_DEP_H_*/

@@ -114,7 +114,8 @@ main(int argc, char **argv)
 	}
 
 	/* Manage log files: stats, log, status and quality file */
-	restartLogging(&rtOpts);
+	initLogging(&rtOpts);
+	restartLogging();
 
 	NOTICE(USER_DESCRIPTION" started successfully on %s using \"%s\" preset (PID %d)\n",
 	       netPathGetInterfaceName(ptpClock->netPath, &rtOpts),

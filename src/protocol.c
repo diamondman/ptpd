@@ -1185,7 +1185,7 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		periodicUpdate(rtOpts, ptpClock);
 	}
 
-        if(rtOpts->sysopts.statusLog.logEnabled && timerExpired(&ptpClock->timers[STATUSFILE_UPDATE_TIMER])) {
+        if(LogFileHandlerIsEnabled(LOGFILE_STATUS) && timerExpired(&ptpClock->timers[STATUSFILE_UPDATE_TIMER])) {
                 writeStatusFile(ptpClock,rtOpts,TRUE);
 		/* ensures that the current updare interval is used */
 		timerStart(&ptpClock->timers[STATUSFILE_UPDATE_TIMER],rtOpts->statusFileUpdateInterval);

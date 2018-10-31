@@ -2157,45 +2157,45 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	"Skip lock file checking and locking.");
 
 	/* if quality file specified, enable quality recording  */
-	CONFIG_KEY_TRIGGER("global:quality_file", rtOpts->sysopts.recordLog.logEnabled,TRUE,FALSE);
+	CONFIG_KEY_TRIGGER("global:quality_file", rtOpts->sysopts.recordLogConfig.logInitiallyEnabled,TRUE,FALSE);
 	parseResult &= configMapString(opCode, opArg, dict, target, "global:quality_file",
-				       PTPD_RESTART_LOGGING, rtOpts->sysopts.recordLog.logPath,
-				       sizeof(rtOpts->sysopts.recordLog.logPath),
-				       rtOpts->sysopts.recordLog.logPath,
+				       PTPD_RESTART_LOGGING, rtOpts->sysopts.recordLogConfig.logPath,
+				       sizeof(rtOpts->sysopts.recordLogConfig.logPath),
+				       rtOpts->sysopts.recordLogConfig.logPath,
 		"File used to record data about sync packets. Enables recording when set.");
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:quality_file_max_size",
 				    PTPD_RESTART_LOGGING, INTTYPE_U32,
-				    &rtOpts->sysopts.recordLog.maxSize,
-				    rtOpts->sysopts.recordLog.maxSize,
+				    &rtOpts->sysopts.recordLogConfig.maxSize,
+				    rtOpts->sysopts.recordLogConfig.maxSize,
 		"Maximum sync packet record file size (in kB) - file will be truncated\n"
 	"	if size exceeds the limit. 0 - no limit.", RANGECHECK_MIN,0,0);
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:quality_file_max_files",
 				    PTPD_RESTART_LOGGING, INTTYPE_INT,
-				    &rtOpts->sysopts.recordLog.maxFiles,
-				    rtOpts->sysopts.recordLog.maxFiles,
+				    &rtOpts->sysopts.recordLogConfig.maxFiles,
+				    rtOpts->sysopts.recordLogConfig.maxFiles,
 		"Enable log rotation of the sync packet record file up to n files.\n"
 	"	 0 - do not rotate.\n", RANGECHECK_RANGE,0, 100);
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:quality_file_truncate",
 					PTPD_RESTART_LOGGING,
-					&rtOpts->sysopts.recordLog.truncateOnReopen,
-					rtOpts->sysopts.recordLog.truncateOnReopen,
+					&rtOpts->sysopts.recordLogConfig.truncateOnReopen,
+					rtOpts->sysopts.recordLogConfig.truncateOnReopen,
 		"Truncate the sync packet record file every time it is (re) opened:\n"
 	"	 startup and SIGHUP.");
 
 	/* if status file specified, enable status logging*/
-	CONFIG_KEY_TRIGGER("global:status_file", rtOpts->sysopts.statusLog.logEnabled,TRUE,FALSE);
+	CONFIG_KEY_TRIGGER("global:status_file", rtOpts->sysopts.statusLogConfig.logInitiallyEnabled,TRUE,FALSE);
 	parseResult &= configMapString(opCode, opArg, dict, target, "global:status_file",
-				       PTPD_RESTART_LOGGING, rtOpts->sysopts.statusLog.logPath,
-				       sizeof(rtOpts->sysopts.statusLog.logPath),
-				       rtOpts->sysopts.statusLog.logPath,
+				       PTPD_RESTART_LOGGING, rtOpts->sysopts.statusLogConfig.logPath,
+				       sizeof(rtOpts->sysopts.statusLogConfig.logPath),
+				       rtOpts->sysopts.statusLogConfig.logPath,
 	"File used to log "PTPD_PROGNAME" status information.");
 	/* status file can be disabled even if specified */
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:log_status",
-					PTPD_RESTART_NONE, &rtOpts->sysopts.statusLog.logEnabled,
-					rtOpts->sysopts.statusLog.logEnabled,
+					PTPD_RESTART_NONE, &rtOpts->sysopts.statusLogConfig.logInitiallyEnabled,
+					rtOpts->sysopts.statusLogConfig.logInitiallyEnabled,
 		"Enable / disable writing status information to file.");
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:status_update_interval",
@@ -2224,31 +2224,31 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
      */
 
 	/* if log file specified, enable file logging - otherwise disable */
-	CONFIG_KEY_TRIGGER("global:log_file", rtOpts->sysopts.eventLog.logEnabled,TRUE,FALSE);
+	CONFIG_KEY_TRIGGER("global:log_file", rtOpts->sysopts.eventLogConfig.logInitiallyEnabled,TRUE,FALSE);
 	parseResult &= configMapString(opCode, opArg, dict, target, "global:log_file",
-				       PTPD_RESTART_LOGGING, rtOpts->sysopts.eventLog.logPath,
-				       sizeof(rtOpts->sysopts.eventLog.logPath),
-				       rtOpts->sysopts.eventLog.logPath,
+				       PTPD_RESTART_LOGGING, rtOpts->sysopts.eventLogConfig.logPath,
+				       sizeof(rtOpts->sysopts.eventLogConfig.logPath),
+				       rtOpts->sysopts.eventLogConfig.logPath,
 		"Specify log file path (event log). Setting this enables logging to file.");
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:log_file_max_size",
 				    PTPD_RESTART_LOGGING, INTTYPE_U32,
-				    &rtOpts->sysopts.eventLog.maxSize,
-				    rtOpts->sysopts.eventLog.maxSize,
+				    &rtOpts->sysopts.eventLogConfig.maxSize,
+				    rtOpts->sysopts.eventLogConfig.maxSize,
 		"Maximum log file size (in kB) - log file will be truncated if size exceeds\n"
 	"	 the limit. 0 - no limit.", RANGECHECK_MIN,0,0);
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:log_file_max_files",
 				    PTPD_RESTART_NONE, INTTYPE_INT,
-				    &rtOpts->sysopts.eventLog.maxFiles,
-				    rtOpts->sysopts.eventLog.maxFiles,
+				    &rtOpts->sysopts.eventLogConfig.maxFiles,
+				    rtOpts->sysopts.eventLogConfig.maxFiles,
 		"Enable log rotation of the sync packet record file up to n files.\n"
 	"	 0 - do not rotate.\n", RANGECHECK_RANGE,0, 100);
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:log_file_truncate",
 					PTPD_RESTART_LOGGING,
-					&rtOpts->sysopts.eventLog.truncateOnReopen,
-					rtOpts->sysopts.eventLog.truncateOnReopen,
+					&rtOpts->sysopts.eventLogConfig.truncateOnReopen,
+					rtOpts->sysopts.eventLogConfig.truncateOnReopen,
 		"Truncate the log file every time it is (re) opened: startup and SIGHUP.");
 
 	parseResult &= configMapSelectValue(opCode, opArg, dict, target, "global:log_level",
@@ -2264,29 +2264,42 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 				);
 
 	/* if statistics file specified, enable statistics logging - otherwise disable  - log_statistics also controlled further below*/
-	CONFIG_KEY_TRIGGER("global:statistics_file", rtOpts->sysopts.statisticsLog.logEnabled,TRUE,FALSE);
+	CONFIG_KEY_TRIGGER("global:statistics_file",
+			   rtOpts->sysopts.statisticsLogConfig.logInitiallyEnabled,
+			   TRUE, FALSE);
 	CONFIG_KEY_TRIGGER("global:statistics_file", rtOpts->logStatistics,TRUE,FALSE);
 	parseResult &= configMapString(opCode, opArg, dict, target, "global:statistics_file",
-		PTPD_RESTART_LOGGING, rtOpts->sysopts.statisticsLog.logPath, sizeof(rtOpts->sysopts.statisticsLog.logPath), rtOpts->sysopts.statisticsLog.logPath,
+				       PTPD_RESTART_LOGGING,
+				       rtOpts->sysopts.statisticsLogConfig.logPath,
+				       sizeof(rtOpts->sysopts.statisticsLogConfig.logPath),
+				       rtOpts->sysopts.statisticsLogConfig.logPath,
 		"Specify statistics log file path. Setting this enables logging of \n"
 	"	 statistics, but can be overriden with global:log_statistics.");
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:statistics_log_interval",
-		PTPD_RESTART_NONE, INTTYPE_INT, &rtOpts->sysopts.statisticsLogInterval, rtOpts->sysopts.statisticsLogInterval,
+				    PTPD_RESTART_NONE, INTTYPE_INT,
+				    &rtOpts->sysopts.statisticsLogInterval,
+				    rtOpts->sysopts.statisticsLogInterval,
 		 "Log timing statistics every n seconds for Sync and Delay messages\n"
 	"	 (0 - log all).",RANGECHECK_MIN,0,0);
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:statistics_file_max_size",
-		PTPD_RESTART_LOGGING, INTTYPE_U32, &rtOpts->sysopts.statisticsLog.maxSize, rtOpts->sysopts.statisticsLog.maxSize,
+				    PTPD_RESTART_LOGGING, INTTYPE_U32,
+				    &rtOpts->sysopts.statisticsLogConfig.maxSize,
+				    rtOpts->sysopts.statisticsLogConfig.maxSize,
 		"Maximum statistics log file size (in kB) - log file will be truncated\n"
 	"	 if size exceeds the limit. 0 - no limit.",RANGECHECK_MIN,0,0);
 
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:statistics_file_max_files",
-		PTPD_RESTART_LOGGING, INTTYPE_INT, &rtOpts->sysopts.statisticsLog.maxFiles, rtOpts->sysopts.statisticsLog.maxFiles,
+				    PTPD_RESTART_LOGGING, INTTYPE_INT,
+				    &rtOpts->sysopts.statisticsLogConfig.maxFiles,
+				    rtOpts->sysopts.statisticsLogConfig.maxFiles,
 		"Enable log rotation of the statistics file up to n files. 0 - do not rotate.", RANGECHECK_RANGE,0, 100);
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:statistics_file_truncate",
-		PTPD_RESTART_LOGGING, &rtOpts->sysopts.statisticsLog.truncateOnReopen, rtOpts->sysopts.statisticsLog.truncateOnReopen,
+					PTPD_RESTART_LOGGING,
+					&rtOpts->sysopts.statisticsLogConfig.truncateOnReopen,
+					rtOpts->sysopts.statisticsLogConfig.truncateOnReopen,
 		"Truncate the statistics file every time it is (re) opened: startup and SIGHUP.");
 
 	parseResult &= configMapBoolean(opCode, opArg, dict, target, "global:dump_packets",
@@ -2303,8 +2316,8 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 		rtOpts->sysopts.useSysLog    = FALSE;
 		rtOpts->logStatistics = TRUE;
 		rtOpts->sysopts.statisticsLogInterval = 0;
-		rtOpts->sysopts.eventLog.logEnabled = FALSE;
-		rtOpts->sysopts.statisticsLog.logEnabled = FALSE;
+		rtOpts->sysopts.eventLogConfig.logInitiallyEnabled = FALSE;
+		rtOpts->sysopts.statisticsLogConfig.logInitiallyEnabled = FALSE;
 	}
 
 	/*
@@ -2341,9 +2354,9 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 		);
 
 	/* If statistics file is enabled but logStatistics isn't, disable logging to file */
-	CONFIG_KEY_CONDITIONAL_TRIGGER(rtOpts->sysopts.statisticsLog.logEnabled && !rtOpts->logStatistics,
-				       rtOpts->sysopts.statisticsLog.logEnabled, FALSE,
-				       rtOpts->sysopts.statisticsLog.logEnabled);
+	CONFIG_KEY_CONDITIONAL_TRIGGER(rtOpts->sysopts.statisticsLogConfig.logInitiallyEnabled && !rtOpts->logStatistics,
+				       rtOpts->sysopts.statisticsLogConfig.logInitiallyEnabled, FALSE,
+				       rtOpts->sysopts.statisticsLogConfig.logInitiallyEnabled);
 
 #if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined (__QNXNTO__)
 	parseResult &= configMapInt(opCode, opArg, dict, target, "global:cpuaffinity_cpucore", PTPD_CHANGE_CPUAFFINITY, INTTYPE_INT, &rtOpts->sysopts.cpuNumber, rtOpts->sysopts.cpuNumber,

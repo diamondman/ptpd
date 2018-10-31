@@ -148,6 +148,45 @@
 #include "display.h"
 #include "ptpd_logging.h"
 
+typedef struct LogFileHandler {
+
+	Boolean logEnabled;
+
+	LogFileConfig* config;
+
+	FILE* logFP;
+	uint32_t lastHash;
+	UInteger32 fileSize;
+
+} LogFileHandler;
+
+static LogFileHandler logFiles[LOGFILE_MAX] = {0};
+
+Boolean LogFileHandlerIsEnabled(LogFile_e id) {
+	if(id >= LOGFILE_MAX) return FALSE;
+	return logFiles[id].logEnabled;
+}
+
+static Boolean LogFileHandlerInit(LogFile_e id, LogFileConfig* config) {
+	if(id >= LOGFILE_MAX) return FALSE;
+	if(!config) return FALSE;
+
+	LogFileHandler* log = &logFiles[id];
+	log->config = config;
+	log->logEnabled = config->logInitiallyEnabled;
+
+	return TRUE;
+}
+
+Boolean initLogging(RunTimeOpts* rtOpts) {
+	if(!LogFileHandlerInit(LOGFILE_STATISTICS,&rtOpts->sysopts.statisticsLogConfig)) return FALSE;
+	if(!LogFileHandlerInit(LOGFILE_RECORD,    &rtOpts->sysopts.recordLogConfig)    ) return FALSE;
+	if(!LogFileHandlerInit(LOGFILE_EVENT,     &rtOpts->sysopts.eventLogConfig)     ) return FALSE;
+	if(!LogFileHandlerInit(LOGFILE_MAX,       &rtOpts->sysopts.statusLogConfig)    ) return FALSE;
+	return TRUE;
+}
+
+
 /* only C99 has the round function built-in */
 double round (double __x);
 
@@ -510,7 +549,7 @@ updateLogSize(LogFileHandler* handler)
 	} else {
 #ifdef RUNTIME_DEBUG
 /* 2.3.1: do not print to stderr or log file */
-//		fprintf(stderr, "fstat on %s file failed!\n", handler->logID);
+//		fprintf(stderr, "fstat on %s file failed!\n", handler->config->logID);
 #endif /* RUNTIME_DEBUG */
 	}
 }
@@ -542,14 +581,14 @@ logMessage(int priority, const char * format, ...)
 	    goto end;
 	}
 	/* If we're using a log file and the message has been written OK, we're done*/
-	if(rtOpts.sysopts.eventLog.logEnabled && rtOpts.sysopts.eventLog.logFP != NULL) {
-	    if(writeMessage(rtOpts.sysopts.eventLog.logFP, &rtOpts.sysopts.eventLog.lastHash,
+	if(logFiles[LOGFILE_EVENT].logEnabled && logFiles[LOGFILE_EVENT].logFP != NULL) {
+	    if(writeMessage(logFiles[LOGFILE_EVENT].logFP, &logFiles[LOGFILE_EVENT].lastHash,
 			    priority, format, ap) > 0) {
-		maintainLogSize(&rtOpts.sysopts.eventLog);
+		maintainLogSize(&logFiles[LOGFILE_EVENT]);
 		if(!startupInProgress)
 		    goto end;
 		else {
-		    rtOpts.sysopts.eventLog.lastHash = 0;
+		    logFiles[LOGFILE_EVENT].lastHash = 0;
 		    goto std_err;
 		    }
 	    }
@@ -582,14 +621,14 @@ logMessage(int priority, const char * format, ...)
 			goto end;
 		}
 		else {
-			rtOpts.sysopts.eventLog.lastHash = 0;
+			logFiles[LOGFILE_EVENT].lastHash = 0;
 			goto std_err;
 		}
 	}
 std_err:
 
 	/* Either all else failed or we're running in foreground - or we also log to stderr */
-	writeMessage(stderr, &rtOpts.sysopts.eventLog.lastHash, priority, format, ap1);
+	writeMessage(stderr, &logFiles[LOGFILE_EVENT].lastHash, priority, format, ap1);
 
 end:
 	va_end(ap1);
@@ -609,16 +648,17 @@ restartLog(LogFileHandler* handler, Boolean quiet)
                 return TRUE;
 
 	/* Open the file */
-        if ( (handler->logFP = fopen(handler->logPath, handler->openMode)) == NULL) {
-                if(!quiet) PERROR("Could not open %s file", handler->logID);
+        if ( (handler->logFP = fopen(handler->config->logPath, handler->config->openMode)) == NULL) {
+                if(!quiet) PERROR("Could not open %s file", handler->config->logID);
 		return FALSE;
         }
 
-	if(handler->truncateOnReopen) {
+	if(handler->config->truncateOnReopen) {
 		if(!ftruncate(fileno(handler->logFP), 0)) {
-			if(!quiet) INFO("Truncated %s file\n", handler->logID);
+			if(!quiet) INFO("Truncated %s file\n", handler->config->logID);
 		} else {
-			DBG("Could not truncate % file: %s\n", handler->logID, handler->logPath);
+			DBG("Could not truncate % file: %s\n",
+			    handler->config->logID, handler->config->logPath);
 		}
 	}
 	/* \n flushes output for us, no need for fflush() - if you want something different, set it later */
@@ -631,7 +671,7 @@ static Boolean
 closeLog(LogFileHandler* handler)
 {
 	if(handler->logFP != NULL) {
-		//if(!quiet) INFO("Closing %s log file.\n", handler->logID);
+		//if(!quiet) INFO("Closing %s log file.\n", handler->config->logID);
 		handler->lastHash=0;
 		fclose(handler->logFP);
 		/*
@@ -641,9 +681,9 @@ closeLog(LogFileHandler* handler)
 		handler->logFP=NULL;
 		/* If we're not logging to file (any more), call it quits */
 		if (!handler->logEnabled) {
-			if(handler->unlinkOnClose) {
-				//if(!quiet) INFO("Logging to %s file disabled. Deleting file.\n", handler->logID);
-				unlink(handler->logPath);
+			if(handler->config->unlinkOnClose) {
+				//if(!quiet) INFO("Logging to %s file disabled. Deleting file.\n", handler->config->logID);
+				unlink(handler->config->logPath);
 			}
 		}
 		return TRUE;
@@ -656,27 +696,27 @@ closeLog(LogFileHandler* handler)
 static Boolean
 maintainLogSize(LogFileHandler* handler)
 {
-	if(handler->maxSize) {
+	if(handler->config->maxSize) {
 		if(handler->logFP == NULL)
 		    return FALSE;
 		updateLogSize(handler);
 #ifdef RUNTIME_DEBUG
 /* 2.3.1: do not print to stderr or log file */
-//		fprintf(stderr, "%s logsize: %d\n", handler->logID, handler->fileSize);
+//		fprintf(stderr, "%s logsize: %d\n", handler->config->logID, handler->fileSize);
 #endif /* RUNTIME_DEBUG */
-		if(handler->fileSize > (handler->maxSize * 1024)) {
+		if(handler->fileSize > (handler->config->maxSize * 1024)) {
 
 		    /* Rotate the log file */
-		    if (handler->maxFiles) {
+		    if (handler->config->maxFiles) {
 			int i = 0;
 			int logFileNumber = 0;
 			time_t maxMtime = 0;
 			struct stat st;
 			char fname[PATH_MAX];
 			/* Find the last modified file of the series */
-			while(++i <= handler->maxFiles) {
+			while(++i <= handler->config->maxFiles) {
 				memset(fname, 0, PATH_MAX);
-				snprintf(fname, PATH_MAX,"%s.%d", handler->logPath, i);
+				snprintf(fname, PATH_MAX,"%s.%d", handler->config->logPath, i);
 				if((stat(fname,&st) != -1) && S_ISREG(st.st_mode)) {
 					if(st.st_mtime > maxMtime) {
 						maxMtime = st.st_mtime;
@@ -685,18 +725,18 @@ maintainLogSize(LogFileHandler* handler)
 				}
 			}
 			/* Use next file in line or first one if rolled over */
-			if(++logFileNumber > handler->maxFiles)
+			if(++logFileNumber > handler->config->maxFiles)
 				logFileNumber = 1;
 			memset(fname, 0, PATH_MAX);
-			snprintf(fname, PATH_MAX,"%s.%d", handler->logPath, logFileNumber);
+			snprintf(fname, PATH_MAX,"%s.%d", handler->config->logPath, logFileNumber);
 			/* Move current file to new location */
-			rename(handler->logPath, fname);
+			rename(handler->config->logPath, fname);
 			/* Reopen to reactivate the original path */
 			if(restartLog(handler,TRUE)) {
 				INFO("Rotating %s file - size above %dkB\n",
-					handler->logID, handler->maxSize);
+					handler->config->logID, handler->config->maxSize);
 			} else {
-				DBG("Could not rotate %s file\n", handler->logPath);
+				DBG("Could not rotate %s file\n", handler->config->logPath);
 			}
 			return TRUE;
 		    /* Just truncate - maxSize given but no maxFiles */
@@ -704,11 +744,11 @@ maintainLogSize(LogFileHandler* handler)
 
 			if(!ftruncate(fileno(handler->logFP),0)) {
 			INFO("Truncating %s file - size above %dkB\n",
-				handler->logID, handler->maxSize);
+				handler->config->logID, handler->config->maxSize);
 			} else {
 #ifdef RUNTIME_DEBUG
 /* 2.3.1: do not print to stderr or log file */
-//				fprintf(stderr, "Could not truncate %s file\n", handler->logPath);
+//				fprintf(stderr, "Could not truncate %s file\n", handler->config->logPath);
 #endif
 			}
 			return TRUE;
@@ -720,35 +760,21 @@ maintainLogSize(LogFileHandler* handler)
 }
 
 void
-restartLogging(RunTimeOpts* rtOpts)
+restartLogging()
 {
-	if(!restartLog(&rtOpts->sysopts.statisticsLog, TRUE))
-		NOTIFY("Failed logging to %s file\n", rtOpts->sysopts.statisticsLog.logID);
-
-	if(!restartLog(&rtOpts->sysopts.recordLog, TRUE))
-		NOTIFY("Failed logging to %s file\n", rtOpts->sysopts.recordLog.logID);
-
-	if(!restartLog(&rtOpts->sysopts.eventLog, TRUE))
-		NOTIFY("Failed logging to %s file\n", rtOpts->sysopts.eventLog.logID);
-
-	if(!restartLog(&rtOpts->sysopts.statusLog, TRUE))
-		NOTIFY("Failed logging to %s file\n", rtOpts->sysopts.statusLog.logID);
+	for(int i = 0; i < LOGFILE_MAX; i++){
+		if(!restartLog(&logFiles[i], TRUE))
+			NOTIFY("Failed logging to %s file\n", logFiles[i].config->logID);
+	}
 }
 
 void
 stopLogging(RunTimeOpts* rtOpts)
 {
-	rtOpts->sysopts.statisticsLog.logEnabled = FALSE;
-	closeLog(&rtOpts->sysopts.statisticsLog);
-
-	rtOpts->sysopts.recordLog.logEnabled = FALSE;
-	closeLog(&rtOpts->sysopts.recordLog);
-
-	rtOpts->sysopts.eventLog.logEnabled = FALSE;
-	closeLog(&rtOpts->sysopts.eventLog);
-
-	rtOpts->sysopts.statusLog.logEnabled = FALSE;
-	closeLog(&rtOpts->sysopts.statusLog);
+	for(int i = 0; i < LOGFILE_MAX; i++){
+		logFiles[i].logEnabled = FALSE;
+		closeLog(&logFiles[i]);
+	}
 }
 
 void
@@ -768,9 +794,9 @@ logStatistics(PtpClock * ptpClock)
 		return;
 	}
 
-	if(rtOpts.sysopts.statisticsLog.logEnabled &&
-	   rtOpts.sysopts.statisticsLog.logFP != NULL)
-	    destination = rtOpts.sysopts.statisticsLog.logFP;
+	if(logFiles[LOGFILE_STATISTICS].logEnabled &&
+	   logFiles[LOGFILE_STATISTICS].logFP != NULL)
+	    destination = logFiles[LOGFILE_STATISTICS].logFP;
 	else
 	    destination = stdout;
 
@@ -945,8 +971,8 @@ logStatistics(PtpClock * ptpClock)
 	    }
 	}
 
-	if(destination == rtOpts.sysopts.statisticsLog.logFP) {
-		if (maintainLogSize(&rtOpts.sysopts.statisticsLog))
+	if(destination == logFiles[LOGFILE_STATISTICS].logFP) {
+		if (maintainLogSize(&logFiles[LOGFILE_STATISTICS]))
 			ptpClock->resetStatisticsLog = TRUE;
 	}
 }
@@ -1063,7 +1089,7 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 	char outBuf[2048];
 	char tmpBuf[200];
 
-	if(!rtOpts->sysopts.statusLog.logEnabled)
+	if(!logFiles[LOGFILE_STATUS].logEnabled)
 		return;
 
 	int n = getAlarmSummary(NULL, 0, ptpClock->alarms, ALRM_MAX);
@@ -1071,7 +1097,7 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 
 	getAlarmSummary(alarmBuf, n, ptpClock->alarms, ALRM_MAX);
 
-	if(rtOpts->sysopts.statusLog.logFP == NULL)
+	if(logFiles[LOGFILE_STATUS].logFP == NULL)
 		return;
 
 	char timeStr[MAXTIMESTR];
@@ -1084,7 +1110,7 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 	gettimeofday(&now, 0);
 	strftime(timeStr, MAXTIMESTR, "%a %b %d %X %Z %Y", localtime((time_t*)&now.tv_sec));
 
-	FILE* out = rtOpts->sysopts.statusLog.logFP;
+	FILE* out = logFiles[LOGFILE_STATUS].logFP;
 	memset(outBuf, 0, sizeof(outBuf));
 
 	setbuf(out, outBuf);
@@ -1469,11 +1495,11 @@ void
 recordSync(UInteger16 sequenceId, TimeInternal * time)
 {
 	extern RunTimeOpts rtOpts;
-	if (rtOpts.sysopts.recordLog.logEnabled && rtOpts.sysopts.recordLog.logFP != NULL) {
-		fprintf(rtOpts.sysopts.recordLog.logFP, "%d %llu\n", sequenceId,
+	if (logFiles[LOGFILE_RECORD].logEnabled && logFiles[LOGFILE_RECORD].logFP != NULL) {
+		fprintf(logFiles[LOGFILE_RECORD].logFP, "%d %llu\n", sequenceId,
 		  ((time->seconds * 1000000000ULL) + time->nanoseconds)
 		);
-		maintainLogSize(&rtOpts.sysopts.recordLog);
+		maintainLogSize(&logFiles[LOGFILE_RECORD]);
 	}
 }
 
@@ -2859,14 +2885,14 @@ do_signal_sighup(RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	/* tell the service it can perform any HUP-triggered actions */
 	ptpClock->timingService.reloadRequested = TRUE;
 
-	if(rtOpts->sysopts.recordLog.logEnabled ||
-	   rtOpts->sysopts.eventLog.logEnabled ||
-	   rtOpts->sysopts.statisticsLog.logEnabled)
+	if(logFiles[LOGFILE_RECORD].logEnabled ||
+	   logFiles[LOGFILE_EVENT].logEnabled ||
+	   logFiles[LOGFILE_STATISTICS].logEnabled)
 		INFO("Reopening log files\n");
 
-	restartLogging(rtOpts);
+	restartLogging();
 
-	if(rtOpts->sysopts.statisticsLog.logEnabled)
+	if(logFiles[LOGFILE_STATISTICS].logEnabled)
 		ptpClock->resetStatisticsLog = TRUE;
 }
 

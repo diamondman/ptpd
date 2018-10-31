@@ -419,33 +419,29 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 
 /* Log file settings */
 
-	rtOpts->sysopts.statisticsLog.logID = "statistics";
-	rtOpts->sysopts.statisticsLog.openMode = "a+";
-	rtOpts->sysopts.statisticsLog.logFP = NULL;
-	rtOpts->sysopts.statisticsLog.truncateOnReopen = FALSE;
-	rtOpts->sysopts.statisticsLog.unlinkOnClose = FALSE;
-	rtOpts->sysopts.statisticsLog.maxSize = 0;
+	rtOpts->sysopts.statisticsLogConfig.logID = "statistics";
+	rtOpts->sysopts.statisticsLogConfig.openMode = "a+";
+	rtOpts->sysopts.statisticsLogConfig.truncateOnReopen = FALSE;
+	rtOpts->sysopts.statisticsLogConfig.unlinkOnClose = FALSE;
+	rtOpts->sysopts.statisticsLogConfig.maxSize = 0;
 
-	rtOpts->sysopts.recordLog.logID = "record";
-	rtOpts->sysopts.recordLog.openMode = "a+";
-	rtOpts->sysopts.recordLog.logFP = NULL;
-	rtOpts->sysopts.recordLog.truncateOnReopen = FALSE;
-	rtOpts->sysopts.recordLog.unlinkOnClose = FALSE;
-	rtOpts->sysopts.recordLog.maxSize = 0;
+	rtOpts->sysopts.recordLogConfig.logID = "record";
+	rtOpts->sysopts.recordLogConfig.openMode = "a+";
+	rtOpts->sysopts.recordLogConfig.truncateOnReopen = FALSE;
+	rtOpts->sysopts.recordLogConfig.unlinkOnClose = FALSE;
+	rtOpts->sysopts.recordLogConfig.maxSize = 0;
 
-	rtOpts->sysopts.eventLog.logID = "log";
-	rtOpts->sysopts.eventLog.openMode = "a+";
-	rtOpts->sysopts.eventLog.logFP = NULL;
-	rtOpts->sysopts.eventLog.truncateOnReopen = FALSE;
-	rtOpts->sysopts.eventLog.unlinkOnClose = FALSE;
-	rtOpts->sysopts.eventLog.maxSize = 0;
+	rtOpts->sysopts.eventLogConfig.logID = "log";
+	rtOpts->sysopts.eventLogConfig.openMode = "a+";
+	rtOpts->sysopts.eventLogConfig.truncateOnReopen = FALSE;
+	rtOpts->sysopts.eventLogConfig.unlinkOnClose = FALSE;
+	rtOpts->sysopts.eventLogConfig.maxSize = 0;
 
-	rtOpts->sysopts.statusLog.logID = "status";
-	rtOpts->sysopts.statusLog.openMode = "w";
-	strncpy(rtOpts->sysopts.statusLog.logPath, DEFAULT_STATUSFILE, PATH_MAX);
-	rtOpts->sysopts.statusLog.logFP = NULL;
-	rtOpts->sysopts.statusLog.truncateOnReopen = FALSE;
-	rtOpts->sysopts.statusLog.unlinkOnClose = TRUE;
+	rtOpts->sysopts.statusLogConfig.logID = "status";
+	rtOpts->sysopts.statusLogConfig.openMode = "w";
+	strncpy(rtOpts->sysopts.statusLogConfig.logPath, DEFAULT_STATUSFILE, PATH_MAX);
+	rtOpts->sysopts.statusLogConfig.truncateOnReopen = FALSE;
+	rtOpts->sysopts.statusLogConfig.unlinkOnClose = TRUE;
 
 /* Management message support settings */
 	rtOpts->managementEnabled = TRUE;
