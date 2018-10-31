@@ -9,7 +9,7 @@
 #include <limits.h> // For PATH_MAX
 
 #include "ptp_primitives.h"
-#include "net.h"
+#include "dep/net.h"
 
 typedef struct LogFileConfig {
 	Boolean logInitiallyEnabled;

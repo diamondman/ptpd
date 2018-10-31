@@ -136,7 +136,7 @@
 #include "constants.h"
 #include "dep/constants_dep.h"
 #include "ptp_primitives.h"
-#include "dep/datatypes_dep.h"
+#include "datatypes_port.h"
 #include "ptp_datatypes.h"
 #include "arith.h"
 #include "dep/servo.h" // For adjFreq_wrapper

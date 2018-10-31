@@ -3,7 +3,7 @@
 
 #include "ptp_primitives.h"
 #include "timingdomain.h"
-#include "dep/datatypes_dep.h"
+#include "datatypes_port.h"
 #include "ptp_datatypes.h"
 #include "datatypes_stub.h"
 #include "ptpd_logging.h"

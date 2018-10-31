@@ -5,7 +5,7 @@ lib_LTLIBRARIES = $(LIBPTPD2_LIBS_LA)
 sbin_PROGRAMS = ptpd2
 man_MANS = ptpd2.8 ptpd2.conf.5
 
-AM_CFLAGS	= $(SNMP_CFLAGS) $(PCAP_CFLAGS) -Wall -fexceptions
+AM_CFLAGS	= $(SNMP_CFLAGS) $(PCAP_CFLAGS) -Wall -fexceptions -Idep/port_posix
 AM_CPPFLAGS	= $(SNMP_CPPFLAGS) $(PCAP_CPPFLAGS)
 AM_LDFLAGS	= $(SNMP_LIBS) $(PCAP_LIBS)
 
@@ -38,7 +38,7 @@ ptpd2_SOURCES =				\
 	dep/ipv4_acl.h			\
 	dep/ipv4_acl.c			\
 	dep/msg.c			\
-	dep/net.c			\
+	dep/port_posix/net.c		\
 	dep/ptpd_dep.h			\
 	dep/eventtimer.h		\
 	dep/eventtimer.c		\
@@ -54,7 +54,7 @@ ptpd2_SOURCES =				\
 	dep/daemonconfig.h		\
 	dep/daemonconfig.c		\
 	dep/startup.c			\
-	dep/sys.c			\
+	dep/port_posix/sys.c		\
 	display.c			\
 	management.c			\
 	signaling.c			\

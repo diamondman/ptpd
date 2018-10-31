@@ -13,7 +13,7 @@
 #include "constants.h" // For USER_DESCRIPTION_MAX
 #include "dep/constants_dep.h" // For UNICAST_MAX_DESTINATIONS, PACKET_SIZE
 #include "ptp_primitives.h"
-#include "dep/datatypes_dep.h"
+#include "datatypes_port.h"
 #include "timingdomain.h"
 #include "ptp_datatypes.h"
 #include "signaling.h"
