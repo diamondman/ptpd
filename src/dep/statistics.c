@@ -931,7 +931,7 @@ Boolean isIntPeircesOutlier(IntMovingStdDev *container, int32_t sample, double t
 	DBGV("Peirce %s outlier: val: %d, cnt: %d, mxd: %.09f (%.03f * dev * %.03f), dev: %.09f, mea: %.09f, dif: %.09f\n", container->identifier,
 		sample, container->meanContainer->count, maxDev, getpeircesCriterion(container->meanContainer->count, 1), threshold,
 		container->stdDev,
-		container->meanContainer->mean, fabs(sample - container->meanContainer->mean));
+		container->meanContainer->mean, abs(sample - container->meanContainer->mean));
             return TRUE;
 	}
 
