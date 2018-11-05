@@ -268,17 +268,17 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 		if (ptpClock->portDS.portState == PTP_INITIALIZING) {
 
-			    /*
-			     * DO NOT shut down once started. We have to "wait intelligently",
-			     * that is keep processing signals. If init failed, wait for n seconds
-			     * until next retry, do not exit. Wait in chunks so SIGALRM can interrupt.
-			     */
-			    if(ptpClock->initFailure) {
-				    usleep(10000);
-				    ptpClock->initFailureTimeout--;
-			    }
+			/*
+			 * DO NOT shut down once started. We have to "wait intelligently",
+			 * that is keep processing signals. If init failed, wait for n seconds
+			 * until next retry, do not exit. Wait in chunks so SIGALRM can interrupt.
+			 */
+			if(ptpClock->initFailure) {
+				usleep(10000);
+				ptpClock->initFailureTimeout--;
+			}
 
-			    if(!ptpClock->initFailure || ptpClock->initFailureTimeout <= 0) {
+			if(!ptpClock->initFailure || ptpClock->initFailureTimeout <= 0) {
 				if(!doInit(rtOpts, ptpClock)) {
 					ERROR("PTPd init failed - will retry in %d seconds\n", DEFAULT_FAILURE_WAITTIME);
 					writeStatusFile(ptpClock, rtOpts, TRUE);
@@ -291,7 +291,7 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 					SET_ALARM(ALRM_NETWORK_FLT, FALSE);
 				}
 
-			   }
+			}
 
 		} else {
 			doState(rtOpts, ptpClock);
@@ -310,40 +310,43 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		}
 
 		if (timerExpired(&ptpClock->timers[TIMINGDOMAIN_UPDATE_TIMER])) {
-		    timingDomain.update(&timingDomain);
+			timingDomain.update(&timingDomain);
 		}
 
 		if(ptpClock->defaultDS.slaveOnly) {
-		    SET_ALARM(ALRM_PORT_STATE, ptpClock->portDS.portState != PTP_SLAVE);
+			SET_ALARM(ALRM_PORT_STATE, ptpClock->portDS.portState != PTP_SLAVE);
 		}
 
 		if(ptpClock->defaultDS.clockQuality.clockClass < 128) {
-		    SET_ALARM(ALRM_PORT_STATE, ptpClock->portDS.portState != PTP_MASTER && ptpClock->portDS.portState != PTP_PASSIVE );
+			SET_ALARM(ALRM_PORT_STATE,
+				  ptpClock->portDS.portState != PTP_MASTER &&
+				  ptpClock->portDS.portState != PTP_PASSIVE );
 		}
 
 		if (timerExpired(&ptpClock->timers[ALARM_UPDATE_TIMER])) {
-		    if(rtOpts->alarmInitialDelay && (ptpClock->alarmDelay > 0)) {
-			ptpClock->alarmDelay -= ALARM_UPDATE_INTERVAL;
-			if(ptpClock->alarmDelay <= 0 && rtOpts->alarmsEnabled) {
-			    INFO("Alarm delay expired - starting alarm processing\n");
-			    enableAlarms(ptpClock->alarms, ALRM_MAX, TRUE);
+			if(rtOpts->alarmInitialDelay && (ptpClock->alarmDelay > 0)) {
+				ptpClock->alarmDelay -= ALARM_UPDATE_INTERVAL;
+				if(ptpClock->alarmDelay <= 0 && rtOpts->alarmsEnabled) {
+					INFO("Alarm delay expired - starting alarm processing\n");
+					enableAlarms(ptpClock->alarms, ALRM_MAX, TRUE);
+				}
 			}
-		    }
-		    updateAlarms(ptpClock->alarms, ALRM_MAX);
+			updateAlarms(ptpClock->alarms, ALRM_MAX);
 		}
 
 
 		if (timerExpired(&ptpClock->timers[UNICAST_GRANT_TIMER])) {
 			if(rtOpts->unicastDestinationsSet) {
-			    refreshUnicastGrants(ptpClock->unicastGrants,
-				ptpClock->unicastDestinationCount, rtOpts, ptpClock);
+				refreshUnicastGrants(ptpClock->unicastGrants,
+						     ptpClock->unicastDestinationCount,
+						     rtOpts, ptpClock);
 			} else {
-			    refreshUnicastGrants(ptpClock->unicastGrants,
-				UNICAST_MAX_DESTINATIONS, rtOpts, ptpClock);
+				refreshUnicastGrants(ptpClock->unicastGrants,
+						     UNICAST_MAX_DESTINATIONS, rtOpts, ptpClock);
 			}
 			if(ptpClock->unicastPeerDestination.transportAddress) {
-			    refreshUnicastGrants(&ptpClock->peerGrants,
-				1, rtOpts, ptpClock);
+				refreshUnicastGrants(&ptpClock->peerGrants,
+						     1, rtOpts, ptpClock);
 
 			}
 		}
