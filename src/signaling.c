@@ -45,6 +45,7 @@
 #include "ptp_primitives.h"
 #include "ptp_datatypes.h"
 #include "arith.h"
+#include "display.h"
 #include "datatypes.h"
 #include "dep/sys.h" // For snprint_PortIdentity, getRand
 #include "dep/net.h"
