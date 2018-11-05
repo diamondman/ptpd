@@ -305,7 +305,6 @@ ptpClockCreate(const RunTimeOpts* rtOpts, Integer16* ret) {
 		*ret = 2;
 		goto fail;
 	}
-	DBG("allocated %d bytes for protocol engine NetPath data\n", (int)sizeof(NetPath));
 
 	ptpClock->resetStatisticsLog = TRUE;
 

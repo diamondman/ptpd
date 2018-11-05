@@ -2553,6 +2553,7 @@ void netPathFree(NetPath** netPath)
 NetPath* netPathCreate(const RunTimeOpts* rtOpts)
 {
 	NetPath* netPath = (NetPath*)calloc(1, sizeof(NetPath));
+	DBG("allocated %d bytes for protocol engine NetPath data\n", (int)sizeof(NetPath));
 	netPath->runningBackupInterface = FALSE;
 	return netPath;
 }
