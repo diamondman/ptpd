@@ -359,6 +359,8 @@ typedef struct RunTimeOpts {
 /* main program data structure */
 typedef struct PtpClock {
 
+	Boolean ptpClockStaticlyAllocated;
+
 	/* PTP datsets */
 	DefaultDS defaultDS; 			/* Default data set */
 	CurrentDS currentDS; 			/* Current data set */

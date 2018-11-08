@@ -268,7 +268,8 @@ ptpdShutdown(PtpClock * ptpClock)
 
 	timerShutdown(ptpClock->timers);
 
-	free(ptpClock);
+	if(!ptpClock->ptpClockStaticlyAllocated)
+		free(ptpClock);
 
 	extern PtpClock* G_ptpClock;
 	G_ptpClock = NULL;
@@ -279,14 +280,21 @@ ptpdShutdown(PtpClock * ptpClock)
 }
 
 PtpClock *
-ptpClockCreate(const RunTimeOpts* rtOpts, Integer16* ret) {
+ptpClockCreate(const RunTimeOpts* rtOpts, Integer16* ret, PtpClock* ptpClock_in) {
 	PtpClock* ptpClock;
-	/* Allocate memory after we're done with other checks but before going into daemon */
-	ptpClock = (PtpClock *) calloc(1, sizeof(PtpClock));
-	if (!ptpClock) {
-		PERROR("Error: Failed to allocate memory for protocol engine data");
-		*ret = 2;
-		goto fail;
+
+	if (ptpClock_in) {
+		ptpClock = ptpClock_in;
+		memset(ptpClock, 0, sizeof(PtpClock));
+		ptpClock->ptpClockStaticlyAllocated = TRUE;
+	}else{
+		/* Allocate memory after we're done with other checks but before going into daemon */
+		ptpClock = (PtpClock *) calloc(1, sizeof(PtpClock));
+		if (!ptpClock) {
+			PERROR("Error: Failed to allocate memory for protocol engine data");
+			*ret = 2;
+			goto fail;
+		}
 	}
 	DBG("allocated %d bytes for protocol engine data\n", (int)sizeof(PtpClock));
 
@@ -374,7 +382,8 @@ ptpClockCreate(const RunTimeOpts* rtOpts, Integer16* ret) {
 		if(ptpClock->filterSM)
 			freeDoubleMovingStatFilter(&ptpClock->filterSM);
 #endif
-		free(ptpClock);
+		if(!ptpClock->ptpClockStaticlyAllocated)
+			free(ptpClock);
 	}
 	return NULL;
 }

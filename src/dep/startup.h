@@ -6,6 +6,6 @@
 
 void restartSubsystems(RunTimeOpts *rtOpts, PtpClock *ptpClock);
 void ptpdShutdown(PtpClock*);
-PtpClock * ptpClockCreate(const RunTimeOpts*, Integer16* ret);
+PtpClock * ptpClockCreate(const RunTimeOpts*, Integer16* ret, PtpClock* ptpClock_in);
 
 #endif /* include guard */

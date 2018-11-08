@@ -105,7 +105,7 @@ main(int argc, char **argv)
 	/* Initialize run time options with command line arguments */
 	if (!runTimeOptsInit(argc, argv, &ret, &rtOpts) ||
 	    !sysPrePtpClockInit(&rtOpts, &ret) ||
-	    !(ptpClock = ptpClockCreate(&rtOpts, &ret)) ||
+	    !(ptpClock = ptpClockCreate(&rtOpts, &ret, NULL)) ||
 	    !sysPostPtpClockInit(&rtOpts, ptpClock,  &ret)
 	    ) {
 		if (ret != 0 && !rtOpts.checkConfigOnly)
