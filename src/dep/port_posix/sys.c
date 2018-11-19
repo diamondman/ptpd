@@ -571,7 +571,7 @@ logMessage(int priority, const char * format, ...)
 	va_start(ap, format);
 
 #ifdef RUNTIME_DEBUG
-	if ((priority >= LOG_DEBUG) && (priority > rtOpts.debug_level)) {
+	if ((priority >= LOG_DEBUG) && (priority > rtOpts.sysopts.debug_level)) {
 		goto end;
 	}
 #endif

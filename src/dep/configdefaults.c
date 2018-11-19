@@ -234,7 +234,7 @@ loadDefaultSettings( RunTimeOpts* rtOpts )
 	rtOpts->sysopts.useSysLog       = FALSE;
 	rtOpts->announceReceiptTimeout  = DEFAULT_ANNOUNCE_RECEIPT_TIMEOUT;
 #ifdef RUNTIME_DEBUG
-	rtOpts->debug_level = LOG_INFO;			/* by default debug messages as disabled, but INFO messages and below are printed */
+	rtOpts->sysopts.debug_level = LOG_INFO;			/* by default debug messages as disabled, but INFO messages and below are printed */
 #endif
 	rtOpts->sysopts.ttl = 64;
 	rtOpts->delayMechanism   = DEFAULT_DELAY_MECHANISM;

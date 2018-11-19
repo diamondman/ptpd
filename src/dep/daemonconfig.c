@@ -2212,7 +2212,7 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 
 #ifdef RUNTIME_DEBUG
 	parseResult &= configMapSelectValue(opCode, opArg, dict, target, "global:debug_level",
-		PTPD_RESTART_NONE, (uint8_t*)&rtOpts->debug_level, rtOpts->debug_level,
+		PTPD_RESTART_NONE, (uint8_t*)&rtOpts->sysopts.debug_level, rtOpts->sysopts.debug_level,
 	"Specify debug level (if compiled with RUNTIME_DEBUG).",
 				"LOG_INFO", 	LOG_INFO,
 				"LOG_DEBUG", 	LOG_DEBUG,
@@ -2936,9 +2936,9 @@ short_help:
 			break;
                 case 'D':
 #ifdef RUNTIME_DEBUG
-                        (rtOpts->debug_level)++;
-                        if(rtOpts->debug_level > LOG_DEBUGV ){
-                                rtOpts->debug_level = LOG_DEBUGV;
+                        (rtOpts->sysopts.debug_level)++;
+                        if(rtOpts->sysopts.debug_level > LOG_DEBUGV ){
+                                rtOpts->sysopts.debug_level = LOG_DEBUGV;
                         }
 #else
                         printf("Runtime debug not enabled. Please compile with RUNTIME_DEBUG\n");
@@ -3542,13 +3542,13 @@ void enable_runtime_debug(void )
 {
 	extern RunTimeOpts rtOpts;
 
-	rtOpts.debug_level = max(LOG_DEBUGV, rtOpts.debug_level);
+	rtOpts.sysopts.debug_level = max(LOG_DEBUGV, rtOpts.sysopts.debug_level);
 }
 
 void disable_runtime_debug(void )
 {
 	extern RunTimeOpts rtOpts;
 
-	rtOpts.debug_level = LOG_INFO;
+	rtOpts.sysopts.debug_level = LOG_INFO;
 }
 #endif
