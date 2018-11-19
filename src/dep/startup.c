@@ -295,8 +295,8 @@ ptpClockCreate(const RunTimeOpts* rtOpts, Integer16* ret, PtpClock* ptpClock_in)
 			*ret = 2;
 			goto fail;
 		}
+		DBG("allocated %d bytes for protocol engine data\n", (int)sizeof(PtpClock));
 	}
-	DBG("allocated %d bytes for protocol engine data\n", (int)sizeof(PtpClock));
 
 	ptpClock->foreign = (ForeignMasterRecord *)
 		calloc(rtOpts->max_foreign_records, sizeof(ForeignMasterRecord));
